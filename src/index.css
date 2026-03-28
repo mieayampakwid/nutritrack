@@ -1,0 +1,321 @@
+@import "tailwindcss";
+@import "react-day-picker/style.css";
+@plugin "tailwindcss-animate";
+
+/* Soft white + green / apricot / navy palette */
+@theme {
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --color-background: hsl(0 0% 100%);
+  --color-sidebar: hsl(215 32% 97%);
+  --color-sidebar-foreground: hsl(222 38% 18%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222 38% 18%);
+  --color-foreground: hsl(222 38% 18%);
+  --color-primary: hsl(152 36% 38%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(32 46% 94%);
+  --color-secondary-foreground: hsl(222 34% 22%);
+  --color-muted: hsl(210 26% 96%);
+  --color-muted-foreground: hsl(222 14% 42%);
+  --color-accent: hsl(28 42% 93%);
+  --color-accent-foreground: hsl(222 34% 20%);
+  --color-destructive: hsl(0 72% 48%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(215 22% 90%);
+  --color-input: hsl(215 20% 92%);
+  --color-ring: hsl(152 36% 38%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(222 38% 18%);
+  --color-table-header: hsl(210 28% 95%);
+  --color-table-header-foreground: hsl(222 34% 22%);
+  --color-table-row-hover: hsl(152 18% 97%);
+  --color-table-line: hsl(215 18% 88%);
+}
+
+.dark {
+  --color-background: hsl(222 28% 11%);
+  --color-foreground: hsl(210 25% 94%);
+  --color-sidebar: hsl(222 26% 13%);
+  --color-sidebar-foreground: hsl(210 22% 92%);
+  --color-card: hsl(222 24% 14%);
+  --color-card-foreground: hsl(210 25% 94%);
+  --color-primary: hsl(152 34% 52%);
+  --color-primary-foreground: hsl(222 28% 12%);
+  --color-secondary: hsl(32 22% 20%);
+  --color-secondary-foreground: hsl(38 40% 88%);
+  --color-muted: hsl(222 18% 18%);
+  --color-muted-foreground: hsl(215 14% 65%);
+  --color-accent: hsl(28 26% 22%);
+  --color-accent-foreground: hsl(38 36% 90%);
+  --color-destructive: hsl(0 72% 58%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(222 16% 24%);
+  --color-input: hsl(222 16% 20%);
+  --color-ring: hsl(152 34% 52%);
+  --color-popover: hsl(222 24% 14%);
+  --color-popover-foreground: hsl(210 25% 94%);
+  --color-table-header: hsl(222 20% 18%);
+  --color-table-header-foreground: hsl(210 25% 94%);
+  --color-table-row-hover: hsl(222 18% 17%);
+  --color-table-line: hsl(222 14% 26%);
+  /* Stacked polygon facets (dark) */
+  --app-poly-floor: var(--color-background);
+  --app-poly-a: color-mix(in oklab, white 9%, var(--color-background));
+  --app-poly-b: color-mix(in oklab, var(--color-primary) 24%, var(--color-background));
+  --app-poly-c: color-mix(in oklab, hsl(222 46% 46%) 20%, var(--color-background));
+  --app-poly-d: color-mix(in oklab, hsl(32 54% 48%) 18%, var(--color-background));
+  --app-poly-e: color-mix(
+    in oklab,
+    hsl(222 38% 40%) 16%,
+    color-mix(in oklab, var(--color-primary) 14%, var(--color-background))
+  );
+  --app-poly-f: color-mix(in oklab, var(--color-secondary) 72%, var(--color-background));
+  --app-poly-g: color-mix(in oklab, var(--color-primary) 20%, color-mix(in oklab, var(--color-muted) 45%, var(--color-background)));
+}
+
+:root {
+  --radius: 0.5rem;
+  /* Stacked polygon facets (light): white / green / navy / apricot shards */
+  --app-poly-floor: color-mix(in oklab, var(--color-muted) 35%, white);
+  --app-poly-a: hsl(0 0% 100%);
+  --app-poly-b: color-mix(in oklab, var(--color-primary) 17%, white);
+  --app-poly-c: color-mix(in oklab, hsl(222 38% 34%) 12%, white);
+  --app-poly-d: color-mix(in oklab, hsl(32 62% 58%) 13%, white);
+  --app-poly-e: color-mix(
+    in oklab,
+    hsl(222 32% 38%) 8%,
+    color-mix(in oklab, var(--color-primary) 9%, white)
+  );
+  --app-poly-f: color-mix(in oklab, var(--color-secondary) 75%, white);
+  --app-poly-g: color-mix(in oklab, var(--color-primary) 13%, var(--color-secondary));
+}
+
+/*
+ * Polygonal stack: conic wedges (hard angle cuts) + one diagonal linear facet.
+ * Last image in list paints first (rear); first image paints on top.
+ */
+.app-page-split-hero {
+  background-color: var(--app-poly-floor);
+  background-image:
+    conic-gradient(from 218deg at 0% 0%, var(--app-poly-a) 0deg 71deg, transparent 71deg),
+    conic-gradient(from 32deg at 100% 0%, var(--app-poly-b) 0deg 74deg, transparent 74deg),
+    conic-gradient(from 252deg at 100% 100%, var(--app-poly-c) 0deg 64deg, transparent 64deg),
+    conic-gradient(from 118deg at 0% 100%, var(--app-poly-d) 0deg 60deg, transparent 60deg),
+    conic-gradient(from 168deg at 78% 32%, var(--app-poly-e) 0deg 102deg, transparent 102deg),
+    linear-gradient(124deg, var(--app-poly-f) 0%, var(--app-poly-f) 50%, var(--app-poly-g) 50%, var(--app-poly-g) 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+}
+
+html {
+  font-size: 15px;
+  min-height: 100%;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-primary) 45%, transparent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-primary) 45%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-primary) 65%, transparent);
+  background-clip: padding-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--color-background);
+  color: var(--color-foreground);
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px);
+  filter: brightness(0.95);
+}
+
+[data-theme-table] thead tr {
+  background: var(--color-table-header);
+  color: var(--color-table-header-foreground);
+}
+
+[data-theme-table] thead th {
+  color: var(--color-table-header-foreground);
+}
+
+[data-theme-table] th,
+[data-theme-table] td,
+[data-theme-table] tr {
+  border-color: var(--color-table-line);
+}
+
+[data-theme-table] tbody tr:hover {
+  background: var(--color-table-row-hover) !important;
+}
+
+@media screen and (max-width: 767px) {
+  input,
+  select,
+  textarea,
+  [role="combobox"] {
+    font-size: 16px !important;
+  }
+
+  /* Food entry: smaller type inside fields (overrides rule above). */
+  input.food-entry-compact-input {
+    font-size: 0.75rem !important;
+  }
+
+  /* SelectTrigger is a button — match paired compact inputs on food row. */
+  button.food-row-select-sync {
+    font-size: 0.75rem !important;
+  }
+}
+
+.collapsible-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition:
+    grid-template-rows 250ms ease-out,
+    opacity 200ms ease-out;
+  opacity: 0;
+}
+
+.collapsible-content[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.collapsible-content > div {
+  overflow: hidden;
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@keyframes card-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-card-in {
+  animation: card-slide-up 0.3s ease-out both;
+}
+
+@keyframes chip-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-chip-in {
+  animation: chip-pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes row-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-row-in {
+  animation: row-fade-in 0.3s ease-out both;
+}
+
+.fab-backdrop {
+  animation: fade-in 0.15s ease-out both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes section-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-section-in {
+  animation: section-reveal 0.4s ease-out both;
+}
+
+[data-sonner-toast] {
+  transition:
+    transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 350ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 400ms ease !important;
+}
+
+[data-sonner-toast][data-removed="true"] {
+  transition:
+    transform 300ms cubic-bezier(0.4, 0, 1, 1),
+    opacity 200ms ease-out !important;
+}
+
+.rdp-root {
+  --rdp-accent-color: var(--color-primary);
+  --rdp-accent-background-color: var(--color-accent);
+}

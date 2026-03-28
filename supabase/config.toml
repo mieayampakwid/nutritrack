@@ -1,0 +1,6 @@
+# https://supabase.com/docs/guides/cli/config
+
+# Gateway JWT check can return "invalid jwt" while Auth + PostgREST still work (stale
+# session, token shape). The function already calls supabase.auth.getUser() with Bearer.
+[functions.estimate-calories]
+verify_jwt = false
