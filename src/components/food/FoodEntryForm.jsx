@@ -759,7 +759,11 @@ export function FoodEntryForm({ userId }) {
             <h2 className="text-sm font-semibold leading-tight tracking-tight">
               Daftar makanan
             </h2>
-            <p className={typeMuted}>Satu baris = satu jenis makanan beserta porsi dan satuan.</p>
+            <p className={typeMuted}>
+              Satu baris = satu jenis makanan beserta porsi dan satuan. Misalnya Anda makan nasi ayam
+              geprek, tuliskan nasi kisaran berapa porsi, lalu tambah lagi baris dibawahnya untuk ayam
+              gepreknya, lalu klik Analisa
+            </p>
           </div>
           <Badge
             variant="secondary"
