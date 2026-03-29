@@ -8,6 +8,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
+  /* Dashboard greeting */
+  --font-greeting: "Outfit", system-ui, sans-serif;
+
   --color-background: hsl(0 0% 100%);
   --color-sidebar: hsl(168 30% 97%);
   --color-sidebar-foreground: hsl(180 15% 15%);
@@ -35,65 +38,76 @@
   --color-table-line: hsl(168 20% 86%);
 }
 
-.dark {
-  --color-background: hsl(24 20% 10%);
-  --color-foreground: hsl(34 28% 90%);
-  --color-sidebar: hsl(24 24% 13%);
-  --color-sidebar-foreground: hsl(34 26% 90%);
-  --color-card: hsl(24 22% 14%);
-  --color-card-foreground: hsl(34 28% 90%);
-  --color-primary: hsl(29 52% 44%);
-  --color-primary-foreground: hsl(32 30% 96%);
-  --color-secondary: hsl(24 16% 22%);
-  --color-secondary-foreground: hsl(34 26% 90%);
-  --color-muted: hsl(24 14% 18%);
-  --color-muted-foreground: hsl(31 14% 68%);
-  --color-accent: hsl(24 18% 24%);
-  --color-accent-foreground: hsl(34 24% 92%);
-  --color-destructive: hsl(0 72% 58%);
-  --color-destructive-foreground: hsl(0 0% 100%);
-  --color-border: hsl(24 12% 28%);
-  --color-input: hsl(24 12% 22%);
-  --color-ring: hsl(29 52% 44%);
-  --color-popover: hsl(24 22% 14%);
-  --color-popover-foreground: hsl(34 28% 90%);
-  --color-table-header: hsl(24 18% 20%);
-  --color-table-header-foreground: hsl(34 28% 90%);
-  --color-table-row-hover: hsl(24 16% 18%);
-  --color-table-line: hsl(24 12% 26%);
-}
-
 :root {
   --radius: 0.5rem;
-  /* Two-tone split hero (light): primary-tint vs secondary-tint on base */
-  --app-hero-split-a: color-mix(in oklab, var(--color-primary) 13%, var(--color-background));
-  --app-hero-split-b: color-mix(in oklab, var(--color-secondary) 42%, var(--color-background));
+  /* Page hero: solid top 2/5, bottom 3/5 polygonal gray ↔ white */
+  --app-hero-bar: #0097b2;
+  --app-hero-lower-from: #e0e0e0;
+  --app-hero-lower-to: #ffffff;
+  --app-hero-facet-1: rgb(255 255 255 / 0.58);
+  --app-hero-facet-2: rgb(180 180 180 / 0.22);
+  --app-hero-facet-3: rgb(248 248 248 / 0.72);
+  --app-hero-bar-corner-radius: 1.25rem;
 }
 
-html.dark {
-  --app-hero-split-a: color-mix(in oklab, var(--color-primary) 16%, var(--color-background));
-  --app-hero-split-b: color-mix(in oklab, var(--color-secondary) 38%, var(--color-background));
-}
-
-/* Diagonal two-tone band at top of scroll area; rest is solid background */
+/*
+ * Top 2/5: flat #0097b2 via background-color + ::before (rounded bottom corners).
+ * Bottom 3/5: gray→white + facets; facets clipped to lower 60% so they never sit on teal.
+ */
 .app-hero-split-bg {
-  background-color: var(--color-background);
-  background-image: linear-gradient(
-    118deg,
-    var(--app-hero-split-a) 0%,
-    var(--app-hero-split-a) 50.2%,
-    var(--app-hero-split-b) 50.2%,
-    var(--app-hero-split-b) 100%
-  );
-  background-size: 100% min(52vh, 560px);
-  background-position: top center;
+  position: relative;
+  isolation: isolate;
+  background-color: var(--app-hero-bar);
+  background-image:
+    linear-gradient(122deg, var(--app-hero-facet-1) 0%, transparent 45%),
+    linear-gradient(-48deg, var(--app-hero-facet-2) 0%, transparent 48%),
+    linear-gradient(24deg, transparent 36%, var(--app-hero-facet-3) 52%, transparent 70%),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 40%,
+      var(--app-hero-lower-from) 40%,
+      var(--app-hero-lower-to) 100%
+    );
+  background-size:
+    100% 60%,
+    100% 60%,
+    100% 60%,
+    100% 100%;
+  background-position:
+    center bottom,
+    center bottom,
+    center bottom,
+    center top;
   background-repeat: no-repeat;
+  background-attachment: fixed, fixed, fixed, fixed;
 }
 
-/* Full-viewport split (e.g. login) */
+.app-hero-split-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 40%;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--app-hero-bar);
+  border-bottom-left-radius: var(--app-hero-bar-corner-radius);
+  border-bottom-right-radius: var(--app-hero-bar-corner-radius);
+}
+
+/* Stacking above ::before — do not force `position: relative` on sticky greeting (it kills `position: sticky`). */
+.app-hero-split-bg > *:not(.dashboard-sticky-greeting) {
+  position: relative;
+  z-index: 1;
+}
+
+.app-hero-split-bg > .dashboard-sticky-greeting {
+  z-index: 30;
+}
+
 .app-hero-split-bg--full {
-  background-size: 100% 100%;
-  background-attachment: fixed;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 @layer base {

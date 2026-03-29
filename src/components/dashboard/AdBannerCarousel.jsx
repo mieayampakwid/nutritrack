@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { AD_BANNER_INTERVAL_MS, AD_BANNER_SLIDES } from '@/config/adBanners'
 import { cn } from '@/lib/utils'
 
-export function AdBannerCarousel({ slides = AD_BANNER_SLIDES, intervalMs = AD_BANNER_INTERVAL_MS }) {
+export function AdBannerCarousel({
+  slides = AD_BANNER_SLIDES,
+  intervalMs = AD_BANNER_INTERVAL_MS,
+  className,
+}) {
   const [index, setIndex] = useState(0)
   const [hoverPause, setHoverPause] = useState(false)
   const [tabHidden, setTabHidden] = useState(false)
@@ -41,7 +45,7 @@ export function AdBannerCarousel({ slides = AD_BANNER_SLIDES, intervalMs = AD_BA
 
   return (
     <div
-      className="relative mt-3 w-full max-w-3xl px-0 sm:px-1"
+      className={cn('relative mt-3 w-full max-w-3xl px-0 sm:px-1', className)}
       role="region"
       aria-roledescription="carousel"
       aria-label="Iklan"

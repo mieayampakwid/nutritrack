@@ -12,8 +12,11 @@ import {
 import { FoodLogDetailModal } from '@/components/food/FoodLogDetailModal'
 import { formatDateId } from '@/lib/format'
 import { KaloriValue } from '@/components/shared/KaloriValue'
+import { MEAL_LOG_DAY_CARD_RADIUS_CLASS } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 import { useFoodLogItems } from '@/hooks/useFoodLog'
+
+export { MEAL_LOG_DAY_CARD_RADIUS_CLASS }
 
 const WAKTU_KEYS = ['pagi', 'siang', 'malam', 'snack']
 
@@ -41,7 +44,7 @@ function dayStats(byDate, tanggal) {
   return { m, vals, total }
 }
 
-export function FoodLogTable({ logs, pageSize = 10 }) {
+export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
   const byDate = useMemo(() => groupLogsByDate(logs), [logs])
   const sortedDates = useMemo(
     () => [...byDate.keys()].sort((a, b) => b.localeCompare(a)),
@@ -78,8 +81,8 @@ export function FoodLogTable({ logs, pageSize = 10 }) {
   const totalPages = Math.max(1, Math.ceil(sortedDates.length / pageSize))
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-3 md:hidden">
+    <div className="space-y-3">
+      <div className="space-y-2 md:hidden">
         {slice.length === 0 ? (
           <p className="py-4 text-center text-sm text-muted-foreground">Belum ada log.</p>
         ) : (
@@ -94,22 +97,22 @@ export function FoodLogTable({ logs, pageSize = 10 }) {
                 aria-label={`Buka detail log makan ${dateLabel}`}
                 className={cn(
                   'group w-full cursor-pointer touch-manipulation select-none text-left outline-none transition-[transform,box-shadow,border-color] duration-300 ease-out',
-                  'rounded-3xl border border-primary/12 bg-gradient-to-br from-card via-secondary/35 to-muted/55',
-                  'p-3.5 shadow-[0_4px_24px_-8px_hsl(168_76%_36%_/_0.12)]',
+                  `${MEAL_LOG_DAY_CARD_RADIUS_CLASS} border border-primary/12 bg-gradient-to-br from-card via-secondary/35 to-muted/55`,
+                  'p-2.5 shadow-[0_4px_24px_-8px_hsl(168_76%_36%_/_0.12)]',
                   'hover:border-primary/22 hover:shadow-[0_12px_40px_-12px_hsl(168_76%_36%_/_0.18)]',
                   'active:scale-[0.992]',
                   'focus-visible:ring-2 focus-visible:ring-ring/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                  'dark:border-primary/18 dark:from-card dark:via-secondary/25 dark:to-muted/35',
-                  'dark:shadow-[0_6px_28px_-10px_hsl(0_0%_0%_/_0.45)]',
-                  'dark:hover:border-primary/28 dark:hover:shadow-[0_14px_44px_-14px_hsl(0_0%_0%_/_0.55)]',
+                  '',
+                  '',
+                  '',
                 )}
               >
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug tracking-tight text-foreground/88">
                     {dateLabel}
                   </span>
-                  <div className="flex shrink-0 items-baseline gap-1.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/65 dark:text-primary/75">
+                  <div className="flex shrink-0 items-baseline justify-end gap-1.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/65">
                       Total
                     </span>
                     <span className="text-base font-semibold tabular-nums tracking-tight text-primary">
@@ -117,21 +120,21 @@ export function FoodLogTable({ logs, pageSize = 10 }) {
                     </span>
                   </div>
                 </div>
-                <div className="mt-2 grid grid-cols-4 gap-2">
+                <div className="mt-1.5 grid grid-cols-4 gap-1.5">
                   {WAKTU_KEYS.map((k, i) => (
                     <div
                       key={k}
                       className={cn(
-                        'min-w-0 rounded-2xl px-1.5 py-2 text-center',
+                        'min-w-0 rounded-2xl px-1 py-1.5 text-center',
                         'bg-background/55 ring-1 ring-border/35 ring-inset',
                         'transition-colors duration-300 group-hover:bg-background/75 group-hover:ring-border/45',
-                        'dark:bg-background/15 dark:ring-border/30 dark:group-hover:bg-background/25',
+                        '',
                       )}
                     >
                       <div className="truncate text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/80">
                         {WAKTU_LABELS[k]}
                       </div>
-                      <div className="mt-1 min-w-0 truncate text-xs font-semibold tabular-nums tracking-tight text-foreground/92">
+                      <div className="mt-0.5 min-w-0 truncate text-xs font-semibold tabular-nums tracking-tight text-foreground/92">
                         {vals[i] != null ? <KaloriValue value={vals[i]} /> : '—'}
                       </div>
                     </div>
@@ -143,7 +146,12 @@ export function FoodLogTable({ logs, pageSize = 10 }) {
         )}
       </div>
 
-      <Card className="hidden overflow-hidden md:block">
+      <Card
+        className={cn(
+          'hidden overflow-hidden md:block',
+          embedded && 'border-0 bg-transparent shadow-none',
+        )}
+      >
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>

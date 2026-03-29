@@ -15,7 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
 
 function randomPassword() {
   const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -136,7 +138,7 @@ export function ImportData() {
 
         {rows.length > 0 && (
           <>
-            <Card className="overflow-hidden">
+            <Card className={cn('overflow-hidden', MOBILE_DASHBOARD_CARD_SHELL)}>
               <CardContent className="max-h-[360px] overflow-auto p-0">
                 <Table>
                 <TableHeader>
@@ -184,7 +186,7 @@ export function ImportData() {
             <Button variant="outline" size="sm" onClick={downloadReport}>
               Unduh laporan CSV
             </Button>
-            <Card>
+            <Card className={MOBILE_DASHBOARD_CARD_SHELL}>
               <CardContent className="p-0">
                 <pre className="max-h-40 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
                   {logLines.slice(-20).join('\n')}

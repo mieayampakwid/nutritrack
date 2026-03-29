@@ -1,4 +1,4 @@
-import { Settings2, TrendingUp, Upload, Users } from 'lucide-react'
+import { ClipboardList, Settings2, TrendingUp, Upload, Users } from 'lucide-react'
 import { PopularFoodsTrendCard } from '@/components/dashboard/PopularFoodsTrendCard'
 import { DashboardActionCard } from '@/components/dashboard/DashboardActionCard'
 import { AppShell } from '@/components/layout/AppShell'
@@ -19,8 +19,14 @@ const items = [
   {
     to: '/admin/clients',
     title: 'Progres klien',
-    desc: 'Antropometri & log makanan.',
+    desc: 'Antropometri & ringkasan per klien.',
     icon: TrendingUp,
+  },
+  {
+    to: '/admin/food-logs',
+    title: 'Pantau log makan',
+    desc: 'Filter per klien dan rentang tanggal (mis. 10 hari).',
+    icon: ClipboardList,
   },
   {
     to: '/admin/import',

@@ -32,7 +32,9 @@ import {
 } from '@/components/ui/table'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { formatDateId } from '@/lib/format'
+import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
 
 function randomPassword() {
   const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -160,7 +162,7 @@ export function UserManagement() {
       {isLoading ? (
         <LoadingSpinner />
       ) : (
-        <Card className="overflow-hidden">
+        <Card className={cn('overflow-hidden', MOBILE_DASHBOARD_CARD_SHELL)}>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>

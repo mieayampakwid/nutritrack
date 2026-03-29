@@ -1,7 +1,7 @@
 import { formatNumberId } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-/** Renders a formatted calorie number with a smaller, lighter “kkal” suffix. */
+/** Renders a formatted calorie number with a smaller “kkal” suffix beside it. */
 export function KaloriValue({ value, className, unitClassName }) {
   if (value == null || Number.isNaN(Number(value))) return '—'
   return (

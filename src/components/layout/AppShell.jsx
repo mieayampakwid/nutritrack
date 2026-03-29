@@ -3,13 +3,12 @@ import { Link, useLocation } from 'react-router-dom'
 import { DashboardHero } from '@/components/dashboard/DashboardHero'
 import {
   Apple,
+  ClipboardList,
   EllipsisVertical,
   LayoutDashboard,
   LogOut,
-  Moon,
   Ruler,
   Settings2,
-  Sun,
   TrendingUp,
   Upload,
   Users,
@@ -43,6 +42,7 @@ const ROLE_NAV = {
       { to: '/admin/dashboard', label: 'Dasbor', icon: LayoutDashboard },
       { to: '/admin/users', label: 'Pengguna', icon: Users },
       { to: '/admin/clients', label: 'Klien', icon: TrendingUp },
+      { to: '/admin/food-logs', label: 'Log makan', icon: ClipboardList },
       { to: '/admin/import', label: 'Impor', icon: Upload },
     ],
     more: [{ to: '/admin/food-units', label: 'Master ukuran', icon: Settings2 }],
@@ -51,6 +51,7 @@ const ROLE_NAV = {
     primary: [
       { to: '/gizi/dashboard', label: 'Dasbor', icon: LayoutDashboard },
       { to: '/gizi/clients', label: 'Klien', icon: Users },
+      { to: '/gizi/food-logs', label: 'Log makan', icon: ClipboardList },
     ],
     more: [],
   },
@@ -83,17 +84,6 @@ function SidebarContent({ className }) {
   const { profile, signOut } = useAuth()
   const role = profile?.role
   const config = ROLE_NAV[role]
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof document === 'undefined') return false
-    return document.documentElement.classList.contains('dark')
-  })
-
-  function toggleTheme() {
-    const nextIsDark = !document.documentElement.classList.contains('dark')
-    document.documentElement.classList.toggle('dark', nextIsDark)
-    localStorage.setItem('theme', nextIsDark ? 'dark' : 'light')
-    setIsDark(nextIsDark)
-  }
 
   if (!config) return null
 
@@ -160,15 +150,6 @@ function SidebarContent({ className }) {
           variant="ghost"
           size="sm"
           className="w-full justify-start text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-          onClick={toggleTheme}
-        >
-          {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-          {isDark ? 'Tema terang' : 'Tema gelap'}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           onClick={() => signOut()}
         >
           <LogOut className="mr-2 h-4 w-4" />
@@ -185,20 +166,8 @@ function MobileBottomNav() {
   const role = profile?.role
   const config = ROLE_NAV[role]
   const [menuOpen, setMenuOpen] = useState(false)
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof document === 'undefined') return false
-    return document.documentElement.classList.contains('dark')
-  })
 
   if (!config) return null
-
-  function toggleTheme() {
-    const nextIsDark = !isDark
-    setIsDark(nextIsDark)
-    document.documentElement.classList.toggle('dark', nextIsDark)
-    localStorage.setItem('theme', nextIsDark ? 'dark' : 'light')
-    setMenuOpen(false)
-  }
 
   const allItems = [
     ...config.primary,
@@ -307,9 +276,6 @@ function MobileBottomNav() {
               {profile?.email ? (
                 <p className="truncate text-xs text-muted-foreground">{profile.email}</p>
               ) : null}
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {APP_ACRONYM}
-              </p>
             </div>
           </div>
           <div className="flex flex-col gap-2">
@@ -327,14 +293,6 @@ function MobileBottomNav() {
                 </Link>
               )
             })}
-            <Button
-              variant="ghost"
-              className="justify-start text-card-foreground hover:bg-accent hover:text-accent-foreground"
-              onClick={toggleTheme}
-            >
-              {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-              {isDark ? 'Tema terang' : 'Tema gelap'}
-            </Button>
             <Button
               variant="ghost"
               className="justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -367,7 +325,7 @@ export function AppShell({
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <main className="app-hero-split-bg min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 pb-36 md:p-5 md:pb-5">
+        <main className="app-hero-split-bg min-w-0 flex-1 overflow-y-auto overflow-x-clip p-3 pb-36 md:p-5 md:pb-5">
           {dashboardHero ? (
             <DashboardHero contextLabel={dashboardContext} bareOnMobile={dashboardHeroBareMobile} />
           ) : null}

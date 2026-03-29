@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/table'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { useAuth } from '@/hooks/useAuth'
+import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
+import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 
 export function FoodUnitMaster() {
@@ -97,7 +99,7 @@ export function FoodUnitMaster() {
       {isLoading ? (
         <LoadingSpinner />
       ) : (
-        <Card className="overflow-hidden">
+        <Card className={cn('overflow-hidden', MOBILE_DASHBOARD_CARD_SHELL)}>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>

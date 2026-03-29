@@ -6,7 +6,8 @@ export function CalorieDisclaimer({ className }) {
   return (
     <Card
       className={cn(
-        'border-amber-300 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100',
+        'border-amber-300 bg-amber-50 text-amber-950',
+        'max-md:rounded-3xl max-md:shadow-md',
         className,
       )}
     >
@@ -14,7 +15,7 @@ export function CalorieDisclaimer({ className }) {
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
         <div className="min-w-0 space-y-1 text-sm leading-normal">
           <p className="font-semibold leading-tight">Informasi Kalori — Hanya Estimasi</p>
-          <p className="text-amber-900/90 dark:text-amber-100/90">
+          <p className="text-amber-900/90">
             Nilai kalori yang ditampilkan adalah estimasi awal berdasarkan analisa
             AI dan tidak menggantikan penilaian klinis. Untuk konfirmasi lebih
             lanjut mengenai kebutuhan gizi Anda, silakan konsultasikan dengan Ahli

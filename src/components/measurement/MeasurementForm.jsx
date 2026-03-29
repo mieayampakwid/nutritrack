@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { calculateBMI, getBMICategory } from '@/lib/bmiCalculator'
 import { formatDateId, formatNumberId } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
+import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 
 function StepButton({ onClick, disabled, children }) {
@@ -137,7 +138,7 @@ export function MeasurementForm({
   return (
     <div className="mx-auto max-w-6xl">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-8">
-        <Card className="rounded-xl lg:min-h-[360px]">
+        <Card className={cn('lg:min-h-[360px] md:rounded-xl', MOBILE_DASHBOARD_CARD_SHELL)}>
           <CardContent className="p-6">
             <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:text-left">
               <Avatar className="h-24 w-24">
@@ -174,7 +175,7 @@ export function MeasurementForm({
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl">
+        <Card className={cn('md:rounded-xl', MOBILE_DASHBOARD_CARD_SHELL)}>
           <CardContent className="space-y-6 p-6">
             <div className="space-y-2">
               <Label htmlFor="tanggal-ukur">Tanggal</Label>

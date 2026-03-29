@@ -1,10 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { ChevronDown, Cookie, Coffee, Moon, Plus, Sparkles, Sun, Trash2 } from 'lucide-react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { ChevronDown, Cookie, Coffee, Loader2, Moon, Plus, Sparkles, Sun, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -14,14 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
 import {
   useFoodNameSuggestions,
@@ -30,7 +23,11 @@ import {
 } from '@/hooks/useFoodLog'
 import { estimateCalories } from '@/lib/openai'
 import { KaloriValue } from '@/components/shared/KaloriValue'
-import { formatNumberId } from '@/lib/format'
+import { format } from 'date-fns'
+import { id as localeId } from 'date-fns/locale'
+import { APP_ACRONYM } from '@/lib/appMeta'
+import { formatDateId, formatNumberId } from '@/lib/format'
+import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 
@@ -41,8 +38,204 @@ const WAKTU = [
   { key: 'snack', label: 'Snack', icon: Cookie },
 ]
 
+/** Per-slot accent: active = filled solid; inactive = outline + tint; saved = muted same hue. */
+const MEAL_TIME_ACCENTS = {
+  pagi: {
+    active:
+      'border-transparent bg-emerald-600 text-white shadow-sm hover:bg-emerald-600 hover:text-white hover:border-transparent [&_svg]:text-white',
+    inactive:
+      'border-2 border-emerald-500/45 bg-emerald-50/90 text-emerald-950 hover:bg-emerald-100/95 hover:border-emerald-600/55 hover:text-emerald-950',
+    iconInactive: 'text-emerald-600',
+    saved:
+      'border-2 border-emerald-500/25 bg-emerald-50/60 text-emerald-800/90',
+  },
+  siang: {
+    active:
+      'border-transparent bg-orange-500 text-white shadow-sm hover:bg-orange-500 hover:text-white hover:border-transparent [&_svg]:text-white',
+    inactive:
+      'border-2 border-orange-400/55 bg-orange-50/90 text-orange-950 hover:bg-orange-100/95 hover:border-orange-500/65 hover:text-orange-950',
+    iconInactive: 'text-orange-600',
+    saved:
+      'border-2 border-orange-400/30 bg-orange-50/60 text-orange-900/85',
+  },
+  malam: {
+    active:
+      'border-transparent bg-blue-950 text-white shadow-sm hover:bg-blue-950 hover:text-white hover:border-transparent [&_svg]:text-white',
+    inactive:
+      'border-2 border-blue-900/45 bg-blue-50/95 text-blue-950 hover:bg-blue-100 hover:border-blue-950/55 hover:text-blue-950',
+    iconInactive: 'text-blue-900',
+    saved:
+      'border-2 border-blue-900/25 bg-blue-50/55 text-blue-900/85',
+  },
+  snack: {
+    active:
+      'border-transparent bg-[#7a1e2c] text-white shadow-sm hover:bg-[#7a1e2c] hover:text-white hover:border-transparent [&_svg]:text-white',
+    inactive:
+      'border-2 border-rose-900/40 bg-rose-50/90 text-rose-950 hover:bg-rose-100/95 hover:border-rose-950/50 hover:text-rose-950',
+    iconInactive: 'text-rose-800',
+    saved:
+      'border-2 border-rose-900/30 bg-rose-50/60 text-rose-900/88',
+  },
+}
+
+function mealLabelFromKey(key) {
+  return WAKTU.find((w) => w.key === key)?.label ?? key
+}
+
+/** Receipt header pill — matches meal-slot palette. */
+const MEAL_RECEIPT_BADGE = {
+  pagi: 'border-emerald-600/40 bg-emerald-50/90 text-emerald-950',
+  siang: 'border-orange-500/45 bg-orange-50/95 text-orange-950',
+  malam: 'border-blue-950/45 bg-blue-50 text-blue-950',
+  snack: 'border-[#7a1e2c]/45 bg-rose-50 text-rose-950',
+}
+
 const typeLabel = 'text-sm font-medium leading-none text-foreground'
 const typeMuted = 'text-sm leading-normal text-muted-foreground'
+
+const ANALYZE_STATUS_LINES = [
+  'Memetakan bahan dan porsi ke basis data gizi…',
+  'Menghitung estimasi energi (kkal) per item…',
+  'Menyelaraskan hasil dengan satuan yang Anda pilih…',
+  'Menyiapkan ringkasan untuk disimpan…',
+]
+
+function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
+  const [lineIdx, setLineIdx] = useState(0)
+
+  useEffect(() => {
+    if (!active) {
+      setLineIdx(0)
+      return
+    }
+    const id = window.setInterval(() => {
+      setLineIdx((i) => (i + 1) % ANALYZE_STATUS_LINES.length)
+    }, 2600)
+    return () => window.clearInterval(id)
+  }, [active])
+
+  const spinTransition = reduceMotion
+    ? { duration: 0 }
+    : { repeat: Infinity, duration: 1.05, ease: 'linear' }
+
+  const pulseTransition = reduceMotion
+    ? { duration: 0 }
+    : { repeat: Infinity, duration: 1.35, ease: 'easeInOut' }
+
+  const barTransition = reduceMotion
+    ? { duration: 0 }
+    : { repeat: Infinity, duration: 1.35, ease: [0.4, 0, 0.2, 1] }
+
+  return (
+    <AnimatePresence initial={false}>
+      {active ? (
+        <motion.div
+          key="ai-analyzing"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+          aria-label="Menganalisa makanan dengan AI"
+          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+          transition={{ duration: reduceMotion ? 0.15 : 0.35, ease: [0.22, 1, 0.36, 1] }}
+          className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.07] via-background to-teal-500/[0.06] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]"
+        >
+          {!reduceMotion ? (
+            <motion.div
+              className="pointer-events-none absolute -left-1/2 top-0 h-px w-[200%] bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+              animate={{ x: ['-30%', '30%'] }}
+              transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
+            />
+          ) : (
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-primary/25" />
+          )}
+          {!reduceMotion ? (
+            <motion.div
+              className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/10 blur-2xl"
+              animate={{ opacity: [0.35, 0.65, 0.35], scale: [1, 1.08, 1] }}
+              transition={{ repeat: Infinity, duration: 3.2, ease: 'easeInOut' }}
+            />
+          ) : null}
+          {!reduceMotion ? (
+            <motion.div
+              className="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-teal-500/10 blur-2xl"
+              animate={{ opacity: [0.25, 0.5, 0.25] }}
+              transition={{ repeat: Infinity, duration: 2.8, ease: 'easeInOut', delay: 0.4 }}
+            />
+          ) : null}
+
+          <div className="relative flex gap-3.5 sm:gap-4">
+            <div className="relative flex h-[3.25rem] w-[3.25rem] shrink-0 items-center justify-center sm:h-14 sm:w-14">
+              <div className="absolute inset-0 rounded-full border-2 border-primary/15" />
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary border-r-primary/40"
+                animate={reduceMotion ? {} : { rotate: 360 }}
+                transition={spinTransition}
+              />
+              <motion.div
+                className="absolute inset-1 rounded-full border border-dashed border-primary/25"
+                animate={reduceMotion ? {} : { rotate: -360 }}
+                transition={{ ...spinTransition, duration: reduceMotion ? 0 : 2.1 }}
+              />
+              <motion.div
+                animate={
+                  reduceMotion
+                    ? {}
+                    : { scale: [1, 1.12, 1], opacity: [0.75, 1, 0.75] }
+                }
+                transition={pulseTransition}
+              >
+                <Sparkles className="relative z-10 h-6 w-6 text-primary sm:h-7 sm:w-7" aria-hidden />
+              </motion.div>
+            </div>
+
+            <div className="min-w-0 flex-1 space-y-2 pt-0.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-[family-name:var(--font-greeting)] text-sm font-semibold tracking-tight text-foreground sm:text-base">
+                  Menganalisa dengan AI
+                </p>
+                <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                  tunggu sebentar
+                </span>
+              </div>
+              <div className="relative min-h-[2.75rem] sm:min-h-[2.5rem]">
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={lineIdx}
+                    initial={reduceMotion ? false : { opacity: 0, x: 8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -6 }}
+                    transition={{ duration: reduceMotion ? 0 : 0.3 }}
+                    className="text-xs leading-relaxed text-muted-foreground sm:text-sm"
+                  >
+                    {ANALYZE_STATUS_LINES[lineIdx]}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+
+              <div className="relative mt-1 h-1.5 overflow-hidden rounded-full bg-muted/80">
+                {!reduceMotion ? (
+                  <>
+                    <motion.div
+                      className="absolute inset-y-0 left-0 w-2/5 rounded-full bg-gradient-to-r from-primary/20 via-primary to-primary/20"
+                      initial={false}
+                      animate={{ left: ['-40%', '100%'] }}
+                      transition={barTransition}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+                  </>
+                ) : (
+                  <div className="h-full w-full rounded-full bg-primary/40" />
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  )
+}
 
 /** Same chrome as `SelectTrigger` (select.jsx): flex, h-9, border, padding, shadow. */
 const foodRowControlShell =
@@ -139,6 +332,7 @@ function foodRowSummaryLine(r, unitMap) {
 }
 
 export function FoodEntryForm({ userId }) {
+  const reduceMotion = useReducedMotion()
   const qc = useQueryClient()
   const { data: units = [] } = useFoodUnits()
   const { data: suggestions = [] } = useFoodNameSuggestions()
@@ -152,6 +346,7 @@ export function FoodEntryForm({ userId }) {
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
   const resultRef = useRef(null)
+  const analyzingAnchorRef = useRef(null)
 
   const filledSlotsToday = useMemo(
     () => new Set(todaySlots.map((r) => r.waktu_makan).filter(Boolean)),
@@ -189,6 +384,16 @@ export function FoodEntryForm({ userId }) {
     })
     return () => cancelAnimationFrame(id)
   }, [result])
+
+  useEffect(() => {
+    if (!loading) return
+    const el = analyzingAnchorRef.current
+    if (!el) return
+    const id = requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [loading, reduceMotion])
 
   function setRow(i, patch) {
     setRows((prev) => prev.map((r, j) => (j === i ? { ...r, ...patch } : r)))
@@ -346,10 +551,11 @@ export function FoodEntryForm({ userId }) {
 
   return (
     <div className="space-y-2 sm:space-y-3">
-      <section className="space-y-1.5">
+      <section className="space-y-1.5 text-center">
         <div className="flex w-full gap-1.5" aria-label="Waktu makan">
           {WAKTU.map(({ key, label, icon }) => {
             const MealIcon = icon
+            const accent = MEAL_TIME_ACCENTS[key]
             const hasSavedToday = filledSlotsToday.has(key)
             const active = waktu === key && !allSlotsFilledToday
             return (
@@ -364,14 +570,25 @@ export function FoodEntryForm({ userId }) {
                 }
                 className={cn(
                   'h-auto min-h-0 flex-1 flex-col gap-0.5 whitespace-normal rounded-lg px-1 py-1.5 text-[0.65rem] font-medium leading-tight transition-all duration-200 motion-safe:active:scale-[0.98] sm:gap-1 sm:px-1.5 sm:py-2 sm:text-xs [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-5 sm:[&_svg]:w-5',
-                  active && 'shadow-sm',
+                  hasSavedToday && accent.saved,
+                  !hasSavedToday && active && accent.active,
+                  !hasSavedToday && !active && accent.inactive,
+                  active && !hasSavedToday && 'shadow-sm',
                 )}
                 onClick={() => setWaktu(key)}
               >
-                <MealIcon className="shrink-0 opacity-90" aria-hidden />
+                <MealIcon
+                  className={cn(
+                    'h-4 w-4 shrink-0 sm:h-5 sm:w-5',
+                    active && !hasSavedToday && 'text-white opacity-100',
+                    !active && !hasSavedToday && accent.iconInactive,
+                    hasSavedToday && 'opacity-70',
+                  )}
+                  aria-hidden
+                />
                 <span className="max-w-full text-center leading-snug">{label}</span>
                 {hasSavedToday ? (
-                  <span className="max-w-full text-center text-[0.6rem] font-normal leading-tight text-muted-foreground sm:text-[0.65rem]">
+                  <span className="max-w-full text-center text-[0.6rem] font-normal leading-tight opacity-80 sm:text-[0.65rem]">
                     ✓
                   </span>
                 ) : null}
@@ -379,7 +596,7 @@ export function FoodEntryForm({ userId }) {
             )
           })}
         </div>
-        <p className={typeMuted}>
+        <p className={cn(typeMuted, 'text-center')}>
           Tiap waktu makan hanya sekali per hari. Yang sudah tercatat tidak bisa dipilih lagi. Untuk
           camilan terpisah gunakan waktu &quot;Snack&quot;, atau gabungkan beberapa makanan dalam satu
           daftar sebelum menyimpan.
@@ -396,70 +613,143 @@ export function FoodEntryForm({ userId }) {
           ref={resultRef}
           id="food-entry-result"
           tabIndex={-1}
-          className="scroll-mt-3 outline-none sm:scroll-mt-4"
+          className="scroll-mt-3 text-left outline-none sm:scroll-mt-4"
+          aria-live="polite"
         >
           <Card
             className={cn(
-              'border-primary/20 bg-primary/5 shadow-sm',
+              'food-entry-result-receipt relative overflow-hidden border-2 border-dashed border-stone-400/55',
+              'bg-[linear-gradient(168deg,#faf7f2_0%,#ffffff_42%,#ecfdf8_96%)]',
+              'text-neutral-900 shadow-[0_2px_0_rgba(15,118,110,0.06),0_18px_48px_-12px_rgba(0,151,178,0.18)]',
+              '',
+              '',
+              'rounded-2xl max-md:rounded-3xl',
               'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:fill-mode-both',
             )}
           >
-          <CardHeader className="space-y-1 p-4 pb-2 sm:p-4 sm:pb-2">
-            <div className="min-w-0 space-y-0.5">
-              <CardTitle className="text-sm font-semibold leading-tight tracking-tight">
-                Tersimpan
-              </CardTitle>
-              <CardDescription className="text-sm leading-normal">
-                Estimasi kalori untuk entri yang baru saja Anda simpan.
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2 p-4 pt-0 sm:space-y-2.5">
-            <div className="overflow-x-auto rounded-md border border-border bg-background text-sm shadow-sm">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="h-9 text-sm font-medium">Makanan</TableHead>
-                    <TableHead className="h-9 text-right text-sm font-medium">Jumlah</TableHead>
-                    <TableHead className="h-9 text-sm font-medium">Satuan</TableHead>
-                    <TableHead className="h-9 text-right text-sm font-medium">Kkal</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {result.items.map((x, idx) => (
-                    <TableRow
-                      key={idx}
-                      className="transition-colors duration-150 motion-safe:hover:bg-muted/40"
-                    >
-                      <TableCell className="py-2 text-sm font-medium leading-normal">
-                        {x.nama_makanan}
-                      </TableCell>
-                      <TableCell className="py-2 text-right text-sm tabular-nums leading-normal">
-                        {formatNumberId(x.jumlah)}
-                      </TableCell>
-                      <TableCell className="py-2 text-sm leading-normal">{x.unit_nama}</TableCell>
-                      <TableCell className="py-2 text-right text-sm tabular-nums leading-normal">
-                        <KaloriValue value={x.kalori_estimasi} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <CalorieDisclaimer />
-          </CardContent>
-          </Card>
-          <div
-            className="mt-2 flex flex-wrap items-baseline justify-end gap-x-2 gap-y-0.5 border-t border-border/50 pt-2 text-sm"
-            aria-live="polite"
-          >
-            <span className="font-medium text-muted-foreground">Total estimasi</span>
-            <KaloriValue
-              value={result.total}
-              className="text-base font-semibold text-primary"
-              unitClassName="text-primary/70"
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.035]"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+              }}
+              aria-hidden
             />
-          </div>
+            <div className="relative">
+              <header className="px-5 pb-1 pt-6 text-center sm:px-7 sm:pt-7">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-teal-700/85">
+                  Struk estimasi
+                </p>
+                <p className="mt-2 font-[family-name:var(--font-greeting)] text-[1.35rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-2xl">
+                  Tersimpan
+                </p>
+                <p className="mx-auto mt-2 max-w-[18rem] text-xs leading-relaxed text-neutral-600">
+                  Ringkasan asupan yang baru dicatat — nilai berikut bersifat estimasi.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] text-neutral-500">
+                  <span className="font-medium tracking-wide text-neutral-700">
+                    {APP_ACRONYM}
+                  </span>
+                  <span className="text-neutral-300" aria-hidden>
+                    |
+                  </span>
+                  <time className="tabular-nums" dateTime={new Date().toISOString()}>
+                    {formatDateId(new Date())}
+                  </time>
+                  <span className="text-neutral-300" aria-hidden>
+                    ·
+                  </span>
+                  <span className="tabular-nums">{format(new Date(), 'HH:mm', { locale: localeId })}</span>
+                </div>
+                <div className="mt-4 flex justify-center">
+                  <span
+                    className={cn(
+                      'inline-flex rounded-full border px-3.5 py-1 text-[11px] font-semibold tracking-wide',
+                      MEAL_RECEIPT_BADGE[waktu] ?? MEAL_RECEIPT_BADGE.pagi,
+                    )}
+                  >
+                    {mealLabelFromKey(waktu)}
+                  </span>
+                </div>
+              </header>
+
+              <div
+                className="mx-5 mt-5 h-px border-t border-dashed border-stone-400/70 sm:mx-7"
+                role="presentation"
+              />
+
+              <div className="px-5 py-4 sm:px-7">
+                <div className="flex items-end justify-between gap-2 border-b border-stone-800/10 pb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">
+                    Rincian
+                  </span>
+                  <span className="text-[10px] font-medium tabular-nums text-neutral-400">
+                    {result.items.length} baris
+                  </span>
+                </div>
+                <ul className="mt-1 divide-y divide-dotted divide-stone-300/80">
+                  {result.items.map((x, idx) => (
+                    <li key={idx} className="py-3.5 first:pt-2">
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold leading-snug text-neutral-900 sm:text-[0.9375rem]">
+                            {x.nama_makanan}
+                          </p>
+                          <p className="mt-1.5 text-[11px] tabular-nums leading-none text-neutral-500">
+                            <span className="font-medium text-neutral-600">
+                              {formatNumberId(x.jumlah)}
+                            </span>
+                            <span className="mx-1 text-neutral-400">×</span>
+                            <span>{x.unit_nama}</span>
+                          </p>
+                        </div>
+                        <div className="shrink-0 border-l border-dashed border-stone-300/70 pl-3">
+                          <span className="block text-right font-mono text-sm font-semibold tabular-nums text-teal-800 sm:text-base">
+                            <KaloriValue
+                              value={x.kalori_estimasi}
+                              unitClassName="text-[0.65em] font-normal text-teal-700/65"
+                            />
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div
+                className="mx-5 border-t-2 border-double border-teal-700/25 sm:mx-7"
+                role="presentation"
+              />
+
+              <div className="relative bg-gradient-to-r from-teal-600/[0.09] via-teal-600/[0.05] to-transparent px-5 py-5 sm:px-7">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-teal-900/70">
+                      Total estimasi
+                    </p>
+                    <p className="text-xs text-neutral-600">
+                      Jumlah kalori gabungan untuk waktu makan ini.
+                    </p>
+                  </div>
+                  <KaloriValue
+                    value={result.total}
+                    className="text-2xl font-bold tracking-tight text-teal-800 sm:text-[1.65rem]"
+                    unitClassName="text-sm font-semibold text-teal-700/75"
+                  />
+                </div>
+              </div>
+
+              <div
+                className="h-2.5 w-full bg-[repeating-linear-gradient(90deg,transparent_0px,transparent_5px,currentColor_5px,currentColor_7px)] text-stone-400/45"
+                role="presentation"
+                aria-hidden
+              />
+
+              <div className="px-5 pb-5 pt-1 sm:px-7 sm:pb-6">
+                <CalorieDisclaimer className="border-amber-200/70 bg-amber-50/70 shadow-none" />
+              </div>
+            </div>
+          </Card>
         </div>
       ) : null}
 
@@ -501,7 +791,7 @@ export function FoodEntryForm({ userId }) {
                 aria-label={`Entri makanan ke-${i + 1}`}
                 className={cn(
                   'group flex overflow-visible rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm',
-                  'ring-1 ring-border/30 dark:ring-border/50',
+                  'ring-1 ring-border/30',
                   'transition-[border-color,box-shadow,ring-color] duration-200',
                   'motion-safe:hover:border-primary/30 motion-safe:hover:shadow-md motion-safe:hover:ring-primary/20',
                   isExpanded &&
@@ -509,9 +799,11 @@ export function FoodEntryForm({ userId }) {
                 )}
               >
                 <div
-                  className="w-1 shrink-0 bg-gradient-to-b from-primary/55 via-primary/35 to-primary/15 motion-safe:transition-opacity motion-safe:group-hover:opacity-100 sm:w-1.5"
+                  className="shrink-0 self-stretch overflow-hidden rounded-l-xl"
                   aria-hidden
-                />
+                >
+                  <div className="h-full w-1 bg-gradient-to-b from-primary/55 via-primary/35 to-primary/15 motion-safe:transition-opacity motion-safe:group-hover:opacity-100 sm:w-1.5" />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 border-b border-border/50 bg-muted/25 px-3 py-2">
                     <Badge
@@ -672,6 +964,10 @@ export function FoodEntryForm({ userId }) {
         </Button>
       </section>
 
+      <div ref={analyzingAnchorRef} className="mt-3 scroll-mt-4">
+        <FoodEntryAiAnalyzingPanel active={loading} reduceMotion={reduceMotion} />
+      </div>
+
       <div className="flex flex-col gap-1.5 border-t border-border/60 pt-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
         {error ? (
           <p
@@ -689,7 +985,14 @@ export function FoodEntryForm({ userId }) {
           disabled={loading || slotsPending || allSlotsFilledToday || filledSlotsToday.has(waktu)}
           onClick={handleAnalyze}
         >
-          <Sparkles className="h-4 w-4" />
+          {loading ? (
+            <Loader2
+              className={cn('h-4 w-4', !reduceMotion && 'motion-safe:animate-spin')}
+              aria-hidden
+            />
+          ) : (
+            <Sparkles className="h-4 w-4" aria-hidden />
+          )}
           {loading ? 'Menganalisa & menyimpan…' : 'Analisa & simpan'}
         </Button>
       </div>

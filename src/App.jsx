@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Navigate, Route, Routes } from 'react-router-dom'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { AppShellLoadingSkeleton } from '@/components/shared/AppShellLoadingSkeleton'
 import { useAuth, AuthProvider } from '@/hooks/useAuth'
 
 const LoginPage = lazy(() =>
@@ -24,6 +24,9 @@ const AdminClientDetail = lazy(() =>
 )
 const ImportData = lazy(() =>
   import('@/pages/admin/ImportData').then((m) => ({ default: m.ImportData })),
+)
+const FoodLogMonitor = lazy(() =>
+  import('@/pages/staff/FoodLogMonitor').then((m) => ({ default: m.FoodLogMonitor })),
 )
 const GiziDashboard = lazy(() =>
   import('@/pages/ahli-gizi/GiziDashboard').then((m) => ({ default: m.GiziDashboard })),
@@ -59,11 +62,7 @@ function dashboardPath(role) {
 function RootRedirect() {
   const { session, profile, loading } = useAuth()
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    )
+    return <AppShellLoadingSkeleton />
   }
   if (!session || !profile) return <Navigate to="/login" replace />
   return <Navigate to={dashboardPath(profile.role)} replace />
@@ -71,15 +70,12 @@ function RootRedirect() {
 
 function RequireAuth({ roles, children }) {
   const { session, profile, loading } = useAuth()
+  const location = useLocation()
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    )
+    return <AppShellLoadingSkeleton />
   }
-  if (!session) return <Navigate to="/login" replace />
-  if (!profile) return <Navigate to="/login" replace />
+  if (!session) return <Navigate to="/login" replace state={{ from: location }} />
+  if (!profile) return <Navigate to="/login" replace state={{ from: location }} />
   if (roles && !roles.includes(profile.role)) {
     return <Navigate to={dashboardPath(profile.role)} replace />
   }
@@ -87,11 +83,7 @@ function RequireAuth({ roles, children }) {
 }
 
 function RouteFallback() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <LoadingSpinner />
-    </div>
-  )
+  return <AppShellLoadingSkeleton />
 }
 
 function AppRoutes() {
@@ -149,6 +141,14 @@ function AppRoutes() {
             </RequireAuth>
           }
         />
+        <Route
+          path="/admin/food-logs"
+          element={
+            <RequireAuth roles={['admin']}>
+              <FoodLogMonitor />
+            </RequireAuth>
+          }
+        />
 
         <Route
           path="/gizi/dashboard"
@@ -171,6 +171,14 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['ahli_gizi']}>
               <GiziClientDetail />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/gizi/food-logs"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <FoodLogMonitor />
             </RequireAuth>
           }
         />

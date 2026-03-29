@@ -2,18 +2,85 @@ import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { AdBannerCarousel } from '@/components/dashboard/AdBannerCarousel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/hooks/useAuth'
-import { APP_DISPLAY_NAME } from '@/lib/appMeta'
+import { getLoginGreetingTemplate } from '@/lib/dashboardGreeting'
+import { APP_ACRONYM, APP_DISPLAY_NAME, APP_TAGLINE } from '@/lib/appMeta'
+import { cn } from '@/lib/utils'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
+import laperLogo from '@/assets/laper-logo.png'
 
 function dashboardPath(role) {
   if (role === 'admin') return '/admin/dashboard'
   if (role === 'ahli_gizi') return '/gizi/dashboard'
   return '/klien/dashboard'
+}
+
+function LoginLogoBlock() {
+  const year = new Date().getFullYear()
+  return (
+    <div className="flex w-full flex-col items-center px-1">
+      <img
+        src={laperLogo}
+        alt={`${APP_ACRONYM} — ${APP_TAGLINE}`}
+        className="block h-auto w-full max-w-[14rem] object-contain sm:max-w-[15.5rem]"
+        width={400}
+        height={100}
+        decoding="async"
+      />
+      <p className="m-0 max-w-[min(100%,20rem)] text-center text-[0.6875rem] leading-tight text-white sm:text-xs">
+        © {year} PKRS RSUD RT Notopuro
+      </p>
+    </div>
+  )
+}
+
+function LoginGreetingCard() {
+  const greetingText = getLoginGreetingTemplate()
+
+  return (
+    <div className="w-full">
+      <div
+        className={cn(
+          'relative z-10 overflow-hidden rounded-xl border border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100/95',
+          'px-2.5 py-2 text-left shadow-[0_2px_16px_-6px_hsl(38_60%_30%_/_0.12)]',
+          'ring-1 ring-inset ring-amber-100/90 backdrop-blur-md',
+          'after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-[1] after:h-[3px] after:bg-gradient-to-b after:from-amber-100/95 after:to-amber-100',
+        )}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgb(254_252_232_/_0.9),transparent_55%)]"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute bottom-2 left-0 top-2 w-px rounded-full bg-gradient-to-b from-transparent via-amber-400/55 to-transparent shadow-[2px_0_10px_hsl(38_70%_40%_/_0.12)]"
+          aria-hidden
+        />
+        <p
+          className={cn(
+            'relative pl-1.5 font-greeting text-[0.875rem] font-medium leading-snug text-amber-950 sm:text-[0.9375rem]',
+          )}
+        >
+          {greetingText}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function LoginPageChrome({ children }) {
+  return (
+    <div className="app-hero-split-bg app-hero-split-bg--full flex min-h-dvh flex-col items-center justify-center overflow-y-auto px-4 py-6">
+      <div className="flex w-full max-w-lg flex-col gap-3 sm:max-w-xl">
+        <LoginLogoBlock />
+        {children}
+      </div>
+    </div>
+  )
 }
 
 export function LoginPage() {
@@ -26,25 +93,37 @@ export function LoginPage() {
 
   if (!isSupabaseConfigured()) {
     return (
-      <div className="app-hero-split-bg app-hero-split-bg--full flex min-h-screen min-h-dvh items-center justify-center p-4">
-        <Card className="w-full max-w-sm animate-card-in border border-border/50 shadow-xl shadow-primary/5">
-          <CardHeader className="space-y-2 pb-2 pt-8 text-center">
-            <CardTitle className="text-lg font-bold leading-snug tracking-tight">{APP_DISPLAY_NAME}</CardTitle>
-            <CardDescription>
-              Salin <code className="text-xs">.env.example</code> ke <code className="text-xs">.env</code> dan isi URL
-              serta anon key Supabase. Muat ulang server setelah mengubah <code className="text-xs">.env</code>.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
+      <LoginPageChrome>
+        <>
+          <Card className="animate-card-in border border-border/50 shadow-xl shadow-primary/5">
+            <CardHeader className="space-y-2 pb-2 pt-8 text-center">
+              <CardTitle className="text-lg font-bold leading-snug tracking-tight">{APP_DISPLAY_NAME}</CardTitle>
+              <CardDescription>
+                Salin <code className="text-xs">.env.example</code> ke <code className="text-xs">.env</code> dan isi URL
+                serta anon key Supabase. Muat ulang server setelah mengubah <code className="text-xs">.env</code>.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+          <div className="mt-3 w-full max-w-none">
+            <AdBannerCarousel className="mt-0" />
+          </div>
+        </>
+      </LoginPageChrome>
     )
   }
 
   if (loading) {
     return (
-      <div className="app-hero-split-bg app-hero-split-bg--full flex min-h-screen min-h-dvh items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
+      <LoginPageChrome>
+        <>
+          <div className="flex min-h-[12rem] items-center justify-center rounded-xl border border-border/50 bg-card/80 shadow-sm">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Memuat" />
+          </div>
+          <div className="mt-3 w-full max-w-none">
+            <AdBannerCarousel className="mt-0" />
+          </div>
+        </>
+      </LoginPageChrome>
     )
   }
 
@@ -55,32 +134,37 @@ export function LoginPage() {
 
   if (session && !loading && !profile) {
     return (
-      <div className="app-hero-split-bg app-hero-split-bg--full flex min-h-screen min-h-dvh items-center justify-center p-4">
-        <Card className="w-full max-w-sm animate-card-in border border-border/50 shadow-xl shadow-primary/5">
-          <CardHeader className="space-y-2 pb-2 pt-8 text-center">
-            <CardTitle className="text-xl font-bold tracking-tight">Profil tidak ditemukan</CardTitle>
-            <CardDescription className="space-y-2 text-left">
-              <span>
-                Akun tidak memiliki baris profil, baris disembunyikan oleh RLS, atau proyek Supabase di{' '}
-                <code className="text-xs">.env</code> tidak cocok dengan basis data.
-              </span>
-              {profileLoadError ? (
-                <span className="block text-sm text-destructive">API: {profileLoadError}</span>
-              ) : (
-                <span className="block text-sm text-muted-foreground">
-                  Jika baris ada di Table Editor, jalankan{' '}
-                  <code className="text-xs">supabase/fix_profiles_access.sql</code> di SQL Editor.
+      <LoginPageChrome>
+        <>
+          <Card className="animate-card-in border border-border/50 shadow-xl shadow-primary/5">
+            <CardHeader className="space-y-2 pb-2 pt-8 text-center">
+              <CardTitle className="text-xl font-bold tracking-tight">Profil tidak ditemukan</CardTitle>
+              <CardDescription className="space-y-2 text-left">
+                <span>
+                  Akun tidak memiliki baris profil, baris disembunyikan oleh RLS, atau proyek Supabase di{' '}
+                  <code className="text-xs">.env</code> tidak cocok dengan basis data.
                 </span>
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-8 pb-8 pt-4">
-            <Button type="button" className="w-full" size="lg" onClick={() => supabase.auth.signOut()}>
-              Keluar
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+                {profileLoadError ? (
+                  <span className="block text-sm text-destructive">API: {profileLoadError}</span>
+                ) : (
+                  <span className="block text-sm text-muted-foreground">
+                    Jika baris ada di Table Editor, jalankan{' '}
+                    <code className="text-xs">supabase/fix_profiles_access.sql</code> di SQL Editor.
+                  </span>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-8 pb-8 pt-4">
+              <Button type="button" className="w-full" size="lg" onClick={() => supabase.auth.signOut()}>
+                Keluar
+              </Button>
+            </CardContent>
+          </Card>
+          <div className="mt-3 w-full max-w-none">
+            <AdBannerCarousel className="mt-0" />
+          </div>
+        </>
+      </LoginPageChrome>
     )
   }
 
@@ -91,76 +175,83 @@ export function LoginPage() {
     setBusy(false)
     if (error) {
       toast.error(error.message)
-      return
     }
-    toast.success('Berhasil masuk.')
   }
 
+  const loginInputClass =
+    'h-8 border-border/70 bg-background/80 px-2.5 py-1 text-sm shadow-sm placeholder:text-muted-foreground/80 file:text-sm focus-visible:ring-1 focus-visible:ring-offset-0'
+
   return (
-    <div className="app-hero-split-bg app-hero-split-bg--full flex min-h-screen min-h-dvh items-center justify-center p-4">
-      <div className="w-full max-w-sm animate-card-in">
-        <Card className="border border-border/50 shadow-xl shadow-primary/5">
-          <CardHeader className="space-y-3 px-8 pb-2 pt-8 text-center">
-            <div className="space-y-1">
-              <CardTitle className="text-lg font-bold leading-snug tracking-tight">{APP_DISPLAY_NAME}</CardTitle>
-              <CardDescription>Masuk dengan email dan kata sandi</CardDescription>
-            </div>
-          </CardHeader>
+    <LoginPageChrome>
+      <>
+        <div className="animate-card-in">
+          <Card className="overflow-hidden rounded-xl border border-border/55 bg-card/95 shadow-[0_10px_40px_-18px_rgba(0,0,0,0.18)] ring-1 ring-black/[0.03] dark:shadow-[0_12px_40px_-20px_rgba(0,0,0,0.45)] dark:ring-white/[0.06]">
+            <CardContent className="px-4 pb-5 pt-3 sm:px-5">
+              <div className="space-y-2.5">
+                <LoginGreetingCard />
+                <form onSubmit={handleSubmit} className="space-y-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="nama@contoh.com"
+                      className={cn(loginInputClass, 'placeholder:text-[0.6875rem] placeholder:leading-normal')}
+                      autoFocus
+                    />
+                  </div>
 
-          <CardContent className="px-8 pb-8 pt-4">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nama@contoh.com"
-                  autoFocus
-                />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-xs font-medium text-muted-foreground">
+                      Kata sandi
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        autoComplete="current-password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={cn(loginInputClass, 'pr-9')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-0 top-0 flex h-full items-center px-2.5 text-muted-foreground transition-colors hover:text-foreground"
+                        tabIndex={-1}
+                        aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                      >
+                        {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="mt-1 w-full text-sm font-semibold" disabled={busy}>
+                    {busy ? (
+                      <>
+                        <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                        Memuat…
+                      </>
+                    ) : (
+                      'Masuk'
+                    )}
+                  </Button>
+                </form>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Kata sandi</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-0 top-0 flex h-full items-center px-3 text-muted-foreground transition-colors hover:text-foreground"
-                    tabIndex={-1}
-                    aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <Button type="submit" size="lg" className="w-full" disabled={busy}>
-                {busy ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Memuat…
-                  </>
-                ) : (
-                  'Masuk'
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="mt-3 w-full max-w-none">
+          <AdBannerCarousel className="mt-0" />
+        </div>
+      </>
+    </LoginPageChrome>
   )
 }

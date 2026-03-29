@@ -10,7 +10,14 @@ import {
 } from 'recharts'
 import { formatDateId, formatNumberId } from '@/lib/format'
 
-const MEALS = ['pagi', 'siang', 'malam', 'snack']
+const tooltipStyles = {
+  backgroundColor: 'var(--color-popover)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '10px',
+  color: 'var(--color-popover-foreground)',
+  fontSize: '13px',
+  boxShadow: '0 8px 24px -8px color-mix(in oklab, var(--color-foreground) 18%, transparent)',
+}
 
 export function MeasurementChart({ measurements, metric }) {
   const data = (measurements ?? []).map((m) => ({
@@ -40,31 +47,62 @@ export function MeasurementChart({ measurements, metric }) {
 
   if (!data.length) {
     return (
-      <p className="text-sm text-muted-foreground py-8 text-center">
+      <p className="py-8 text-center text-sm text-muted-foreground">
         Belum ada data pengukuran.
       </p>
     )
   }
 
+  const axisTick = { fontSize: 11, fill: 'currentColor' }
+
   return (
-    <div className="h-[320px] w-full min-w-0">
+    <div className="h-[min(52vw,320px)] min-h-[220px] w-full min-w-0 text-neutral-800 md:text-card-foreground">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-          <YAxis tick={{ fontSize: 11 }} width={40} />
+        <LineChart
+          data={data}
+          margin={{ top: 10, right: 4, left: -8, bottom: 4 }}
+          className="text-[0.6875rem] sm:text-xs"
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="var(--color-border)"
+            vertical={false}
+            opacity={0.85}
+          />
+          <XAxis
+            dataKey="label"
+            tick={axisTick}
+            tickLine={false}
+            axisLine={{ stroke: 'var(--color-border)' }}
+            interval="preserveStartEnd"
+            height={36}
+          />
+          <YAxis
+            tick={axisTick}
+            tickLine={false}
+            axisLine={false}
+            width={44}
+            domain={['auto', 'auto']}
+          />
           <Tooltip
             formatter={(v) => [formatNumberId(v), labels[key]]}
             labelFormatter={(_, p) => p?.[0]?.payload?.label ?? ''}
+            contentStyle={tooltipStyles}
+            labelStyle={{ color: 'var(--color-muted-foreground)', marginBottom: 4 }}
           />
-          <Legend />
+          <Legend
+            wrapperStyle={{ paddingTop: 12, fontSize: '12px', color: 'currentColor' }}
+            iconType="circle"
+            iconSize={8}
+          />
           <Line
             type="monotone"
             dataKey={key}
             name={labels[key]}
-            stroke="#1e293b"
+            stroke="var(--color-primary)"
             strokeWidth={2}
-            dot={{ r: 3 }}
+            dot={{ r: 3, strokeWidth: 0, fill: 'var(--color-primary)' }}
+            activeDot={{ r: 5, strokeWidth: 0 }}
             connectNulls
           />
         </LineChart>

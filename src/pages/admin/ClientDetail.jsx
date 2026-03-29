@@ -30,6 +30,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatDateId, formatNumberId } from '@/lib/format'
+import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
+import { cn } from '@/lib/utils'
 
 export function ClientDetail() {
   const { id } = useParams()
@@ -103,7 +105,7 @@ export function ClientDetail() {
             clientProfile={client}
             lastMeasurement={lastMeasurement}
           />
-          <Card className="rounded-xl">
+          <Card className={cn('md:rounded-xl', MOBILE_DASHBOARD_CARD_SHELL)}>
             <CardHeader>
               <div className="flex flex-wrap items-center gap-3">
                 <CardTitle className="text-sm font-medium">Grafik</CardTitle>
@@ -134,7 +136,7 @@ export function ClientDetail() {
         </TabsContent>
       </Tabs>
 
-      <Card className="mt-8 overflow-hidden">
+      <Card className={cn('mt-8 overflow-hidden', MOBILE_DASHBOARD_CARD_SHELL)}>
         <CardHeader className="border-b py-4">
           <CardTitle className="text-base">Riwayat pengukuran</CardTitle>
         </CardHeader>

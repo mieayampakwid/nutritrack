@@ -1,4 +1,4 @@
-import { Users } from 'lucide-react'
+import { ClipboardList, Users } from 'lucide-react'
 import { PopularFoodsTrendCard } from '@/components/dashboard/PopularFoodsTrendCard'
 import { DashboardActionCard } from '@/components/dashboard/DashboardActionCard'
 import { AppShell } from '@/components/layout/AppShell'
@@ -20,8 +20,14 @@ export function GiziDashboard() {
             <DashboardActionCard
               to="/gizi/clients"
               title="Daftar klien"
-              desc="Pantau antropometri dan log makanan."
+              desc="Antropometri dan ringkasan per klien."
               icon={Users}
+            />
+            <DashboardActionCard
+              to="/gizi/food-logs"
+              title="Pantau log makan"
+              desc="Filter per klien dan rentang tanggal (mis. 10 hari)."
+              icon={ClipboardList}
             />
           </div>
         </section>

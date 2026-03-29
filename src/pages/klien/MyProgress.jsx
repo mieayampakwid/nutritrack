@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { MeasurementChart } from '@/components/measurement/MeasurementChart'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { useAuth } from '@/hooks/useAuth'
 import { useMeasurements } from '@/hooks/useMeasurement'
@@ -22,6 +22,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatDateId, formatNumberId } from '@/lib/format'
+import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
+import { cn } from '@/lib/utils'
 
 function filterByRange(measurements, range) {
   if (range === 'all') return measurements
@@ -33,6 +35,8 @@ function filterByRange(measurements, range) {
   return measurements.filter((m) => m.tanggal >= s)
 }
 
+const cardShell = cn('overflow-hidden border-border/70 shadow-sm', MOBILE_DASHBOARD_CARD_SHELL)
+
 export function MyProgress() {
   const { profile } = useAuth()
   const { data: all = [], isLoading } = useMeasurements(profile?.id, Boolean(profile?.id))
@@ -43,80 +47,148 @@ export function MyProgress() {
 
   return (
     <AppShell>
-      <div className="space-y-6 max-w-5xl">
-        <div className="flex flex-wrap gap-3">
-          <div className="flex gap-2">
-            <Button
-              variant={range === '30d' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setRange('30d')}
-            >
-              30 hari
-            </Button>
-            <Button
-              variant={range === '3m' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setRange('3m')}
-            >
-              3 bulan
-            </Button>
-            <Button
-              variant={range === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setRange('all')}
-            >
-              Semua
-            </Button>
-          </div>
-          <Select value={metric} onValueChange={setMetric}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Metrik" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="berat_badan">Berat badan</SelectItem>
-              <SelectItem value="bmi">BMI</SelectItem>
-              <SelectItem value="massa_otot">Massa otot</SelectItem>
-              <SelectItem value="massa_lemak">Massa lemak</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="mx-auto max-w-5xl space-y-4 pb-1">
+        <h1 className="text-center text-lg font-semibold tracking-tight text-white max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)] sm:text-xl md:text-foreground">
+          Progres pengukuran
+        </h1>
+
+        <Card className={cn('p-0', cardShell)}>
+          <CardHeader className="space-y-0 border-b border-border/60 px-4 pb-3 pt-4 sm:px-5">
+            <CardTitle className="text-base font-semibold tracking-tight">Periode dan metrik</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 p-4 sm:p-5">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Rentang waktu">
+              <Button
+                variant={range === '30d' ? 'default' : 'outline'}
+                size="sm"
+                className={cn(
+                  'min-h-9 flex-1 min-[380px]:flex-none',
+                  range !== '30d' &&
+                    '',
+                )}
+                onClick={() => setRange('30d')}
+              >
+                30 hari
+              </Button>
+              <Button
+                variant={range === '3m' ? 'default' : 'outline'}
+                size="sm"
+                className={cn(
+                  'min-h-9 flex-1 min-[380px]:flex-none',
+                  range !== '3m' &&
+                    '',
+                )}
+                onClick={() => setRange('3m')}
+              >
+                3 bulan
+              </Button>
+              <Button
+                variant={range === 'all' ? 'default' : 'outline'}
+                size="sm"
+                className={cn(
+                  'min-h-9 flex-1 min-[380px]:flex-none',
+                  range !== 'all' &&
+                    '',
+                )}
+                onClick={() => setRange('all')}
+              >
+                Semua
+              </Button>
+            </div>
+            <div className="space-y-1.5">
+              <span className="text-xs font-medium text-muted-foreground">
+                Metrik grafik
+              </span>
+              <Select value={metric} onValueChange={setMetric}>
+                <SelectTrigger className="h-11 w-full border-border/80 bg-transparent shadow-sm sm:h-9 sm:max-w-xs">
+                  <SelectValue placeholder="Metrik" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="berat_badan">Berat badan</SelectItem>
+                  <SelectItem value="bmi">BMI</SelectItem>
+                  <SelectItem value="massa_otot">Massa otot</SelectItem>
+                  <SelectItem value="massa_lemak">Massa lemak</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
         {isLoading ? (
-          <LoadingSpinner />
+          <Card className={cn('p-8', cardShell)}>
+            <LoadingSpinner />
+          </Card>
         ) : (
-          <MeasurementChart measurements={measurements} metric={metric} />
+          <Card className={cn('p-0', cardShell)}>
+            <CardHeader className="space-y-0 border-b border-border/60 px-4 pb-3 pt-4 sm:px-5">
+              <CardTitle className="text-base font-semibold tracking-tight">Grafik</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4">
+              <MeasurementChart measurements={measurements} metric={metric} />
+            </CardContent>
+          </Card>
         )}
 
-        <Card className="overflow-hidden">
-          <CardContent className="p-0">
+        <Card className={cn('p-0', cardShell)}>
+          <CardHeader className="space-y-0 border-b border-border/60 px-4 pb-3 pt-4 text-center sm:px-5">
+            <CardTitle className="text-base font-semibold tracking-tight">Riwayat</CardTitle>
+          </CardHeader>
+          <CardContent className="px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead className="text-right">BB</TableHead>
-                    <TableHead className="text-right">TB</TableHead>
-                    <TableHead className="text-right">BMI</TableHead>
-                    <TableHead className="text-right">Otot</TableHead>
-                    <TableHead className="text-right">Lemak</TableHead>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">
+                      Tanggal
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">
+                      BB
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">
+                      TB
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">
+                      BMI
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">
+                      Otot
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">
+                      Lemak
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {[...measurements]
                     .sort((a, b) => b.tanggal.localeCompare(a.tanggal))
                     .map((m) => (
-                      <TableRow key={m.id}>
-                        <TableCell>{formatDateId(m.tanggal)}</TableCell>
-                        <TableCell className="text-right">{formatNumberId(m.berat_badan)}</TableCell>
-                        <TableCell className="text-right">{formatNumberId(m.tinggi_badan)}</TableCell>
-                        <TableCell className="text-right">{formatNumberId(m.bmi)}</TableCell>
-                        <TableCell className="text-right">{formatNumberId(m.massa_otot)}</TableCell>
-                        <TableCell className="text-right">{formatNumberId(m.massa_lemak)}</TableCell>
+                      <TableRow key={m.id} className="max-md:text-[0.8125rem]">
+                        <TableCell className="whitespace-nowrap px-2 text-center sm:px-3">
+                          {formatDateId(m.tanggal)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">
+                          {formatNumberId(m.berat_badan)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">
+                          {formatNumberId(m.tinggi_badan)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">
+                          {formatNumberId(m.bmi)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">
+                          {formatNumberId(m.massa_otot)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">
+                          {formatNumberId(m.massa_lemak)}
+                        </TableCell>
                       </TableRow>
                     ))}
                   {measurements.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="py-10 text-center text-sm text-muted-foreground"
+                      >
                         Belum ada pengukuran.
                       </TableCell>
                     </TableRow>

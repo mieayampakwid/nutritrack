@@ -52,6 +52,8 @@ create table if not exists public.food_logs (
   unique(user_id, tanggal, waktu_makan)
 );
 
+create index if not exists food_logs_user_tanggal_idx on public.food_logs (user_id, tanggal desc);
+
 create table if not exists public.food_log_items (
   id uuid primary key default gen_random_uuid(),
   food_log_id uuid references public.food_logs(id) on delete cascade,

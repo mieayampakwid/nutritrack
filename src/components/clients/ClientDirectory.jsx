@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { formatDateId, formatNumberId } from '@/lib/format'
+import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
 
 function subDays(isoDate, n) {
   const d = new Date(isoDate + 'T12:00:00')
@@ -71,7 +73,12 @@ export function ClientDirectory({ linkPrefix, title }) {
             ak && ak.n > 0 ? ak.sum / ak.n : null
           return (
             <Link key={p.id} to={`${linkPrefix}/${p.id}`}>
-              <Card className="h-full transition-colors hover:bg-muted/40">
+              <Card
+                className={cn(
+                  'h-full transition-colors hover:bg-muted/40',
+                  MOBILE_DASHBOARD_CARD_SHELL,
+                )}
+              >
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">{p.nama}</CardTitle>
                   <p className="text-sm text-muted-foreground">{p.instalasi ?? '—'}</p>

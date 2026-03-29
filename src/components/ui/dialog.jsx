@@ -19,9 +19,9 @@ const DialogOverlay = ({ className, ...props }) => (
   />
 )
 
-const DialogContent = ({ className, compact, children, ...props }) => (
+const DialogContent = ({ className, compact, overlayClassName, children, ...props }) => (
   <DialogPortal>
-    <DialogOverlay />
+    <DialogOverlay className={overlayClassName} />
     <DialogPrimitive.Content
       className={cn(
         'fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl border border-border bg-popover p-5 text-popover-foreground shadow-2xl sm:max-w-lg',

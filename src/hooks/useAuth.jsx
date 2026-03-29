@@ -31,10 +31,12 @@ export function AuthProvider({ children }) {
   }, [])
 
   useEffect(() => {
+    // Do not set loading=false when getSession returns null: the session may still be
+    // restored asynchronously (INITIAL_SESSION). Premature false caused RequireAuth to
+    // send users to /login without `state.from`, then LoginPage sent them to dashboard.
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s)
       if (s?.user?.id) setLoading(true)
-      else setLoading(false)
     })
     const {
       data: { subscription },
