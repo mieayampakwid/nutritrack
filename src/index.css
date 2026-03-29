@@ -188,22 +188,17 @@ button:not(:disabled):active {
   background: var(--color-table-row-hover) !important;
 }
 
+/*
+ * iOS Safari zooms the viewport when a focused control's computed font-size is < 16px.
+ * Never override below 16px on compact rows — use layout/spacing instead of smaller type.
+ */
 @media screen and (max-width: 767px) {
-  input,
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='button']):not([type='submit']):not([type='reset']):not([type='hidden']),
   select,
   textarea,
-  [role="combobox"] {
-    font-size: 16px !important;
-  }
-
-  /* Food entry: smaller type inside fields (overrides rule above). */
-  input.food-entry-compact-input {
-    font-size: 0.75rem !important;
-  }
-
-  /* SelectTrigger is a button — match paired compact inputs on food row. */
-  button.food-row-select-sync {
-    font-size: 0.75rem !important;
+  [role='combobox'],
+  [role='searchbox'] {
+    font-size: max(16px, 1rem) !important;
   }
 }
 
