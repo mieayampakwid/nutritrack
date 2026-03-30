@@ -35,6 +35,20 @@ const PRESETS = [
 
 const STAFF_LOG_STALE_MS = 10 * 60 * 1000
 
+/** Compact filter row: smaller type + shorter controls (scoped to this page). */
+const FILTER_LABEL_CLASS = 'text-xs font-medium leading-snug sm:text-sm'
+/** Klien + Jumlah hari selects: smallest trigger text, tight line-height. */
+const FILTER_SELECT_TRIGGER_CLASS = cn(
+  'h-7 min-h-0 w-full gap-1 px-2 py-0.5 text-xs leading-none md:h-7',
+  '[&_svg]:h-3 [&_svg]:w-3 [&_svg]:shrink-0',
+)
+const FILTER_SELECT_CONTENT_CLASS = 'max-h-72 text-xs'
+const FILTER_SELECT_ITEM_CLASS = 'py-1 pl-2 pr-8 text-xs leading-tight sm:py-1'
+const FILTER_DATE_CLASS = cn(
+  'h-8 min-h-0 w-full justify-start gap-1.5 rounded-md px-2.5 py-0 text-sm font-normal leading-tight md:h-8',
+  '[&_svg]:mr-1.5 [&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:shrink-0',
+)
+
 export function FoodLogMonitor() {
   const location = useLocation()
   const clientsBase = location.pathname.startsWith('/admin') ? '/admin/clients' : '/gizi/clients'
@@ -85,13 +99,17 @@ export function FoodLogMonitor() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div>
-          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-foreground">
-            <ClipboardList className="h-6 w-6 text-primary" aria-hidden />
+      <div className="mx-auto max-w-5xl space-y-5 md:space-y-6">
+        <div
+          className={cn(
+            'max-md:rounded-2xl max-md:border max-md:border-border/80 max-md:bg-card max-md:p-4 max-md:shadow-sm max-md:ring-1 max-md:ring-black/[0.04]',
+          )}
+        >
+          <h1 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+            <ClipboardList className="h-5 w-5 shrink-0 text-primary sm:h-6 sm:w-6" aria-hidden />
             Pantau log makan
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5">
             Pilih klien dan rentang tanggal untuk menganalisis entri makan tanpa memuat seluruh riwayat.
           </p>
         </div>
@@ -102,28 +120,30 @@ export function FoodLogMonitor() {
             MOBILE_DASHBOARD_CARD_SHELL,
           )}
         >
-          <CardHeader className="border-b border-border/60 py-4">
-            <CardTitle className="text-base">Filter</CardTitle>
-            <CardDescription>
+          <CardHeader className="border-b border-border/60 py-3 sm:py-4">
+            <CardTitle className="text-base sm:text-lg">Filter</CardTitle>
+            <CardDescription className="text-xs leading-relaxed sm:text-sm">
               Rentang dihitung inklusif. Preset seperti &quot;10 hari&quot; berarti 10 hari kalender
               diakhiri pada tanggal &quot;Sampai tanggal&quot; — cocok untuk tinjauan berkala.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6 pt-6">
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="monitor-client">Klien</Label>
+          <CardContent className="space-y-3 pt-4 sm:space-y-4 sm:pt-6">
+            <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="monitor-client" className={FILTER_LABEL_CLASS}>
+                  Klien
+                </Label>
                 <Select
                   value={userId}
                   onValueChange={setUserId}
                   disabled={loadingClients}
                 >
-                  <SelectTrigger id="monitor-client" className="w-full">
+                  <SelectTrigger id="monitor-client" className={FILTER_SELECT_TRIGGER_CLASS}>
                     <SelectValue placeholder={loadingClients ? 'Memuat…' : 'Pilih klien'} />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="max-h-72">
+                  <SelectContent position="popper" className={FILTER_SELECT_CONTENT_CLASS}>
                     {clients.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
+                      <SelectItem key={c.id} value={c.id} className={FILTER_SELECT_ITEM_CLASS}>
                         {c.instalasi ? `${c.nama} — ${c.instalasi}` : c.nama}
                       </SelectItem>
                     ))}
@@ -131,15 +151,17 @@ export function FoodLogMonitor() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="monitor-preset">Jumlah hari</Label>
+              <div className="space-y-1">
+                <Label htmlFor="monitor-preset" className={FILTER_LABEL_CLASS}>
+                  Jumlah hari
+                </Label>
                 <Select value={preset} onValueChange={setPreset}>
-                  <SelectTrigger id="monitor-preset" className="w-full">
+                  <SelectTrigger id="monitor-preset" className={FILTER_SELECT_TRIGGER_CLASS}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent position="popper">
+                  <SelectContent position="popper" className={FILTER_SELECT_CONTENT_CLASS}>
                     {PRESETS.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>
+                      <SelectItem key={p.value} value={p.value} className={FILTER_SELECT_ITEM_CLASS}>
                         {p.label}
                       </SelectItem>
                     ))}
@@ -149,33 +171,42 @@ export function FoodLogMonitor() {
             </div>
 
             {preset !== 'custom' ? (
-              <div className="space-y-2 sm:max-w-xs">
-                <Label htmlFor="monitor-end">Sampai tanggal</Label>
+              <div className="space-y-1.5 sm:max-w-xs">
+                <Label htmlFor="monitor-end" className={FILTER_LABEL_CLASS}>
+                  Sampai tanggal
+                </Label>
                 <DatePicker
                   id="monitor-end"
                   value={endDate}
                   onChange={(v) => setEndDate(v || toIsoDateLocal(new Date()))}
                   placeholder="Tanggal akhir rentang"
+                  className={FILTER_DATE_CLASS}
                 />
               </div>
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="monitor-from">Tanggal mulai</Label>
+              <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="monitor-from" className={FILTER_LABEL_CLASS}>
+                    Tanggal mulai
+                  </Label>
                   <DatePicker
                     id="monitor-from"
                     value={customFrom}
                     onChange={setCustomFrom}
                     placeholder="Mulai"
+                    className={FILTER_DATE_CLASS}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="monitor-to">Tanggal selesai</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="monitor-to" className={FILTER_LABEL_CLASS}>
+                    Tanggal selesai
+                  </Label>
                   <DatePicker
                     id="monitor-to"
                     value={customTo}
                     onChange={setCustomTo}
                     placeholder="Selesai"
+                    className={FILTER_DATE_CLASS}
                   />
                 </div>
               </div>
@@ -207,13 +238,31 @@ export function FoodLogMonitor() {
 
         <section aria-label="Tabel log makan">
           {!userId ? (
-            <p className="text-center text-sm text-muted-foreground">Pilih klien untuk menampilkan log.</p>
+            <p
+              className={cn(
+                'rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground shadow-sm',
+                'md:rounded-none md:border-0 md:bg-transparent md:px-0 md:py-6 md:shadow-none',
+              )}
+            >
+              Pilih klien untuk menampilkan log.
+            </p>
           ) : !rangeReady ? (
-            <p className="text-center text-sm text-muted-foreground">
+            <p
+              className={cn(
+                'rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground shadow-sm',
+                'md:rounded-none md:border-0 md:bg-transparent md:px-0 md:py-6 md:shadow-none',
+              )}
+            >
               Lengkapi tanggal mulai dan selesai untuk mode kustom.
             </p>
           ) : loadingLogs ? (
-            <LoadingSpinner />
+            <div
+              className={cn(
+                'rounded-2xl border border-border bg-card px-4 py-12 shadow-sm md:rounded-none md:border-0 md:bg-transparent md:px-0 md:py-8 md:shadow-none',
+              )}
+            >
+              <LoadingSpinner />
+            </div>
           ) : (
             <FoodLogTable logs={logs} pageSize={10} />
           )}

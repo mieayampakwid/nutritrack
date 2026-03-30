@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -82,9 +83,11 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
 
   return (
     <div className="space-y-3">
-      <div className="space-y-2 md:hidden">
+      <div className="space-y-3 md:hidden">
         {slice.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">Belum ada log.</p>
+          <p className="rounded-2xl border border-dashed border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground shadow-sm">
+            Belum ada log.
+          </p>
         ) : (
           slice.map((tanggal) => {
             const { vals, total } = dayStats(byDate, tanggal)
@@ -96,45 +99,46 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
                 onClick={() => setModal(tanggal)}
                 aria-label={`Buka detail log makan ${dateLabel}`}
                 className={cn(
-                  'group w-full cursor-pointer touch-manipulation select-none text-left outline-none transition-[transform,box-shadow,border-color] duration-300 ease-out',
-                  `${MEAL_LOG_DAY_CARD_RADIUS_CLASS} border border-primary/12 bg-gradient-to-br from-card via-secondary/35 to-muted/55`,
-                  'p-2.5 shadow-[0_4px_24px_-8px_hsl(168_76%_36%_/_0.12)]',
-                  'hover:border-primary/22 hover:shadow-[0_12px_40px_-12px_hsl(168_76%_36%_/_0.18)]',
-                  'active:scale-[0.992]',
-                  'focus-visible:ring-2 focus-visible:ring-ring/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                  '',
-                  '',
-                  '',
+                  'group w-full cursor-pointer touch-manipulation select-none text-left outline-none transition-[transform,box-shadow,border-color] duration-200',
+                  MEAL_LOG_DAY_CARD_RADIUS_CLASS,
+                  'border border-border bg-card p-3.5 text-card-foreground shadow-sm ring-1 ring-black/[0.04]',
+                  'hover:border-primary/30 hover:shadow-md',
+                  'active:scale-[0.99]',
+                  'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                 )}
               >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug tracking-tight text-foreground/88">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 flex-1 text-sm font-semibold leading-snug tracking-tight text-foreground">
                     {dateLabel}
                   </span>
-                  <div className="flex shrink-0 items-baseline justify-end gap-1.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/65">
-                      Total
-                    </span>
-                    <span className="text-base font-semibold tabular-nums tracking-tight text-primary">
-                      {total > 0 ? <KaloriValue value={total} /> : '—'}
-                    </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <div className="text-right">
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Total
+                      </div>
+                      <div className="text-base font-semibold tabular-nums text-primary">
+                        {total > 0 ? <KaloriValue value={total} /> : '—'}
+                      </div>
+                    </div>
+                    <ChevronRight
+                      className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground"
+                      aria-hidden
+                    />
                   </div>
                 </div>
-                <div className="mt-1.5 grid grid-cols-4 gap-1.5">
+                <div className="mt-3 grid grid-cols-4 gap-2">
                   {WAKTU_KEYS.map((k, i) => (
                     <div
                       key={k}
                       className={cn(
-                        'min-w-0 rounded-2xl px-1 py-1.5 text-center',
-                        'bg-background/55 ring-1 ring-border/35 ring-inset',
-                        'transition-colors duration-300 group-hover:bg-background/75 group-hover:ring-border/45',
-                        '',
+                        'min-w-0 rounded-xl border border-border bg-muted px-1 py-2 text-center',
+                        'transition-colors group-hover:bg-muted/90',
                       )}
                     >
-                      <div className="truncate text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/80">
+                      <div className="truncate text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                         {WAKTU_LABELS[k]}
                       </div>
-                      <div className="mt-0.5 min-w-0 truncate text-xs font-semibold tabular-nums tracking-tight text-foreground/92">
+                      <div className="mt-1 min-w-0 truncate text-xs font-semibold tabular-nums text-foreground">
                         {vals[i] != null ? <KaloriValue value={vals[i]} /> : '—'}
                       </div>
                     </div>
@@ -200,7 +204,13 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
           </div>
         </CardContent>
       </Card>
-      <div className="flex items-center justify-between gap-2">
+      <div
+        className={cn(
+          'flex items-center justify-between gap-2',
+          'rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm ring-1 ring-black/[0.04]',
+          'md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none md:ring-0',
+        )}
+      >
         <Button
           variant="outline"
           size="sm"
@@ -209,7 +219,7 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
         >
           Sebelumnya
         </Button>
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm font-medium text-foreground tabular-nums md:font-normal md:text-muted-foreground">
           Halaman {page + 1} / {totalPages}
         </span>
         <Button

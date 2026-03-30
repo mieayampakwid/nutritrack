@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/table'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { formatDateId } from '@/lib/format'
-import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
+import { ADMIN_TABLE_CARD_SHELL } from '@/lib/pageCard'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 
@@ -145,24 +145,33 @@ export function UserManagement() {
 
   return (
     <AppShell>
-      <div className="mb-4 flex flex-wrap justify-end gap-2">
-        <Button variant="outline" asChild>
-          <Link to="/admin/import">Impor Excel</Link>
-        </Button>
-        <Button
-          onClick={() => {
-            setForm((f) => ({ ...f, password: randomPassword() }))
-            setOpenAdd(true)
-          }}
-        >
-          Tambah pengguna
-        </Button>
-      </div>
+      <div className="mx-auto max-w-6xl space-y-5 md:space-y-6">
+        <div className="max-md:px-0.5">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">User</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5">
+            Kelola akun, peran, dan status aktif. Gunakan impor Excel untuk menambah banyak klien sekaligus.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2">
+          <Button variant="outline" asChild className="w-full sm:w-auto">
+            <Link to="/admin/import">Impor Excel</Link>
+          </Button>
+          <Button
+            className="w-full sm:w-auto"
+            onClick={() => {
+              setForm((f) => ({ ...f, password: randomPassword() }))
+              setOpenAdd(true)
+            }}
+          >
+            Tambah pengguna
+          </Button>
+        </div>
 
       {isLoading ? (
         <LoadingSpinner />
       ) : (
-        <Card className={cn('overflow-hidden', MOBILE_DASHBOARD_CARD_SHELL)}>
+        <Card className={cn('overflow-hidden', ADMIN_TABLE_CARD_SHELL)}>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
@@ -218,6 +227,7 @@ export function UserManagement() {
           </CardContent>
         </Card>
       )}
+      </div>
 
       <Dialog open={openAdd} onOpenChange={setOpenAdd}>
         <DialogContent className="sm:max-w-md">

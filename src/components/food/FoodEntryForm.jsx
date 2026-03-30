@@ -532,7 +532,7 @@ export function FoodEntryForm({ userId }) {
       const { error: itemErr } = await supabase.from('food_log_items').insert(inserts)
       if (itemErr) throw itemErr
 
-      setResult({ items: itemsWithKal, total })
+      setResult({ items: itemsWithKal, total, waktuMakan: waktu })
       qc.invalidateQueries({ queryKey: ['food_logs', userId] })
       qc.invalidateQueries({ queryKey: ['food_logs_today_slots', userId] })
       qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
@@ -664,10 +664,10 @@ export function FoodEntryForm({ userId }) {
                   <span
                     className={cn(
                       'inline-flex rounded-full border px-3.5 py-1 text-[11px] font-semibold tracking-wide',
-                      MEAL_RECEIPT_BADGE[waktu] ?? MEAL_RECEIPT_BADGE.pagi,
+                      MEAL_RECEIPT_BADGE[result.waktuMakan] ?? MEAL_RECEIPT_BADGE.pagi,
                     )}
                   >
-                    {mealLabelFromKey(waktu)}
+                    {mealLabelFromKey(result.waktuMakan)}
                   </span>
                 </div>
               </header>

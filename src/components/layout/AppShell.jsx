@@ -40,18 +40,20 @@ const ROLE_NAV = {
   admin: {
     primary: [
       { to: '/admin/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-      { to: '/admin/users', label: 'Pengguna', icon: Users },
-      { to: '/admin/clients', label: 'Klien', icon: TrendingUp },
-      { to: '/admin/food-logs', label: 'Log makan', icon: ClipboardList },
-      { to: '/admin/import', label: 'Impor', icon: Upload },
+      { to: '/admin/food-logs', label: 'Evaluasi', icon: ClipboardList },
+      { to: '/admin/users', label: 'User', icon: Users },
     ],
-    more: [{ to: '/admin/food-units', label: 'Master ukuran', icon: Settings2 }],
+    more: [
+      { to: '/admin/clients', label: 'Klien', icon: TrendingUp },
+      { to: '/admin/import', label: 'Impor', icon: Upload },
+      { to: '/admin/food-units', label: 'Master ukuran', icon: Settings2 },
+    ],
   },
   ahli_gizi: {
     primary: [
       { to: '/gizi/dashboard', label: 'Dasbor', icon: LayoutDashboard },
+      { to: '/gizi/food-logs', label: 'Evaluasi', icon: ClipboardList },
       { to: '/gizi/clients', label: 'Klien', icon: Users },
-      { to: '/gizi/food-logs', label: 'Log makan', icon: ClipboardList },
     ],
     more: [],
   },
@@ -228,7 +230,7 @@ function MobileBottomNav() {
                     </motionPrimitive.span>
                     <span
                       className={cn(
-                        'relative z-10 text-[8px] font-normal uppercase tracking-wide transition-colors duration-150',
+                        'relative z-10 text-center text-[10px] font-medium uppercase leading-tight tracking-wide transition-colors duration-150',
                         isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground',
                       )}
                     >
@@ -316,7 +318,11 @@ export function AppShell({
   dashboardHero = false,
   dashboardContext,
   dashboardHeroBareMobile = false,
+  dashboardHeroBareLogo = false,
 }) {
+  const { profile } = useAuth()
+  const isStaff = profile?.role === 'admin' || profile?.role === 'ahli_gizi'
+
   return (
     <div className="flex h-dvh min-h-screen overflow-hidden bg-background">
       <aside className="z-10 hidden min-h-0 w-56 flex-shrink-0 flex-col bg-sidebar p-3 text-sidebar-foreground shadow-[4px_0_15px_rgba(0,0,0,0.1)] md:flex">
@@ -325,9 +331,16 @@ export function AppShell({
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <main className="app-hero-split-bg min-w-0 flex-1 overflow-y-auto overflow-x-clip p-3 pb-36 md:p-5 md:pb-5">
+        <main
+          data-staff={isStaff ? 'true' : undefined}
+          className="app-hero-split-bg min-w-0 flex-1 overflow-y-auto overflow-x-clip p-3 pb-40 md:p-5 md:pb-5"
+        >
           {dashboardHero ? (
-            <DashboardHero contextLabel={dashboardContext} bareOnMobile={dashboardHeroBareMobile} />
+            <DashboardHero
+              contextLabel={dashboardContext}
+              bareOnMobile={dashboardHeroBareMobile}
+              bareLogoShell={dashboardHeroBareLogo}
+            />
           ) : null}
           {children}
         </main>

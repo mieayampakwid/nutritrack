@@ -4,7 +4,7 @@ import { ClientDirectory } from '@/components/clients/ClientDirectory'
 export function ClientList() {
   return (
     <AppShell>
-      <ClientDirectory linkPrefix="/gizi/clients" />
+      <ClientDirectory linkPrefix="/gizi/clients" title="Klien" />
     </AppShell>
   )
 }

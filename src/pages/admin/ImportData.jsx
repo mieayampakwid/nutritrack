@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
+import { ADMIN_TABLE_CARD_SHELL } from '@/lib/pageCard'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 
@@ -118,27 +118,34 @@ export function ImportData() {
 
   return (
     <AppShell>
-      <div className="max-w-4xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-5 md:space-y-6">
+        <div className="max-md:px-0.5">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">Impor Excel</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5">
+            Unggah spreadsheet untuk membuat akun klien massal. Pratinjau baris di bawah sebelum menjalankan impor.
+          </p>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="import-xlsx">File Excel (.xlsx / .xls)</Label>
           <Input
             id="import-xlsx"
             type="file"
             accept=".xlsx,.xls"
-            className="max-w-md cursor-pointer"
+            className="w-full max-w-md cursor-pointer"
             onChange={(e) => {
               const f = e.target.files?.[0]
               if (f) parseFile(f)
             }}
           />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm leading-relaxed text-muted-foreground">
             Kolom wajib: nama, email, instalasi, nomor_wa (header huruf kecil).
           </p>
         </div>
 
         {rows.length > 0 && (
           <>
-            <Card className={cn('overflow-hidden', MOBILE_DASHBOARD_CARD_SHELL)}>
+            <Card className={cn('overflow-hidden', ADMIN_TABLE_CARD_SHELL)}>
               <CardContent className="max-h-[360px] overflow-auto p-0">
                 <Table>
                 <TableHeader>
@@ -165,7 +172,7 @@ export function ImportData() {
               </Table>
               </CardContent>
             </Card>
-            <Button disabled={running} onClick={runImport}>
+            <Button disabled={running} className="w-full sm:w-auto" onClick={runImport}>
               Impor semua (baris dengan email valid)
             </Button>
           </>
@@ -179,16 +186,16 @@ export function ImportData() {
         )}
 
         {logLines.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm">
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-foreground">
               Berhasil: {stats.ok}, gagal: {stats.fail}
             </p>
-            <Button variant="outline" size="sm" onClick={downloadReport}>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={downloadReport}>
               Unduh laporan CSV
             </Button>
-            <Card className={MOBILE_DASHBOARD_CARD_SHELL}>
+            <Card className={cn('overflow-hidden', ADMIN_TABLE_CARD_SHELL)}>
               <CardContent className="p-0">
-                <pre className="max-h-40 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+                <pre className="max-h-40 overflow-auto rounded-none border-t border-border/60 bg-muted p-3 font-mono text-xs leading-relaxed sm:rounded-b-md">
                   {logLines.slice(-20).join('\n')}
                 </pre>
               </CardContent>

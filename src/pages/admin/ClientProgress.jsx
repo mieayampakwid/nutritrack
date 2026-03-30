@@ -4,7 +4,7 @@ import { ClientDirectory } from '@/components/clients/ClientDirectory'
 export function ClientProgress() {
   return (
     <AppShell>
-      <ClientDirectory linkPrefix="/admin/clients" />
+      <ClientDirectory linkPrefix="/admin/clients" title="Klien" />
     </AppShell>
   )
 }

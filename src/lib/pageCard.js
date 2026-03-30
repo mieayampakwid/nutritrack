@@ -11,4 +11,11 @@ export const KLIEN_DASHBOARD_LOG_CARD_SHELL = `${MEAL_LOG_DAY_CARD_RADIUS_CLASS}
  * On md+, default `Card` chrome applies unless you add e.g. `md:rounded-xl`.
  */
 export const MOBILE_DASHBOARD_CARD_SHELL =
-  'max-md:rounded-3xl max-md:border-border/70 max-md:bg-white max-md:text-neutral-900 max-md:shadow-md'
+  'max-md:rounded-3xl max-md:border-border/70 max-md:bg-white max-md:text-neutral-900 max-md:shadow-md max-md:ring-1 max-md:ring-black/[0.04]'
+
+/**
+ * Admin/staff **tables** and dense data grids on mobile: same surface as
+ * {@link MOBILE_DASHBOARD_CARD_SHELL} but **subtle corner radius** (not pill-like).
+ */
+export const ADMIN_TABLE_CARD_SHELL =
+  'max-md:rounded-lg max-md:border-border/70 max-md:bg-white max-md:text-neutral-900 max-md:shadow-sm max-md:ring-1 max-md:ring-black/[0.04]'

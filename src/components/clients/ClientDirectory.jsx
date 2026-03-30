@@ -63,9 +63,16 @@ export function ClientDirectory({ linkPrefix, title }) {
   }
 
   return (
-    <div className="space-y-4">
-      {title && <h2 className="text-lg font-medium">{title}</h2>}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="mx-auto max-w-7xl space-y-5 md:space-y-6">
+      {title ? (
+        <div className="max-md:px-0.5">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">{title}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5">
+            Ringkasan antropometri dan asupan kalori terbaru. Ketuk kartu untuk detail.
+          </p>
+        </div>
+      ) : null}
+      <div className="grid gap-3.5 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
         {(data?.profiles ?? []).map((p) => {
           const lm = latestByUser[p.id]
           const ak = avgKal7[p.id]
@@ -79,11 +86,11 @@ export function ClientDirectory({ linkPrefix, title }) {
                   MOBILE_DASHBOARD_CARD_SHELL,
                 )}
               >
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{p.nama}</CardTitle>
+                <CardHeader className="space-y-1 pb-2 pt-1">
+                  <CardTitle className="text-base font-semibold leading-snug">{p.nama}</CardTitle>
                   <p className="text-sm text-muted-foreground">{p.instalasi ?? '—'}</p>
                 </CardHeader>
-                <CardContent className="text-sm space-y-1">
+                <CardContent className="space-y-1.5 text-sm leading-relaxed">
                   <p>
                     <span className="text-muted-foreground">BMI terakhir: </span>
                     {lm?.bmi != null ? (
@@ -105,7 +112,9 @@ export function ClientDirectory({ linkPrefix, title }) {
         })}
       </div>
       {data?.profiles?.length === 0 && (
-        <p className="text-sm text-muted-foreground">Belum ada klien aktif.</p>
+        <p className="rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+          Belum ada klien aktif.
+        </p>
       )}
     </div>
   )

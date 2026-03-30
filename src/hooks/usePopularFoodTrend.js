@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { endOfMonth, startOfDay, startOfMonth, subDays, subMonths } from 'date-fns'
+import { startOfDay, subDays } from 'date-fns'
 import { toIsoDateLocal } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 
@@ -7,7 +7,7 @@ const TOP_N = 10
 const LOG_PAGE = 800
 const ID_CHUNK = 120
 
-/** @typedef {'daily' | 'monthly' | 'yearly'} PopularFoodRange */
+/** @typedef {'1d' | '7d' | '1mo'} PopularFoodRange */
 
 function chunk(arr, size) {
   const out = []
@@ -15,23 +15,18 @@ function chunk(arr, size) {
   return out
 }
 
+/** Inclusive calendar-day ranges on `tanggal` (local). */
 function rangeBounds(/** @type {PopularFoodRange} */ range) {
   const today = new Date()
-  if (range === 'daily') {
-    const end = startOfDay(today)
-    const start = startOfDay(subDays(end, 29))
-    return { start, end }
+  const end = startOfDay(today)
+  if (range === '1d') {
+    return { start: end, end }
   }
-  if (range === 'monthly') {
-    const end = endOfMonth(today)
-    const start = startOfMonth(subMonths(today, 11))
-    return { start, end }
+  if (range === '7d') {
+    return { start: startOfDay(subDays(end, 6)), end }
   }
-  const endYear = today.getFullYear()
-  const startYear = endYear - 4
-  const start = new Date(startYear, 0, 1)
-  const end = new Date(endYear, 11, 31)
-  return { start, end }
+  /* 1mo: rolling 30 calendar days including today */
+  return { start: startOfDay(subDays(end, 29)), end }
 }
 
 function canonName(s) {

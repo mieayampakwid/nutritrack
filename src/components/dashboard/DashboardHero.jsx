@@ -12,10 +12,15 @@ import { profileDisplayName } from '@/lib/profileDisplay'
 import { cn } from '@/lib/utils'
 
 /**
- * @param {{ className?: string, bareOnMobile?: boolean, compactLogo?: boolean }} props
+ * @param {{ className?: string, bareOnMobile?: boolean, compactLogo?: boolean, bareLogoShell?: boolean }} props
  * Renders a fragment: logo block, sentinel, sticky greeting (direct child of `main` for CSS), ads.
  */
-export function DashboardHero({ className, bareOnMobile = false, compactLogo = false }) {
+export function DashboardHero({
+  className,
+  bareOnMobile = false,
+  compactLogo = false,
+  bareLogoShell = false,
+}) {
   const { profile } = useAuth()
   const displayName = profileDisplayName(profile)
   const [tick, setTick] = useState(0)
@@ -64,11 +69,13 @@ export function DashboardHero({ className, bareOnMobile = false, compactLogo = f
   const greetingTemplate = getDashboardGreetingTemplate(displayName, now)
   const { before, after, hasClock } = splitGreetingAtClock(greetingTemplate)
 
-  const shellClass = bareOnMobile
-    ? 'relative mb-0 max-md:overflow-visible max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none md:mb-0 md:overflow-hidden md:rounded-2xl md:border md:border-border/70 md:bg-gradient-to-br md:from-primary/[0.07] md:via-background md:to-secondary/[0.12] md:p-6 md:shadow-sm'
-    : 'relative mb-0 overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-primary/[0.07] via-background to-secondary/[0.12] p-5 shadow-sm sm:p-6'
+  const shellClass = bareLogoShell
+    ? 'relative mb-0 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none'
+    : bareOnMobile
+      ? 'relative mb-0 max-md:overflow-visible max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none md:mb-0 md:overflow-hidden md:rounded-2xl md:border md:border-border/70 md:bg-gradient-to-br md:from-primary/[0.07] md:via-background md:to-secondary/[0.12] md:p-6 md:shadow-sm'
+      : 'relative mb-0 overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-primary/[0.07] via-background to-secondary/[0.12] p-5 shadow-sm sm:p-6'
 
-  const glowClass = bareOnMobile ? 'max-md:hidden' : ''
+  const glowClass = bareLogoShell ? 'hidden' : bareOnMobile ? 'max-md:hidden' : ''
 
   return (
     <>

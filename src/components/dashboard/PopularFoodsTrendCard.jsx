@@ -2,118 +2,280 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  LabelList,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
-import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { useState, useSyncExternalStore } from 'react'
+import { LayoutGroup, motion } from 'framer-motion'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { usePopularFoodTrend } from '@/hooks/usePopularFoodTrend'
 import { formatNumberId } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-const RANGE_OPTIONS = [
-  { value: 'daily', label: 'Harian (30 hari terakhir)' },
-  { value: 'monthly', label: 'Bulanan (12 bulan terakhir)' },
-  { value: 'yearly', label: 'Tahunan (5 tahun terakhir)' },
+const RANGE_TABS = [
+  { value: '1d', label: 'Harian' },
+  { value: '7d', label: 'Mingguan' },
+  { value: '1mo', label: 'Bulanan' },
 ]
 
-const BAR_FILL = 'hsl(var(--primary))'
+const BAR_FILL = 'var(--color-primary)'
 
-function truncateAxisLabel(s, max = 22) {
+const LABEL_GAP = 8
+
+const tabChipSpring = { type: 'spring', stiffness: 450, damping: 34, mass: 0.85 }
+const tabLabelActive = { scale: [1, 1.1, 1], y: [0, -0.5, 0] }
+const tabLabelIdle = { scale: 1, y: 0 }
+
+/** Tailwind `md` — column chart on desktop, horizontal bars below. */
+function useDesktopChartLayout() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mq = window.matchMedia('(min-width: 768px)')
+      mq.addEventListener('change', onChange)
+      return () => mq.removeEventListener('change', onChange)
+    },
+    () => window.matchMedia('(min-width: 768px)').matches,
+    () => false,
+  )
+}
+
+function truncateLabel(s, max = 36) {
   const t = String(s ?? '')
   if (t.length <= max) return t
   return `${t.slice(0, max - 1)}…`
 }
 
+/**
+ * Recharts LabelList does not pass `payload` into custom label content (it is stripped).
+ * Resolve the row by `index` against chartData from the parent scope.
+ */
+function renderBarTopLabel(chartData) {
+  return function BarTopLabelContent(props) {
+    const { index, viewBox } = props
+    const x = props.x ?? viewBox?.x
+    const y = props.y ?? viewBox?.y
+    const width = props.width ?? viewBox?.width
+    const row = chartData?.[index]
+    if (row == null || x == null || y == null || width == null) return null
+    const cx = Number(x) + Number(width) / 2
+    const cy = Number(y) - 6
+    const num = formatNumberId(Number(row.frekuensi))
+    return (
+      <text
+        x={cx}
+        y={cy}
+        textAnchor="middle"
+        dominantBaseline="auto"
+        fontSize={11}
+        fontFamily="system-ui, -apple-system, sans-serif"
+        fill="var(--color-primary)"
+        fontWeight={700}
+        style={{ pointerEvents: 'none', fontVariantNumeric: 'tabular-nums' }}
+      >
+        {num}
+      </text>
+    )
+  }
+}
+
+function renderBarEndLabel(chartData) {
+  return function BarEndLabelContent(props) {
+    const { index, viewBox } = props
+    const x = props.x ?? viewBox?.x
+    const y = props.y ?? viewBox?.y
+    const width = props.width ?? viewBox?.width
+    const height = props.height ?? viewBox?.height
+    const row = chartData?.[index]
+    if (row == null || x == null || y == null || width == null || height == null) return null
+    const food = truncateLabel(row.food)
+    const num = formatNumberId(Number(row.frekuensi))
+    const lx = Number(x) + Number(width) + LABEL_GAP
+    const cy = Number(y) + Number(height) / 2
+    return (
+      <text
+        x={lx}
+        y={cy}
+        dominantBaseline="middle"
+        textAnchor="start"
+        fontSize={11}
+        fontFamily="system-ui, -apple-system, sans-serif"
+        fill="var(--color-foreground)"
+        style={{ pointerEvents: 'none' }}
+      >
+        <tspan fontWeight={600}>{food}</tspan>
+        <tspan fill="var(--color-muted-foreground)" fontWeight={500}>
+          {' : '}
+        </tspan>
+        <tspan fill="var(--color-primary)" fontWeight={700} style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {num}
+        </tspan>
+      </text>
+    )
+  }
+}
+
 export function PopularFoodsTrendCard({ className }) {
-  const [range, setRange] = useState(/** @type {'daily' | 'monthly' | 'yearly'} */ ('daily'))
+  const [range, setRange] = useState(/** @type {'1d' | '7d' | '1mo'} */ ('7d'))
+  const isDesktop = useDesktopChartLayout()
   const { data, isLoading, isError, error } = usePopularFoodTrend(range)
 
   return (
-    <Card className={cn('min-w-0', className)}>
-      <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <CardTitle className="text-lg">Makanan populer</CardTitle>
-          <CardDescription>
-            Frekuensi entri per nama makanan pada rentang waktu yang dipilih.
-          </CardDescription>
-        </div>
-        <Select value={range} onValueChange={(v) => setRange(v)}>
-          <SelectTrigger className="w-full sm:w-[240px]" aria-label="Rentang waktu grafik">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {RANGE_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <Card className={cn('min-w-0 rounded-2xl border-border/70 shadow-sm', className)}>
+      <CardHeader className="flex flex-col gap-2 space-y-0 px-4 pt-3 pb-0 sm:px-5">
+        <CardTitle className="text-center text-base font-semibold sm:text-lg">
+          Makanan populer
+        </CardTitle>
+        <Tabs value={range} onValueChange={(v) => setRange(/** @type {'1d' | '7d' | '1mo'} */ (v))} className="w-full px-1 pb-0 pt-0.5 sm:px-2 sm:pt-1">
+          <LayoutGroup id="popular-food-range-tabs">
+            <TabsList
+              className="relative mx-auto grid h-auto w-full max-w-[17.5rem] grid-cols-3 gap-px overflow-hidden rounded-lg p-1.5 sm:inline-flex sm:max-w-none sm:w-auto"
+              aria-label="Rentang waktu grafik"
+            >
+              {RANGE_TABS.map((t) => {
+                const isActive = range === t.value
+                return (
+                  <TabsTrigger
+                    key={t.value}
+                    value={t.value}
+                    className={cn(
+                      'relative isolate z-10 min-h-8 flex-1 rounded-[5px] border-0 bg-transparent px-2 py-1.5 text-xs leading-tight shadow-none',
+                      'text-muted-foreground transition-colors duration-150',
+                      'data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none',
+                      'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                      'sm:min-h-7 sm:px-2 sm:py-1 sm:text-[11px]',
+                    )}
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="popular-food-tab-chip"
+                        transition={tabChipSpring}
+                        className="pointer-events-none absolute -inset-px z-0 rounded-[5px] border border-white/40 bg-background/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_10px_rgba(0,0,0,0.08)] ring-1 ring-white/25 backdrop-blur-md"
+                      />
+                    )}
+                    <motion.span
+                      className="relative z-10 inline-flex items-center justify-center font-medium"
+                      animate={isActive ? tabLabelActive : tabLabelIdle}
+                      transition={{ duration: 0.28, ease: 'easeOut' }}
+                    >
+                      {t.label}
+                    </motion.span>
+                  </TabsTrigger>
+                )
+              })}
+            </TabsList>
+          </LayoutGroup>
+        </Tabs>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 pb-0 pt-1.5 sm:px-5 sm:pt-2">
         {isLoading && (
-          <div className="flex h-[320px] items-center justify-center">
+          <div className="flex h-[360px] items-center justify-center">
             <LoadingSpinner />
           </div>
         )}
         {isError && (
-          <p className="text-sm text-destructive py-8 text-center">
+          <p className="py-8 text-center text-sm text-destructive">
             {error instanceof Error ? error.message : 'Gagal memuat data.'}
           </p>
         )}
         {!isLoading && !isError && data && !data.hasData && (
-          <p className="text-sm text-muted-foreground py-8 text-center">
+          <p className="py-8 text-center text-sm text-muted-foreground">
             Belum ada data log makanan pada rentang ini.
           </p>
         )}
         {!isLoading && !isError && data?.hasData && (
-          <div className="h-[360px] w-full min-w-0">
+          <motion.div
+            key={`${range}-${isDesktop ? 'col' : 'row'}`}
+            className="h-[360px] w-full min-w-0 pointer-events-none select-none"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          >
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={data.chartData}
-                margin={{ top: 8, right: 12, left: 4, bottom: 64 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
-                <XAxis
-                  dataKey="food"
-                  type="category"
-                  tick={{ fontSize: 10 }}
-                  interval={0}
-                  angle={-32}
-                  textAnchor="end"
-                  height={56}
-                  tickFormatter={truncateAxisLabel}
-                />
-                <YAxis
-                  tick={{ fontSize: 11 }}
-                  width={44}
-                  allowDecimals={false}
-                  label={{
-                    value: 'Frekuensi',
-                    angle: -90,
-                    position: 'insideLeft',
-                    style: { fontSize: 11, fill: 'hsl(var(--muted-foreground))' },
-                  }}
-                />
-                <Tooltip
-                  formatter={(v) => [formatNumberId(v), 'Frekuensi']}
-                  labelFormatter={(label) => String(label)}
-                />
-                <Bar dataKey="frekuensi" name="Frekuensi" fill={BAR_FILL} radius={[4, 4, 0, 0]} />
-              </BarChart>
+              {isDesktop ? (
+                <BarChart
+                  data={data.chartData}
+                  margin={{ top: 28, right: 8, left: 4, bottom: 72 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+                  <XAxis
+                    type="category"
+                    dataKey="food"
+                    tickLine={false}
+                    axisLine={false}
+                    interval={0}
+                    tick={{ fontSize: 10 }}
+                    tickFormatter={(v) => truncateLabel(String(v), 14)}
+                    angle={-38}
+                    textAnchor="end"
+                    height={68}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                    width={36}
+                  />
+                  <Bar
+                    dataKey="frekuensi"
+                    name="Frekuensi"
+                    fill={BAR_FILL}
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={40}
+                    isAnimationActive
+                    animationDuration={520}
+                    animationEasing="ease-out"
+                    animationBegin={80}
+                    activeBar={false}
+                  >
+                    <LabelList
+                      dataKey="frekuensi"
+                      position="top"
+                      content={renderBarTopLabel(data.chartData)}
+                    />
+                  </Bar>
+                </BarChart>
+              ) : (
+                <BarChart
+                  layout="vertical"
+                  data={data.chartData}
+                  margin={{ top: 10, right: 200, left: 12, bottom: 12 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                  />
+                  <YAxis type="category" dataKey="food" width={0} tick={false} axisLine={false} hide />
+                  <Bar
+                    dataKey="frekuensi"
+                    name="Frekuensi"
+                    fill={BAR_FILL}
+                    radius={[0, 4, 4, 0]}
+                    barSize={18}
+                    isAnimationActive
+                    animationDuration={520}
+                    animationEasing="ease-out"
+                    animationBegin={80}
+                    activeBar={false}
+                  >
+                    <LabelList
+                      dataKey="frekuensi"
+                      position="right"
+                      content={renderBarEndLabel(data.chartData)}
+                    />
+                  </Bar>
+                </BarChart>
+              )}
             </ResponsiveContainer>
-          </div>
+          </motion.div>
         )}
       </CardContent>
     </Card>
