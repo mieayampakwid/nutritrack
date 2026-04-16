@@ -47,6 +47,11 @@ export function ClientNutritionSummaryCard({ profile, className }) {
   const bmi = calculateBMI(bb, tb)
   const bmiCat = getBMICategoryAsiaPacific(bmi)
 
+  const latestEvaluatedDate =
+    latest?.created_at != null
+      ? formatDateId(String(latest.created_at).slice(0, 10))
+      : null
+
   return (
     <Card className={cn('border-border/80 bg-card shadow-sm ring-1 ring-black/[0.04]', MOBILE_DASHBOARD_CARD_SHELL, className)}>
       <CardHeader className="space-y-1 pb-2">
@@ -54,6 +59,12 @@ export function ClientNutritionSummaryCard({ profile, className }) {
         <p className="text-xs leading-relaxed text-muted-foreground">
           Data dari profil (BB/TB entri) dan asesmen Harris–Benedict terakhir.
         </p>
+        {!isLoading && latestEvaluatedDate ? (
+          <p className="pt-0.5 text-sm text-foreground">
+            <span className="text-muted-foreground">Terakhir dievaluasi: </span>
+            <span className="font-semibold tabular-nums">{latestEvaluatedDate}</span>
+          </p>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         <dl className="grid gap-2.5 rounded-lg border border-border/60 bg-muted/20 px-3 py-3">
@@ -104,12 +115,6 @@ export function ClientNutritionSummaryCard({ profile, className }) {
               <p className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
                 {formatNumberId(latest.energi_total)}{' '}
                 <span className="text-base font-semibold text-muted-foreground">kkal/hari</span>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Tanggal asesmen:{' '}
-                {latest.created_at
-                  ? formatDateId(String(latest.created_at).slice(0, 10))
-                  : '—'}
               </p>
               <dl className="grid gap-1 text-xs text-muted-foreground">
                 <div className="flex justify-between gap-2">

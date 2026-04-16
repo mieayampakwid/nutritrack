@@ -1,4 +1,5 @@
 import { AppShell } from '@/components/layout/AppShell'
+import { ClientNutritionSummaryCard } from '@/components/clients/ClientNutritionSummaryCard'
 import { FoodLogTable } from '@/components/food/FoodLogTable'
 import { KLIEN_DASHBOARD_LOG_CARD_SHELL } from '@/lib/pageCard'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -16,7 +17,10 @@ export function KlienDashboard() {
 
   return (
     <AppShell dashboardHero dashboardHeroBareMobile dashboardHeroCompactLogo>
-      <div className="mx-auto max-w-5xl -mt-2">
+      <div className="mx-auto max-w-5xl -mt-2 space-y-4 sm:space-y-5">
+        <section aria-label="Ringkasan gizi dan kebutuhan kalori">
+          <ClientNutritionSummaryCard profile={profile} />
+        </section>
         <section aria-label="Log makanan">
           <Card className={KLIEN_DASHBOARD_LOG_CARD_SHELL}>
             <CardHeader className="space-y-0 p-0 px-3 pb-1.5 pt-1.5 sm:px-4 sm:pt-2">

@@ -32,3 +32,17 @@ export function formatNumberId(n, opts = {}) {
   }).format(Number(n))
 }
 
+/** Title-case each word for display (e.g. client names); presentation-only. */
+export function formatDisplayName(name) {
+  const t = String(name ?? '').trim()
+  if (!t) return ''
+  return t
+    .split(/\s+/)
+    .map((word) => {
+      if (!word) return word
+      const lower = word.toLocaleLowerCase('id-ID')
+      return lower.charAt(0).toLocaleUpperCase('id-ID') + lower.slice(1)
+    })
+    .join(' ')
+}
+

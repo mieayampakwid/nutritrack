@@ -193,7 +193,7 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
 
 /** Same chrome as `SelectTrigger` (select.jsx): flex, h-9, border, padding, shadow. */
 const foodRowControlShell =
-  'flex h-9 w-full items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input bg-background/80 px-3 py-2 text-xs shadow-sm ring-offset-background transition-[color,box-shadow,border-color] duration-200'
+  'flex h-9 min-h-0 w-full items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input bg-background/80 px-3 py-2 text-xs shadow-sm ring-offset-background transition-[color,box-shadow,border-color] duration-200'
 
 /** Mobile: match `input { font-size: 16px }` in index.css (SelectTrigger is a button). */
 const foodRowSelectMobileType = 'food-row-select-sync'
@@ -210,7 +210,7 @@ const foodQtyStepperShellClass =
   'inline-flex h-9 shrink-0 items-center overflow-hidden rounded-md border border-input bg-background/80'
 
 const foodQtyStepperInnerInputClass =
-  'food-entry-compact-input h-full min-w-0 w-14 rounded-none border-0 bg-transparent px-0 text-center text-xs tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0'
+  'food-entry-compact-input h-full min-h-0 min-w-0 w-14 rounded-none border-0 bg-transparent px-0 text-center text-xs tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0'
 
 const foodQtyStepperBtnClass =
   'flex h-full w-8 shrink-0 items-center justify-center text-xs font-medium text-muted-foreground transition-colors hover:bg-accent'
