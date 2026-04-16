@@ -31,6 +31,12 @@ const ImportData = lazy(() =>
 const FoodLogMonitor = lazy(() =>
   import('@/pages/staff/FoodLogMonitor').then((m) => ({ default: m.FoodLogMonitor })),
 )
+const ClientUserDataEntry = lazy(() =>
+  import('@/pages/staff/ClientUserDataEntry').then((m) => ({ default: m.ClientUserDataEntry })),
+)
+const ClientDataEntryPicker = lazy(() =>
+  import('@/pages/staff/ClientDataEntryPicker').then((m) => ({ default: m.ClientDataEntryPicker })),
+)
 const GiziDashboard = lazy(() =>
   import('@/pages/ahli-gizi/GiziDashboard').then((m) => ({ default: m.GiziDashboard })),
 )
@@ -145,6 +151,22 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/admin/clients/:id/data-entry"
+          element={
+            <RequireAuth roles={['admin']}>
+              <ClientUserDataEntry />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/data-entry"
+          element={
+            <RequireAuth roles={['admin']}>
+              <ClientDataEntryPicker />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/admin/import"
           element={
             <RequireAuth roles={['admin']}>
@@ -182,6 +204,22 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['ahli_gizi']}>
               <GiziClientDetail />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/gizi/clients/:id/data-entry"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <ClientUserDataEntry />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/gizi/data-entry"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <ClientDataEntryPicker />
             </RequireAuth>
           }
         />

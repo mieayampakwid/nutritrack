@@ -29,6 +29,7 @@ import { roleLabel } from '@/lib/adminUsers'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { ClientNutritionSummaryCard } from '@/components/clients/ClientNutritionSummaryCard'
 
 export function AdminUserDetail() {
   const { id } = useParams()
@@ -55,11 +56,15 @@ export function AdminUserDetail() {
 
   const updateMutation = useMutation({
     mutationFn: async () => {
+      const tgl = (editRow.tgl_lahir ?? '').trim()
+      const ph = (editRow.phone_whatsapp ?? '').trim()
       const { error: e } = await supabase
         .from('profiles')
         .update({
           nama: editRow.nama,
           nomor_wa: editRow.nomor_wa || null,
+          phone_whatsapp: ph || null,
+          tgl_lahir: tgl && /^\d{4}-\d{2}-\d{2}$/.test(tgl) ? tgl : null,
           instalasi: editRow.instalasi || null,
           role: editRow.role,
         })
@@ -164,6 +169,16 @@ export function AdminUserDetail() {
                 <dd className="mt-0.5 text-foreground">{profile.nomor_wa ?? '—'}</dd>
               </div>
               <div>
+                <dt className="font-medium text-muted-foreground">WhatsApp (resume)</dt>
+                <dd className="mt-0.5 text-foreground">{profile.phone_whatsapp ?? '—'}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-muted-foreground">Tanggal lahir</dt>
+                <dd className="mt-0.5 text-foreground">
+                  {profile.tgl_lahir ? formatDateId(profile.tgl_lahir.slice(0, 10)) : '—'}
+                </dd>
+              </div>
+              <div>
                 <dt className="font-medium text-muted-foreground">Terdaftar</dt>
                 <dd className="mt-0.5 text-foreground">
                   {formatDateId(profile.created_at?.slice(0, 10))}
@@ -197,6 +212,15 @@ export function AdminUserDetail() {
             </div>
           </CardContent>
         </Card>
+
+        {profile.role === 'klien' ? (
+          <div className="space-y-3">
+            <ClientNutritionSummaryCard profile={profile} />
+            <Button variant="outline" className="w-full sm:w-auto" asChild>
+              <Link to={`/admin/clients/${profile.id}/data-entry`}>Entri / ubah data BMI &amp; asesmen</Link>
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <Dialog
@@ -226,6 +250,26 @@ export function AdminUserDetail() {
                 <Input
                   value={editRow.nomor_wa ?? ''}
                   onChange={(e) => setEditRow((r) => ({ ...r, nomor_wa: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>WA resume (wa.me)</Label>
+                <Input
+                  value={editRow.phone_whatsapp ?? ''}
+                  onChange={(e) => setEditRow((r) => ({ ...r, phone_whatsapp: e.target.value }))}
+                  placeholder="Opsional"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Tanggal lahir</Label>
+                <Input
+                  type="date"
+                  value={
+                    editRow.tgl_lahir
+                      ? String(editRow.tgl_lahir).slice(0, 10)
+                      : ''
+                  }
+                  onChange={(e) => setEditRow((r) => ({ ...r, tgl_lahir: e.target.value }))}
                 />
               </div>
               <div className="space-y-1">

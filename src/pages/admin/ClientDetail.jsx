@@ -32,6 +32,7 @@ import {
 import { formatDateId, formatNumberId } from '@/lib/format'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
+import { ClientNutritionSummaryCard } from '@/components/clients/ClientNutritionSummaryCard'
 
 export function ClientDetail() {
   const { id } = useParams()
@@ -84,14 +85,19 @@ export function ClientDetail() {
 
   return (
     <AppShell>
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <Button variant="ghost" size="sm" asChild className="gap-2">
           <Link to={listPath}>
             <ArrowLeft className="h-4 w-4" />
             Kembali ke daftar
           </Link>
         </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link to={`${listPath}/${id}/data-entry`}>Entri data (BMI &amp; asesmen)</Link>
+        </Button>
       </div>
+
+      <ClientNutritionSummaryCard profile={client} className="mb-6" />
 
       <Tabs defaultValue="antro">
         <TabsList>

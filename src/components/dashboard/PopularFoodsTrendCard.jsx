@@ -8,7 +8,7 @@ import {
   YAxis,
 } from 'recharts'
 import { useState, useSyncExternalStore } from 'react'
-import { LayoutGroup, motion } from 'framer-motion'
+import { LayoutGroup, motion as Motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -53,7 +53,7 @@ function truncateLabel(s, max = 36) {
  * Recharts LabelList does not pass `payload` into custom label content (it is stripped).
  * Resolve the row by `index` against chartData from the parent scope.
  */
-function renderBarTopLabel(chartData) {
+function renderBarTopLabel(chartData, { fontSize = 11 } = {}) {
   return function BarTopLabelContent(props) {
     const { index, viewBox } = props
     const x = props.x ?? viewBox?.x
@@ -70,7 +70,7 @@ function renderBarTopLabel(chartData) {
         y={cy}
         textAnchor="middle"
         dominantBaseline="auto"
-        fontSize={11}
+        fontSize={fontSize}
         fontFamily="system-ui, -apple-system, sans-serif"
         fill="var(--color-primary)"
         fontWeight={700}
@@ -82,7 +82,7 @@ function renderBarTopLabel(chartData) {
   }
 }
 
-function renderBarEndLabel(chartData) {
+function renderBarEndLabel(chartData, { fontSize = 11 } = {}) {
   return function BarEndLabelContent(props) {
     const { index, viewBox } = props
     const x = props.x ?? viewBox?.x
@@ -101,7 +101,7 @@ function renderBarEndLabel(chartData) {
         y={cy}
         dominantBaseline="middle"
         textAnchor="start"
-        fontSize={11}
+        fontSize={fontSize}
         fontFamily="system-ui, -apple-system, sans-serif"
         fill="var(--color-foreground)"
         style={{ pointerEvents: 'none' }}
@@ -125,11 +125,11 @@ export function PopularFoodsTrendCard({ className }) {
 
   return (
     <Card className={cn('min-w-0 rounded-2xl border-border/70 shadow-sm', className)}>
-      <CardHeader className="flex flex-col gap-2 space-y-0 px-4 pt-3 pb-0 sm:px-5">
-        <CardTitle className="text-center text-base font-semibold sm:text-lg">
+      <CardHeader className="flex flex-col gap-2 space-y-0 px-4 pt-3 pb-0 sm:px-5 lg:px-8 lg:pt-5">
+        <CardTitle className="text-center text-base font-semibold sm:text-lg md:text-xl">
           Makanan populer
         </CardTitle>
-        <Tabs value={range} onValueChange={(v) => setRange(/** @type {'1d' | '7d' | '1mo'} */ (v))} className="w-full px-1 pb-0 pt-0.5 sm:px-2 sm:pt-1">
+        <Tabs value={range} onValueChange={(v) => setRange(/** @type {'1d' | '7d' | '1mo'} */ (v))} className="w-full px-1 pb-0 pt-0.5 sm:px-2 sm:pt-1 lg:px-3">
           <LayoutGroup id="popular-food-range-tabs">
             <TabsList
               className="relative mx-auto grid h-auto w-full max-w-[17.5rem] grid-cols-3 gap-px overflow-hidden rounded-lg p-1.5 sm:inline-flex sm:max-w-none sm:w-auto"
@@ -146,23 +146,23 @@ export function PopularFoodsTrendCard({ className }) {
                       'text-muted-foreground transition-colors duration-150',
                       'data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none',
                       'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                      'sm:min-h-7 sm:px-2 sm:py-1 sm:text-[11px]',
+                      'sm:min-h-8 sm:px-2.5 sm:py-1.5 sm:text-sm md:text-[0.9375rem]',
                     )}
                   >
                     {isActive && (
-                      <motion.span
+                      <Motion.span
                         layoutId="popular-food-tab-chip"
                         transition={tabChipSpring}
                         className="pointer-events-none absolute -inset-px z-0 rounded-[5px] border border-white/40 bg-background/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_10px_rgba(0,0,0,0.08)] ring-1 ring-white/25 backdrop-blur-md"
                       />
                     )}
-                    <motion.span
+                    <Motion.span
                       className="relative z-10 inline-flex items-center justify-center font-medium"
                       animate={isActive ? tabLabelActive : tabLabelIdle}
                       transition={{ duration: 0.28, ease: 'easeOut' }}
                     >
                       {t.label}
-                    </motion.span>
+                    </Motion.span>
                   </TabsTrigger>
                 )
               })}
@@ -170,7 +170,7 @@ export function PopularFoodsTrendCard({ className }) {
           </LayoutGroup>
         </Tabs>
       </CardHeader>
-      <CardContent className="px-4 pb-0 pt-1.5 sm:px-5 sm:pt-2">
+      <CardContent className="px-4 pb-0 pt-1.5 sm:px-5 sm:pt-2 lg:px-8 lg:pt-3">
         {isLoading && (
           <div className="flex h-[360px] items-center justify-center">
             <LoadingSpinner />
@@ -187,7 +187,7 @@ export function PopularFoodsTrendCard({ className }) {
           </p>
         )}
         {!isLoading && !isError && data?.hasData && (
-          <motion.div
+          <Motion.div
             key={`${range}-${isDesktop ? 'col' : 'row'}`}
             className="h-[360px] w-full min-w-0 pointer-events-none select-none"
             initial={{ opacity: 0, y: 12 }}
@@ -198,7 +198,7 @@ export function PopularFoodsTrendCard({ className }) {
               {isDesktop ? (
                 <BarChart
                   data={data.chartData}
-                  margin={{ top: 28, right: 8, left: 4, bottom: 72 }}
+                  margin={{ top: 30, right: 12, left: 8, bottom: 76 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
                   <XAxis
@@ -207,18 +207,18 @@ export function PopularFoodsTrendCard({ className }) {
                     tickLine={false}
                     axisLine={false}
                     interval={0}
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 12 }}
                     tickFormatter={(v) => truncateLabel(String(v), 14)}
                     angle={-38}
                     textAnchor="end"
-                    height={68}
+                    height={72}
                   />
                   <YAxis
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 12 }}
                     tickLine={false}
                     axisLine={false}
                     allowDecimals={false}
-                    width={36}
+                    width={42}
                   />
                   <Bar
                     dataKey="frekuensi"
@@ -235,7 +235,7 @@ export function PopularFoodsTrendCard({ className }) {
                     <LabelList
                       dataKey="frekuensi"
                       position="top"
-                      content={renderBarTopLabel(data.chartData)}
+                      content={renderBarTopLabel(data.chartData, { fontSize: 13 })}
                     />
                   </Bar>
                 </BarChart>
@@ -248,7 +248,7 @@ export function PopularFoodsTrendCard({ className }) {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
                   <XAxis
                     type="number"
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 12 }}
                     tickLine={false}
                     axisLine={false}
                     allowDecimals={false}
@@ -269,13 +269,13 @@ export function PopularFoodsTrendCard({ className }) {
                     <LabelList
                       dataKey="frekuensi"
                       position="right"
-                      content={renderBarEndLabel(data.chartData)}
+                      content={renderBarEndLabel(data.chartData, { fontSize: 12 })}
                     />
                   </Bar>
                 </BarChart>
               )}
             </ResponsiveContainer>
-          </motion.div>
+          </Motion.div>
         )}
       </CardContent>
     </Card>

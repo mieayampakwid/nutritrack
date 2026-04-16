@@ -10,7 +10,12 @@ create table if not exists public.profiles (
   instalasi text,
   role text check (role in ('admin', 'ahli_gizi', 'klien')) not null default 'klien',
   is_active boolean not null default true,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  berat_badan numeric(6,2),
+  tinggi_badan numeric(6,2),
+  tgl_lahir date,
+  jenis_kelamin text check (jenis_kelamin is null or jenis_kelamin in ('male', 'female')),
+  phone_whatsapp text
 );
 
 create table if not exists public.body_measurements (
@@ -48,11 +53,11 @@ create table if not exists public.food_logs (
   waktu_makan text check (waktu_makan in ('pagi', 'siang', 'malam', 'snack')) not null,
   total_kalori numeric(8,2) default 0,
   status text check (status in ('saved')) default 'saved',
-  created_at timestamptz default now(),
-  unique(user_id, tanggal, waktu_makan)
+  created_at timestamptz default now()
 );
 
 create index if not exists food_logs_user_tanggal_idx on public.food_logs (user_id, tanggal desc);
+create index if not exists food_logs_user_tanggal_created_idx on public.food_logs (user_id, tanggal desc, created_at desc);
 
 create table if not exists public.food_log_items (
   id uuid primary key default gen_random_uuid(),
@@ -64,6 +69,18 @@ create table if not exists public.food_log_items (
   kalori_estimasi numeric(8,2) default 0,
   created_at timestamptz default now()
 );
+
+create table if not exists public.assessments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  faktor_aktivitas numeric(6,3) not null,
+  faktor_stres numeric(6,3) not null,
+  energi_total numeric(10,2) not null,
+  created_by uuid not null references public.profiles(id),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists assessments_user_created_idx on public.assessments (user_id, created_at desc);
 
 create or replace view public.food_name_suggestions as
 select nama_makanan, count(*)::bigint as frekuensi
@@ -85,21 +102,29 @@ begin
   if r not in ('admin', 'ahli_gizi', 'klien') then
     r := 'klien';
   end if;
-  insert into public.profiles (id, nama, email, nomor_wa, instalasi, role)
+  insert into public.profiles (id, nama, email, nomor_wa, instalasi, role, tgl_lahir, phone_whatsapp)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'nama', split_part(new.email, '@', 1)),
     new.email,
     nullif(trim(new.raw_user_meta_data->>'nomor_wa'), ''),
     nullif(trim(new.raw_user_meta_data->>'instalasi'), ''),
-    r
+    r,
+    case
+      when trim(coalesce(new.raw_user_meta_data->>'tgl_lahir', '')) ~ '^\d{4}-\d{2}-\d{2}$'
+        then trim(new.raw_user_meta_data->>'tgl_lahir')::date
+      else null
+    end,
+    nullif(trim(coalesce(new.raw_user_meta_data->>'phone_whatsapp', '')), '')
   )
   on conflict (id) do update set
     nama = excluded.nama,
     email = excluded.email,
     nomor_wa = coalesce(excluded.nomor_wa, public.profiles.nomor_wa),
     instalasi = coalesce(excluded.instalasi, public.profiles.instalasi),
-    role = excluded.role;
+    role = excluded.role,
+    tgl_lahir = coalesce(excluded.tgl_lahir, public.profiles.tgl_lahir),
+    phone_whatsapp = coalesce(excluded.phone_whatsapp, public.profiles.phone_whatsapp);
   return new;
 end;
 $$;
@@ -145,6 +170,7 @@ alter table public.body_measurements enable row level security;
 alter table public.food_logs enable row level security;
 alter table public.food_log_items enable row level security;
 alter table public.food_units enable row level security;
+alter table public.assessments enable row level security;
 
 drop policy if exists "profiles_self" on public.profiles;
 create policy "profiles_self" on public.profiles
@@ -190,6 +216,14 @@ create policy "food_units_read" on public.food_units
 
 drop policy if exists "food_units_staff" on public.food_units;
 create policy "food_units_staff" on public.food_units
+  for all using (public.jwt_is_staff());
+
+drop policy if exists "assessments_klien_select" on public.assessments;
+create policy "assessments_klien_select" on public.assessments
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "assessments_staff_all" on public.assessments;
+create policy "assessments_staff_all" on public.assessments
   for all using (public.jwt_is_staff());
 
 grant usage on schema public to postgres, anon, authenticated, service_role;

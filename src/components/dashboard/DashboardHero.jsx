@@ -72,8 +72,8 @@ export function DashboardHero({
   const shellClass = bareLogoShell
     ? 'relative mb-0 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none'
     : bareOnMobile
-      ? 'relative mb-0 max-md:overflow-visible max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none md:mb-0 md:overflow-hidden md:rounded-2xl md:border md:border-border/70 md:bg-gradient-to-br md:from-primary/[0.07] md:via-background md:to-secondary/[0.12] md:p-6 md:shadow-sm'
-      : 'relative mb-0 overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-primary/[0.07] via-background to-secondary/[0.12] p-5 shadow-sm sm:p-6'
+      ? 'relative mb-0 max-md:overflow-visible max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none md:mb-0 md:overflow-hidden md:rounded-2xl md:border md:border-border/70 md:bg-gradient-to-br md:from-primary/[0.07] md:via-background md:to-secondary/[0.12] md:p-7 md:shadow-sm lg:p-8'
+      : 'relative mb-0 overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-primary/[0.07] via-background to-secondary/[0.12] p-5 shadow-sm sm:p-6 md:p-7 lg:p-8'
 
   const glowClass = bareLogoShell ? 'hidden' : bareOnMobile ? 'max-md:hidden' : ''
 
@@ -118,19 +118,19 @@ export function DashboardHero({
 
       <div
         className={cn(
-          'dashboard-sticky-greeting sticky top-0 -mx-3 w-[calc(100%+1.5rem)] max-w-none px-3 md:-mx-5 md:w-[calc(100%+2.5rem)] md:px-5',
+          'dashboard-sticky-greeting sticky top-0 -mx-3 w-[calc(100%+1.5rem)] max-w-none px-3 md:-mx-6 md:w-[calc(100%+3rem)] md:px-6 lg:-mx-8 lg:w-[calc(100%+4rem)] lg:px-8',
           'transition-[padding,box-shadow,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
           !greetingFloated && 'mt-2.5 sm:mt-3',
           greetingFloated &&
             'py-1.5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.12)]',
         )}
       >
-        <div className="relative z-10 mx-auto w-full max-w-[min(100%,22rem)] sm:max-w-lg md:max-w-xl">
+        <div className="relative z-10 mx-auto w-full max-w-[min(100%,22rem)] sm:max-w-lg md:max-w-xl lg:max-w-2xl">
           <div
             className={cn(
               /* -mb-px + hairline: mask 1px seam vs fixed hero bg under rounded corners (GPU compositing). */
               'relative z-10 -mb-px overflow-hidden rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100/95',
-              'px-2.5 py-2.5 text-left shadow-[0_2px_20px_-6px_hsl(38_60%_30%_/_0.12)]',
+              'px-2.5 py-2.5 text-left shadow-[0_2px_20px_-6px_hsl(38_60%_30%_/_0.12)] md:px-4 md:py-3',
               'ring-1 ring-inset ring-amber-100/90 backdrop-blur-md',
               'after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-[1] after:h-[3px] after:bg-gradient-to-b after:from-amber-100/95 after:to-amber-100',
               '',
@@ -150,8 +150,8 @@ export function DashboardHero({
             />
             <p
               className={cn(
-                'relative pl-2 font-greeting text-[0.9375rem] font-medium leading-tight text-amber-950',
-                'sm:text-[1rem]',
+                'relative pl-2 font-greeting text-[0.9375rem] font-medium leading-snug text-amber-950',
+                'sm:text-[1rem] md:text-[1.0625rem] md:leading-snug lg:text-lg lg:leading-snug',
               )}
             >
               {hasClock ? (
@@ -159,7 +159,7 @@ export function DashboardHero({
                   {before}
                   <time
                     dateTime={now.toISOString()}
-                    className="mx-0.5 inline-flex translate-y-px items-baseline rounded-md border border-amber-300/90 bg-amber-100/95 px-1.5 py-px font-sans text-[0.8125rem] font-semibold tabular-nums tracking-normal text-amber-950 shadow-[inset_0_1px_0_hsl(48_100%_96%_/_0.95)]"
+                    className="mx-0.5 inline-flex translate-y-px items-baseline rounded-md border border-amber-300/90 bg-amber-100/95 px-1.5 py-px font-sans text-[0.8125rem] font-semibold tabular-nums tracking-normal text-amber-950 shadow-[inset_0_1px_0_hsl(48_100%_96%_/_0.95)] md:px-2 md:text-sm"
                   >
                     {formatClockWib(now)}
                   </time>

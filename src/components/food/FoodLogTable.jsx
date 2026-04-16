@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
+import { format } from 'date-fns'
+import { id as localeId } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -19,12 +21,10 @@ import { useFoodLogItems } from '@/hooks/useFoodLog'
 
 export { MEAL_LOG_DAY_CARD_RADIUS_CLASS }
 
-const WAKTU_KEYS = ['pagi', 'siang', 'malam', 'snack']
-
 const WAKTU_LABELS = {
-  pagi: 'Pagi',
-  siang: 'Siang',
-  malam: 'Malam',
+  pagi: 'Sarapan',
+  siang: 'Makan siang',
+  malam: 'Makan malam',
   snack: 'Snack',
 }
 
@@ -33,37 +33,43 @@ const MEAL_LOG_DAY_SURFACE = cn(
   'border-amber-200/55 bg-amber-50/95 text-card-foreground ring-1 ring-amber-200/35',
   'hover:border-amber-300/55 hover:bg-amber-50',
 )
-const MEAL_LOG_MEAL_CELL_FILLED = cn(
-  'border-amber-200/50 bg-amber-100/55 ring-1 ring-amber-200/25',
-  'group-hover:bg-amber-100/70',
-)
 const MEAL_LOG_TABLE_ROW = cn(
   'border-amber-100/70 bg-amber-50/90 hover:bg-amber-50',
   'data-[state=selected]:bg-amber-100/60',
 )
 
-function groupLogsByDate(logs) {
+function formatLogTime(iso) {
+  if (!iso) return '—'
+  try {
+    return format(new Date(iso), 'HH:mm', { locale: localeId })
+  } catch {
+    return '—'
+  }
+}
+
+function groupLogsByDateLists(logs) {
   const map = new Map()
   for (const log of logs ?? []) {
     const d = log.tanggal
-    if (!map.has(d)) map.set(d, {})
-    map.get(d)[log.waktu_makan] = log
+    if (!d) continue
+    if (!map.has(d)) map.set(d, [])
+    map.get(d).push(log)
+  }
+  for (const arr of map.values()) {
+    arr.sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
   }
   return map
 }
 
-function dayStats(byDate, tanggal) {
-  const m = byDate.get(tanggal) ?? {}
-  const vals = WAKTU_KEYS.map((k) => (m[k] ? Number(m[k].total_kalori) : null))
-  const total = vals.reduce((a, v) => a + (v ?? 0), 0)
-  return { m, vals, total }
+function dayTotal(logsForDay) {
+  return (logsForDay ?? []).reduce((a, log) => a + (Number(log.total_kalori) || 0), 0)
 }
 
 export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
-  const byDate = useMemo(() => groupLogsByDate(logs), [logs])
+  const byDateLists = useMemo(() => groupLogsByDateLists(logs), [logs])
   const sortedDates = useMemo(
-    () => [...byDate.keys()].sort((a, b) => b.localeCompare(a)),
-    [byDate],
+    () => [...byDateLists.keys()].sort((a, b) => b.localeCompare(a)),
+    [byDateLists],
   )
   const [page, setPage] = useState(0)
   const start = page * pageSize
@@ -72,13 +78,12 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
   const logIdsForPage = useMemo(() => {
     const ids = []
     for (const d of slice) {
-      const m = byDate.get(d)
-      for (const k of WAKTU_KEYS) {
-        if (m[k]) ids.push(m[k].id)
+      for (const log of byDateLists.get(d) ?? []) {
+        ids.push(log.id)
       }
     }
     return ids
-  }, [byDate, slice])
+  }, [byDateLists, slice])
 
   const { data: items = [] } = useFoodLogItems(logIdsForPage, logIdsForPage.length > 0)
 
@@ -104,7 +109,8 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
           </p>
         ) : (
           slice.map((tanggal) => {
-            const { vals, total } = dayStats(byDate, tanggal)
+            const logsForDay = byDateLists.get(tanggal) ?? []
+            const total = dayTotal(logsForDay)
             const dateLabel = formatDateId(tanggal)
             return (
               <button
@@ -140,26 +146,23 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
                     />
                   </div>
                 </div>
-                <div className="mt-3 grid grid-cols-4 gap-2">
-                  {WAKTU_KEYS.map((k, i) => (
-                    <div
-                      key={k}
-                      className={cn(
-                        'min-w-0 rounded-xl border px-1 py-2 text-center transition-colors',
-                        vals[i] != null
-                          ? MEAL_LOG_MEAL_CELL_FILLED
-                          : 'border-border bg-muted group-hover:bg-muted/90',
-                      )}
+                <ul className="mt-3 space-y-2 border-t border-amber-200/40 pt-3">
+                  {logsForDay.map((log) => (
+                    <li
+                      key={log.id}
+                      className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-xs"
                     >
-                      <div className="truncate text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {WAKTU_LABELS[k]}
-                      </div>
-                      <div className="mt-1 min-w-0 truncate text-xs font-semibold tabular-nums text-foreground">
-                        {vals[i] != null ? <KaloriValue value={vals[i]} /> : '—'}
-                      </div>
-                    </div>
+                      <span className="font-medium tabular-nums text-foreground">
+                        <span className="text-muted-foreground">{formatLogTime(log.created_at)}</span>
+                        <span className="mx-1.5 text-amber-700/50">·</span>
+                        {WAKTU_LABELS[log.waktu_makan] ?? log.waktu_makan}
+                      </span>
+                      <span className="shrink-0 font-semibold tabular-nums text-foreground">
+                        <KaloriValue value={log.total_kalori} />
+                      </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </button>
             )
           })
@@ -178,29 +181,41 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
-                  <TableHead className="text-right">Pagi</TableHead>
-                  <TableHead className="text-right">Siang</TableHead>
-                  <TableHead className="text-right">Malam</TableHead>
-                  <TableHead className="text-right">Snack</TableHead>
+                  <TableHead>Entri</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {slice.map((tanggal) => {
-                  const { vals, total } = dayStats(byDate, tanggal)
+                  const logsForDay = byDateLists.get(tanggal) ?? []
+                  const total = dayTotal(logsForDay)
                   return (
                     <TableRow key={tanggal} className={MEAL_LOG_TABLE_ROW}>
-                      <TableCell>{formatDateId(tanggal)}</TableCell>
-                      {vals.map((v, i) => (
-                        <TableCell key={i} className="text-right tabular-nums">
-                          {v != null ? <KaloriValue value={v} /> : '—'}
-                        </TableCell>
-                      ))}
-                      <TableCell className="text-right font-medium tabular-nums">
+                      <TableCell className="whitespace-nowrap align-top">
+                        {formatDateId(tanggal)}
+                      </TableCell>
+                      <TableCell className="max-w-[min(28rem,42vw)] align-top text-sm">
+                        <ul className="space-y-1.5 py-0.5">
+                          {logsForDay.map((log) => (
+                            <li key={log.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                              <span className="tabular-nums text-muted-foreground">
+                                {formatLogTime(log.created_at)}
+                              </span>
+                              <span className="text-foreground">
+                                {WAKTU_LABELS[log.waktu_makan] ?? log.waktu_makan}
+                              </span>
+                              <span className="ml-auto shrink-0 font-medium tabular-nums">
+                                <KaloriValue value={log.total_kalori} />
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </TableCell>
+                      <TableCell className="text-right font-medium tabular-nums align-top">
                         {total > 0 ? <KaloriValue value={total} /> : '—'}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="align-top">
                         <Button variant="outline" size="sm" onClick={() => setModal(tanggal)}>
                           Detail
                         </Button>
@@ -210,7 +225,7 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
                 })}
                 {slice.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={4} className="text-center text-muted-foreground">
                       Belum ada log.
                     </TableCell>
                   </TableRow>
@@ -253,7 +268,7 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
           open={Boolean(modal)}
           onOpenChange={(o) => !o && setModal(null)}
           tanggal={modal}
-          logsByMeal={byDate.get(modal) ?? {}}
+          logsForDay={byDateLists.get(modal) ?? []}
           itemsByLogId={itemsByLogId}
         />
       )}

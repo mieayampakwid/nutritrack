@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { KaloriValue } from '@/components/shared/KaloriValue'
@@ -7,6 +7,7 @@ import { formatDateId, formatNumberId } from '@/lib/format'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { ClientQuickSummaryModal } from '@/components/clients/ClientQuickSummaryModal'
 
 function subDays(isoDate, n) {
   const d = new Date(isoDate + 'T12:00:00')
@@ -15,6 +16,8 @@ function subDays(isoDate, n) {
 }
 
 export function ClientDirectory({ linkPrefix, title }) {
+  const [summaryId, setSummaryId] = useState(null)
+
   const { data, isLoading } = useQuery({
     queryKey: ['client_directory'],
     queryFn: async () => {
@@ -79,7 +82,12 @@ export function ClientDirectory({ linkPrefix, title }) {
           const avg =
             ak && ak.n > 0 ? ak.sum / ak.n : null
           return (
-            <Link key={p.id} to={`${linkPrefix}/${p.id}`}>
+            <button
+              key={p.id}
+              type="button"
+              className="block h-full w-full cursor-pointer rounded-[inherit] text-left outline-none transition-transform active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              onClick={() => setSummaryId(p.id)}
+            >
               <Card
                 className={cn(
                   'h-full transition-colors hover:bg-muted/40',
@@ -107,7 +115,7 @@ export function ClientDirectory({ linkPrefix, title }) {
                   </p>
                 </CardContent>
               </Card>
-            </Link>
+            </button>
           )
         })}
       </div>
@@ -116,6 +124,13 @@ export function ClientDirectory({ linkPrefix, title }) {
           Belum ada klien aktif.
         </p>
       )}
+
+      <ClientQuickSummaryModal
+        open={Boolean(summaryId)}
+        onOpenChange={(o) => !o && setSummaryId(null)}
+        clientId={summaryId}
+        linkPrefix={linkPrefix}
+      />
     </div>
   )
 }

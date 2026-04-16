@@ -44,7 +44,9 @@ export function useFoodLogsForUser(userId, enabledOrOptions = true) {
         const minTanggal = toIsoDateLocal(start)
         if (minTanggal) q = q.gte('tanggal', minTanggal)
       }
-      const { data, error } = await q.order('tanggal', { ascending: false })
+      const { data, error } = await q
+        .order('tanggal', { ascending: false })
+        .order('created_at', { ascending: false })
       if (error) throw error
       return data ?? []
     },
@@ -73,24 +75,6 @@ export function useFoodNameSuggestions() {
         .from('food_name_suggestions')
         .select('nama_makanan, frekuensi')
         .limit(200)
-      if (error) throw error
-      return data ?? []
-    },
-  })
-}
-
-/** Slots that already have a log today (for entry form UX; does not block re-saving). */
-export function useTodayFoodLogSlots(userId) {
-  const today = new Date().toISOString().slice(0, 10)
-  return useQuery({
-    queryKey: ['food_logs_today_slots', userId, today],
-    enabled: Boolean(userId),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('food_logs')
-        .select('waktu_makan')
-        .eq('user_id', userId)
-        .eq('tanggal', today)
       if (error) throw error
       return data ?? []
     },

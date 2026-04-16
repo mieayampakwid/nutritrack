@@ -4,6 +4,7 @@ import { DashboardHero } from '@/components/dashboard/DashboardHero'
 import {
   Apple,
   ClipboardList,
+  ClipboardPen,
   EllipsisVertical,
   LayoutDashboard,
   LogOut,
@@ -45,6 +46,7 @@ const ROLE_NAV = {
     ],
     more: [
       { to: '/admin/clients', label: 'Klien', icon: TrendingUp },
+      { to: '/admin/data-entry', label: 'Entri data', icon: ClipboardPen },
       { to: '/admin/import', label: 'Impor', icon: Upload },
       { to: '/admin/food-units', label: 'Master ukuran', icon: Settings2 },
     ],
@@ -54,6 +56,7 @@ const ROLE_NAV = {
       { to: '/gizi/dashboard', label: 'Dasbor', icon: LayoutDashboard },
       { to: '/gizi/food-logs', label: 'Evaluasi', icon: ClipboardList },
       { to: '/gizi/clients', label: 'Klien', icon: Users },
+      { to: '/gizi/data-entry', label: 'Entri data', icon: ClipboardPen },
     ],
     more: [],
   },
@@ -76,7 +79,7 @@ function SidebarBrand() {
       to={to}
       className="mb-4 block rounded-lg px-1 py-1 transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
     >
-      <span className="block text-lg font-bold tracking-tight text-foreground">{APP_ACRONYM}</span>
+      <span className="block text-lg font-bold tracking-tight text-foreground md:text-xl">{APP_ACRONYM}</span>
     </Link>
   )
 }
@@ -99,13 +102,13 @@ function SidebarContent({ className }) {
               key={item.to}
               to={item.to}
               className={cn(
-                'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-normal transition-colors',
+                'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-normal transition-colors md:px-3 md:py-2.5 md:text-[0.9375rem] lg:text-base',
                 routeActive(location.pathname, item.to)
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
               )}
             >
-              <IconComponent className="h-4 w-4 shrink-0" />
+              <IconComponent className="h-4 w-4 shrink-0 md:h-[1.125rem] md:w-[1.125rem]" />
               {item.label}
             </Link>
           )
@@ -117,32 +120,38 @@ function SidebarContent({ className }) {
               key={item.to}
               to={item.to}
               className={cn(
-                'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-normal transition-colors',
+                'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-normal transition-colors md:px-3 md:py-2.5 md:text-[0.9375rem] lg:text-base',
                 routeActive(location.pathname, item.to)
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
               )}
             >
-              <IconComponent className="h-4 w-4 shrink-0" />
+              <IconComponent className="h-4 w-4 shrink-0 md:h-[1.125rem] md:w-[1.125rem]" />
               {item.label}
             </Link>
           )
         })}
       </div>
-      <div className="mt-auto shrink-0 space-y-2 border-t border-border/60 pt-3">
-        <div className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-background/30 px-2 py-2">
+      <div className="mt-auto shrink-0 space-y-2 border-t border-border/60 pt-3 md:pt-4">
+        <div className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-background/30 px-2 py-2 md:gap-3 md:px-3 md:py-2.5">
           <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary md:h-10 md:w-10 md:text-sm"
             aria-hidden
           >
             {getInitials(profile?.nama || profile?.email)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-foreground" title={profileDisplayName(profile)}>
+            <p
+              className="truncate text-xs font-medium text-foreground md:text-sm"
+              title={profileDisplayName(profile)}
+            >
               {profileDisplayName(profile)}
             </p>
             {profile?.email ? (
-              <p className="truncate text-[10px] text-muted-foreground" title={profile.email}>
+              <p
+                className="truncate text-[10px] text-muted-foreground md:text-xs md:leading-snug"
+                title={profile.email}
+              >
                 {profile.email}
               </p>
             ) : null}
@@ -151,7 +160,7 @@ function SidebarContent({ className }) {
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          className="w-full justify-start text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-9 md:text-sm"
           onClick={() => signOut()}
         >
           <LogOut className="mr-2 h-4 w-4" />
@@ -325,7 +334,7 @@ export function AppShell({
 
   return (
     <div className="flex h-dvh min-h-screen overflow-hidden bg-background">
-      <aside className="z-10 hidden min-h-0 w-56 flex-shrink-0 flex-col bg-sidebar p-3 text-sidebar-foreground shadow-[4px_0_15px_rgba(0,0,0,0.1)] md:flex">
+      <aside className="z-10 hidden min-h-0 w-56 flex-shrink-0 flex-col bg-sidebar p-3 text-sidebar-foreground shadow-[4px_0_15px_rgba(0,0,0,0.1)] md:flex md:w-60 md:p-4 lg:w-64 lg:p-5">
         <SidebarBrand />
         <SidebarContent className="min-h-0 flex-1" />
       </aside>
@@ -333,7 +342,7 @@ export function AppShell({
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <main
           data-staff={isStaff ? 'true' : undefined}
-          className="app-hero-split-bg min-w-0 flex-1 overflow-y-auto overflow-x-clip p-3 pb-40 md:p-5 md:pb-5"
+          className="app-hero-split-bg min-w-0 flex-1 overflow-y-auto overflow-x-clip p-3 pb-40 md:p-6 md:pb-6 lg:p-8"
         >
           {dashboardHero ? (
             <DashboardHero

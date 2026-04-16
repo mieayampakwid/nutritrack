@@ -1,0 +1,13 @@
+-- NutriTrack — Ahli Gizi account (Task 1)
+--
+-- The app already supports creating users with role `ahli_gizi` from
+-- Admin → User → Tambah pengguna → Peran: ahli_gizi.
+--
+-- Optional: promote an existing auth user (after they exist in auth.users + profiles):
+--
+--   update public.profiles
+--   set role = 'ahli_gizi'
+--   where email = 'nama.email@contoh.com';
+--
+-- There is no safe generic INSERT into auth.users from SQL alone without
+-- extensions/service role; use the Dashboard Auth UI or signUp from the app.

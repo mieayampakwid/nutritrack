@@ -15,7 +15,7 @@ function Card({ className, ...props }) {
 
 function CardHeader({ className, ...props }) {
   return (
-    <div className={cn('flex flex-col space-y-1.5 p-4 sm:p-6', className)} {...props} />
+    <div className={cn('flex flex-col space-y-1.5 p-4 sm:p-6 lg:p-8', className)} {...props} />
   )
 }
 
@@ -33,17 +33,20 @@ function CardTitle({ className, ...props }) {
 
 function CardDescription({ className, ...props }) {
   return (
-    <p className={cn('text-sm text-muted-foreground', className)} {...props} />
+    <p
+      className={cn('text-sm leading-relaxed text-muted-foreground md:text-[0.9375rem] md:leading-relaxed', className)}
+      {...props}
+    />
   )
 }
 
 function CardContent({ className, ...props }) {
-  return <div className={cn('p-4 pt-0 sm:p-6 sm:pt-0', className)} {...props} />
+  return <div className={cn('p-4 pt-0 sm:p-6 sm:pt-0 lg:p-8 lg:pt-0', className)} {...props} />
 }
 
 function CardFooter({ className, ...props }) {
   return (
-    <div className={cn('flex items-center p-4 pt-0 sm:p-6 sm:pt-0', className)} {...props} />
+    <div className={cn('flex items-center p-4 pt-0 sm:p-6 sm:pt-0 lg:p-8 lg:pt-0', className)} {...props} />
   )
 }
 

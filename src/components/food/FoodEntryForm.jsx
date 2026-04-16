@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { ChevronDown, Cookie, Coffee, Loader2, Moon, Plus, Sparkles, Sun, Trash2 } from 'lucide-react'
+import { AnimatePresence, motion as Motion, useReducedMotion } from 'framer-motion'
+import { ChevronDown, Cookie, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -16,67 +16,24 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
-import {
-  useFoodNameSuggestions,
-  useFoodUnits,
-  useTodayFoodLogSlots,
-} from '@/hooks/useFoodLog'
+import { useFoodNameSuggestions, useFoodUnits } from '@/hooks/useFoodLog'
 import { estimateCalories } from '@/lib/openai'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { APP_ACRONYM } from '@/lib/appMeta'
-import { formatDateId, formatNumberId } from '@/lib/format'
+import { formatDateId, formatNumberId, toIsoDateLocal } from '@/lib/format'
+import { mealSlotFromLocalTime } from '@/lib/mealSlotFromTime'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 
 const WAKTU = [
-  { key: 'pagi', label: 'Sarapan pagi', icon: Coffee },
-  { key: 'siang', label: 'Makan siang', icon: Sun },
-  { key: 'malam', label: 'Makan malam', icon: Moon },
-  { key: 'snack', label: 'Snack', icon: Cookie },
+  { key: 'pagi', label: 'Sarapan pagi' },
+  { key: 'siang', label: 'Makan siang' },
+  { key: 'malam', label: 'Makan malam' },
+  { key: 'snack', label: 'Snack' },
 ]
-
-/** Per-slot accent: active = filled solid; inactive = outline + tint; saved = muted same hue. */
-const MEAL_TIME_ACCENTS = {
-  pagi: {
-    active:
-      'border-transparent bg-emerald-600 text-white shadow-sm hover:bg-emerald-600 hover:text-white hover:border-transparent [&_svg]:text-white',
-    inactive:
-      'border-2 border-emerald-500/45 bg-emerald-50/90 text-emerald-950 hover:bg-emerald-100/95 hover:border-emerald-600/55 hover:text-emerald-950',
-    iconInactive: 'text-emerald-600',
-    saved:
-      'border-2 border-emerald-500/25 bg-emerald-50/60 text-emerald-800/90',
-  },
-  siang: {
-    active:
-      'border-transparent bg-orange-500 text-white shadow-sm hover:bg-orange-500 hover:text-white hover:border-transparent [&_svg]:text-white',
-    inactive:
-      'border-2 border-orange-400/55 bg-orange-50/90 text-orange-950 hover:bg-orange-100/95 hover:border-orange-500/65 hover:text-orange-950',
-    iconInactive: 'text-orange-600',
-    saved:
-      'border-2 border-orange-400/30 bg-orange-50/60 text-orange-900/85',
-  },
-  malam: {
-    active:
-      'border-transparent bg-blue-950 text-white shadow-sm hover:bg-blue-950 hover:text-white hover:border-transparent [&_svg]:text-white',
-    inactive:
-      'border-2 border-blue-900/45 bg-blue-50/95 text-blue-950 hover:bg-blue-100 hover:border-blue-950/55 hover:text-blue-950',
-    iconInactive: 'text-blue-900',
-    saved:
-      'border-2 border-blue-900/25 bg-blue-50/55 text-blue-900/85',
-  },
-  snack: {
-    active:
-      'border-transparent bg-[#7a1e2c] text-white shadow-sm hover:bg-[#7a1e2c] hover:text-white hover:border-transparent [&_svg]:text-white',
-    inactive:
-      'border-2 border-rose-900/40 bg-rose-50/90 text-rose-950 hover:bg-rose-100/95 hover:border-rose-950/50 hover:text-rose-950',
-    iconInactive: 'text-rose-800',
-    saved:
-      'border-2 border-rose-900/30 bg-rose-50/60 text-rose-900/88',
-  },
-}
 
 function mealLabelFromKey(key) {
   return WAKTU.find((w) => w.key === key)?.label ?? key
@@ -104,10 +61,7 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
   const [lineIdx, setLineIdx] = useState(0)
 
   useEffect(() => {
-    if (!active) {
-      setLineIdx(0)
-      return
-    }
+    if (!active) return
     const id = window.setInterval(() => {
       setLineIdx((i) => (i + 1) % ANALYZE_STATUS_LINES.length)
     }, 2600)
@@ -129,7 +83,7 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
   return (
     <AnimatePresence initial={false}>
       {active ? (
-        <motion.div
+        <Motion.div
           key="ai-analyzing"
           role="status"
           aria-live="polite"
@@ -142,7 +96,7 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
           className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.07] via-background to-teal-500/[0.06] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]"
         >
           {!reduceMotion ? (
-            <motion.div
+            <Motion.div
               className="pointer-events-none absolute -left-1/2 top-0 h-px w-[200%] bg-gradient-to-r from-transparent via-primary/40 to-transparent"
               animate={{ x: ['-30%', '30%'] }}
               transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
@@ -151,14 +105,14 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-primary/25" />
           )}
           {!reduceMotion ? (
-            <motion.div
+            <Motion.div
               className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/10 blur-2xl"
               animate={{ opacity: [0.35, 0.65, 0.35], scale: [1, 1.08, 1] }}
               transition={{ repeat: Infinity, duration: 3.2, ease: 'easeInOut' }}
             />
           ) : null}
           {!reduceMotion ? (
-            <motion.div
+            <Motion.div
               className="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-teal-500/10 blur-2xl"
               animate={{ opacity: [0.25, 0.5, 0.25] }}
               transition={{ repeat: Infinity, duration: 2.8, ease: 'easeInOut', delay: 0.4 }}
@@ -168,17 +122,17 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
           <div className="relative flex gap-3.5 sm:gap-4">
             <div className="relative flex h-[3.25rem] w-[3.25rem] shrink-0 items-center justify-center sm:h-14 sm:w-14">
               <div className="absolute inset-0 rounded-full border-2 border-primary/15" />
-              <motion.div
+              <Motion.div
                 className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary border-r-primary/40"
                 animate={reduceMotion ? {} : { rotate: 360 }}
                 transition={spinTransition}
               />
-              <motion.div
+              <Motion.div
                 className="absolute inset-1 rounded-full border border-dashed border-primary/25"
                 animate={reduceMotion ? {} : { rotate: -360 }}
                 transition={{ ...spinTransition, duration: reduceMotion ? 0 : 2.1 }}
               />
-              <motion.div
+              <Motion.div
                 animate={
                   reduceMotion
                     ? {}
@@ -187,7 +141,7 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
                 transition={pulseTransition}
               >
                 <Sparkles className="relative z-10 h-6 w-6 text-primary sm:h-7 sm:w-7" aria-hidden />
-              </motion.div>
+              </Motion.div>
             </div>
 
             <div className="min-w-0 flex-1 space-y-2 pt-0.5">
@@ -201,7 +155,7 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
               </div>
               <div className="relative min-h-[2.75rem] sm:min-h-[2.5rem]">
                 <AnimatePresence mode="wait">
-                  <motion.p
+                  <Motion.p
                     key={lineIdx}
                     initial={reduceMotion ? false : { opacity: 0, x: 8 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -210,14 +164,14 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
                     className="text-xs leading-relaxed text-muted-foreground sm:text-sm"
                   >
                     {ANALYZE_STATUS_LINES[lineIdx]}
-                  </motion.p>
+                  </Motion.p>
                 </AnimatePresence>
               </div>
 
               <div className="relative mt-1 h-1.5 overflow-hidden rounded-full bg-muted/80">
                 {!reduceMotion ? (
                   <>
-                    <motion.div
+                    <Motion.div
                       className="absolute inset-y-0 left-0 w-2/5 rounded-full bg-gradient-to-r from-primary/20 via-primary to-primary/20"
                       initial={false}
                       animate={{ left: ['-40%', '100%'] }}
@@ -231,7 +185,7 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
               </div>
             </div>
           </div>
-        </motion.div>
+        </Motion.div>
       ) : null}
     </AnimatePresence>
   )
@@ -336,9 +290,8 @@ export function FoodEntryForm({ userId }) {
   const qc = useQueryClient()
   const { data: units = [] } = useFoodUnits()
   const { data: suggestions = [] } = useFoodNameSuggestions()
-  const { data: todaySlots = [], isPending: slotsPending } = useTodayFoodLogSlots(userId)
 
-  const [waktu, setWaktu] = useState('pagi')
+  const [isSnack, setIsSnack] = useState(false)
   const [rows, setRows] = useState(() => [emptyRow()])
   const [expandedRowId, setExpandedRowId] = useState(() => rows[0].id)
   const [suggestionsOpenRowId, setSuggestionsOpenRowId] = useState(null)
@@ -347,18 +300,6 @@ export function FoodEntryForm({ userId }) {
   const [result, setResult] = useState(null)
   const resultRef = useRef(null)
   const analyzingAnchorRef = useRef(null)
-
-  const filledSlotsToday = useMemo(
-    () => new Set(todaySlots.map((r) => r.waktu_makan).filter(Boolean)),
-    [todaySlots],
-  )
-  const allSlotsFilledToday = WAKTU.every(({ key }) => filledSlotsToday.has(key))
-
-  useEffect(() => {
-    if (!filledSlotsToday.has(waktu)) return
-    const next = WAKTU.find(({ key }) => !filledSlotsToday.has(key))?.key
-    if (next) setWaktu(next)
-  }, [waktu, filledSlotsToday])
 
   const suggestionNames = useMemo(
     () => suggestions.map((s) => s.nama_makanan).filter(Boolean),
@@ -445,11 +386,9 @@ export function FoodEntryForm({ userId }) {
       return
     }
 
-    if (filledSlotsToday.has(waktu)) {
-      setError('Waktu makan ini sudah tercatat untuk hari ini.')
-      toast.error('Waktu makan ini sudah tercatat hari ini.')
-      return
-    }
+    const submittedAt = new Date()
+    const tanggal = toIsoDateLocal(submittedAt)
+    const waktu = mealSlotFromLocalTime(submittedAt, isSnack)
 
     setLoading(true)
     try {
@@ -480,24 +419,6 @@ export function FoodEntryForm({ userId }) {
 
       const total = itemsWithKal.reduce((a, x) => a + x.kalori_estimasi, 0)
 
-      const tanggal = new Date().toISOString().slice(0, 10)
-
-      const { data: existing, error: existErr } = await supabase
-        .from('food_logs')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('tanggal', tanggal)
-        .eq('waktu_makan', waktu)
-        .maybeSingle()
-
-      if (existErr) throw existErr
-      if (existing) {
-        setError('Waktu makan ini sudah tercatat untuk hari ini.')
-        toast.error('Waktu makan ini sudah tercatat hari ini.')
-        qc.invalidateQueries({ queryKey: ['food_logs_today_slots', userId] })
-        return
-      }
-
       const { data: logRow, error: logErr } = await supabase
         .from('food_logs')
         .insert({
@@ -510,15 +431,7 @@ export function FoodEntryForm({ userId }) {
         .select()
         .single()
 
-      if (logErr) {
-        if (logErr.code === '23505') {
-          setError('Waktu makan ini sudah tercatat untuk hari ini.')
-          toast.error('Waktu makan ini sudah tercatat hari ini.')
-          qc.invalidateQueries({ queryKey: ['food_logs_today_slots', userId] })
-          return
-        }
-        throw logErr
-      }
+      if (logErr) throw logErr
 
       const inserts = itemsWithKal.map((x) => ({
         food_log_id: logRow.id,
@@ -534,11 +447,11 @@ export function FoodEntryForm({ userId }) {
 
       setResult({ items: itemsWithKal, total, waktuMakan: waktu })
       qc.invalidateQueries({ queryKey: ['food_logs', userId] })
-      qc.invalidateQueries({ queryKey: ['food_logs_today_slots', userId] })
       qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
       const nextRow = emptyRow()
       setRows([nextRow])
       setExpandedRowId(nextRow.id)
+      setIsSnack(false)
       toast.success('Data tersimpan.')
     } catch (e) {
       console.error(e)
@@ -551,61 +464,38 @@ export function FoodEntryForm({ userId }) {
 
   return (
     <div className="space-y-2 sm:space-y-3">
-      <section className="space-y-1.5 text-center">
-        <div className="flex w-full gap-1.5" aria-label="Waktu makan">
-          {WAKTU.map(({ key, label, icon }) => {
-            const MealIcon = icon
-            const accent = MEAL_TIME_ACCENTS[key]
-            const hasSavedToday = filledSlotsToday.has(key)
-            const active = waktu === key && !allSlotsFilledToday
-            return (
-              <Button
-                key={key}
-                type="button"
-                variant={active ? 'default' : 'outline'}
-                aria-pressed={active}
-                disabled={hasSavedToday}
-                aria-label={
-                  hasSavedToday ? `${label}, sudah tercatat hari ini` : label
-                }
-                className={cn(
-                  'h-auto min-h-0 flex-1 flex-col gap-0.5 whitespace-normal rounded-lg px-1 py-1.5 text-[0.65rem] font-medium leading-tight transition-all duration-200 motion-safe:active:scale-[0.98] sm:gap-1 sm:px-1.5 sm:py-2 sm:text-xs [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-5 sm:[&_svg]:w-5',
-                  hasSavedToday && accent.saved,
-                  !hasSavedToday && active && accent.active,
-                  !hasSavedToday && !active && accent.inactive,
-                  active && !hasSavedToday && 'shadow-sm',
-                )}
-                onClick={() => setWaktu(key)}
-              >
-                <MealIcon
-                  className={cn(
-                    'h-4 w-4 shrink-0 sm:h-5 sm:w-5',
-                    active && !hasSavedToday && 'text-white opacity-100',
-                    !active && !hasSavedToday && accent.iconInactive,
-                    hasSavedToday && 'opacity-70',
-                  )}
-                  aria-hidden
-                />
-                <span className="max-w-full text-center leading-snug">{label}</span>
-                {hasSavedToday ? (
-                  <span className="max-w-full text-center text-[0.6rem] font-normal leading-tight opacity-80 sm:text-[0.65rem]">
-                    ✓
-                  </span>
-                ) : null}
-              </Button>
-            )
-          })}
+      <section className="space-y-2 text-center">
+        <div
+          className={cn(
+            'mx-auto flex max-w-md items-center justify-center gap-3 rounded-xl border border-border/80 bg-muted/20 px-4 py-3',
+            isSnack && 'border-rose-900/35 bg-rose-50/80',
+          )}
+        >
+          <Cookie
+            className={cn('h-5 w-5 shrink-0 text-muted-foreground', isSnack && 'text-rose-800')}
+            aria-hidden
+          />
+          <div className="flex flex-1 flex-col items-start gap-1 text-left">
+            <Label htmlFor="food-entry-snack" className={cn(typeLabel, 'cursor-pointer')}>
+              Camilan (Snack)
+            </Label>
+            <p className={cn(typeMuted, 'text-xs leading-snug')}>
+              Aktifkan jika ini camilan. Jika tidak, kategori waktu makan ditetapkan otomatis dari jam
+              saat Anda menekan Analisa &amp; simpan.
+            </p>
+          </div>
+          <input
+            id="food-entry-snack"
+            type="checkbox"
+            checked={isSnack}
+            onChange={(e) => setIsSnack(e.target.checked)}
+            className="h-5 w-5 shrink-0 rounded border-input accent-[#7a1e2c]"
+            aria-label="Tandai sebagai snack"
+          />
         </div>
-        <p className={cn(typeMuted, 'text-center')}>
-          Tiap waktu makan hanya sekali per hari. Yang sudah tercatat tidak bisa dipilih lagi. Untuk
-          camilan terpisah gunakan waktu &quot;Snack&quot;, atau gabungkan beberapa makanan dalam satu
-          daftar sebelum menyimpan.
+        <p className={cn(typeMuted, 'text-center text-xs sm:text-sm')}>
+          Sarapan 05:00–10:59 · Siang 11:00–14:59 · Malam 15:00–04:59 (termasuk makan malam larut).
         </p>
-        {allSlotsFilledToday ? (
-          <p className="text-sm font-medium text-foreground" role="status">
-            Semua waktu makan hari ini sudah tercatat.
-          </p>
-        ) : null}
       </section>
 
       {result ? (
@@ -986,7 +876,7 @@ export function FoodEntryForm({ userId }) {
         <Button
           type="button"
           className="order-1 h-9 w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:order-2 sm:w-auto sm:min-w-[11rem]"
-          disabled={loading || slotsPending || allSlotsFilledToday || filledSlotsToday.has(waktu)}
+          disabled={loading}
           onClick={handleAnalyze}
         >
           {loading ? (

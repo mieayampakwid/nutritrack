@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ChevronRight } from 'lucide-react'
@@ -70,28 +70,22 @@ export function UserManagement() {
         (u.nama || '').toLowerCase().includes(q) ||
         (u.email || '').toLowerCase().includes(q) ||
         (u.instalasi || '').toLowerCase().includes(q) ||
-        (u.nomor_wa || '').toLowerCase().includes(q),
+        (u.nomor_wa || '').toLowerCase().includes(q) ||
+        (u.phone_whatsapp || '').toLowerCase().includes(q),
     )
   }, [users, search])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / USERS_PAGE_SIZE))
+  const effectivePage = Math.max(1, Math.min(page, pageCount))
 
   const pageSlice = useMemo(() => {
-    const start = (page - 1) * USERS_PAGE_SIZE
+    const start = (effectivePage - 1) * USERS_PAGE_SIZE
     return filtered.slice(start, start + USERS_PAGE_SIZE)
-  }, [filtered, page])
+  }, [filtered, effectivePage])
 
-  useEffect(() => {
-    setPage(1)
-  }, [search])
-
-  useEffect(() => {
-    if (page > pageCount) setPage(pageCount)
-  }, [page, pageCount])
-
-  const displayStart = filtered.length === 0 ? 0 : (page - 1) * USERS_PAGE_SIZE + 1
+  const displayStart = filtered.length === 0 ? 0 : (effectivePage - 1) * USERS_PAGE_SIZE + 1
   const displayEnd =
-    filtered.length === 0 ? 0 : (page - 1) * USERS_PAGE_SIZE + pageSlice.length
+    filtered.length === 0 ? 0 : (effectivePage - 1) * USERS_PAGE_SIZE + pageSlice.length
 
   const [openAdd, setOpenAdd] = useState(false)
   const [openPw, setOpenPw] = useState('')
@@ -99,6 +93,8 @@ export function UserManagement() {
     nama: '',
     email: '',
     nomor_wa: '',
+    phone_whatsapp: '',
+    tgl_lahir: '',
     instalasi: '',
     role: 'klien',
     password: '',
@@ -114,12 +110,27 @@ export function UserManagement() {
           data: {
             nama: form.nama.trim(),
             nomor_wa: form.nomor_wa.trim(),
+            phone_whatsapp: form.phone_whatsapp.trim(),
+            tgl_lahir: form.tgl_lahir.trim(),
             instalasi: form.instalasi.trim(),
             role: form.role,
           },
         },
       })
       if (error) throw error
+      const uid = data.user?.id
+      if (uid) {
+        const tgl = form.tgl_lahir.trim()
+        const ph = form.phone_whatsapp.trim()
+        const { error: upErr } = await supabase
+          .from('profiles')
+          .update({
+            tgl_lahir: tgl && /^\d{4}-\d{2}-\d{2}$/.test(tgl) ? tgl : null,
+            phone_whatsapp: ph || null,
+          })
+          .eq('id', uid)
+        if (upErr) throw upErr
+      }
       return { user: data.user, password: pw }
     },
     onSuccess: ({ password }) => {
@@ -131,6 +142,8 @@ export function UserManagement() {
         nama: '',
         email: '',
         nomor_wa: '',
+        phone_whatsapp: '',
+        tgl_lahir: '',
         instalasi: '',
         role: 'klien',
         password: '',
@@ -177,7 +190,10 @@ export function UserManagement() {
                   type="search"
                   placeholder="Cari nama, email, instalasi, WA…"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value)
+                    setPage(1)
+                  }}
                   className="h-9 w-full border-input bg-background text-foreground shadow-sm sm:max-w-md"
                   autoComplete="off"
                 />
@@ -317,21 +333,31 @@ export function UserManagement() {
                           variant="outline"
                           size="sm"
                           className="h-8 bg-background"
-                          disabled={page <= 1}
-                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={effectivePage <= 1}
+                          onClick={() =>
+                            setPage((p) => {
+                              const cur = Math.max(1, Math.min(p, pageCount))
+                              return Math.max(1, cur - 1)
+                            })
+                          }
                         >
                           Sebelumnya
                         </Button>
                         <span className="tabular-nums text-foreground">
-                          Hal {page} / {pageCount}
+                          Hal {effectivePage} / {pageCount}
                         </span>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           className="h-8 bg-background"
-                          disabled={page >= pageCount}
-                          onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                          disabled={effectivePage >= pageCount}
+                          onClick={() =>
+                            setPage((p) => {
+                              const cur = Math.max(1, Math.min(p, pageCount))
+                              return Math.min(pageCount, cur + 1)
+                            })
+                          }
                         >
                           Berikutnya
                         </Button>
@@ -371,6 +397,22 @@ export function UserManagement() {
               <Input
                 value={form.nomor_wa}
                 onChange={(e) => setForm((f) => ({ ...f, nomor_wa: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Nomor WhatsApp (resume / wa.me)</Label>
+              <Input
+                value={form.phone_whatsapp}
+                onChange={(e) => setForm((f) => ({ ...f, phone_whatsapp: e.target.value }))}
+                placeholder="Opsional; untuk tombol Kirim resume"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Tanggal lahir</Label>
+              <Input
+                type="date"
+                value={form.tgl_lahir}
+                onChange={(e) => setForm((f) => ({ ...f, tgl_lahir: e.target.value }))}
               />
             </div>
             <div className="space-y-1">

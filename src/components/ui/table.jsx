@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 
 const Table = ({ className, ...props }) => (
   <div className="relative w-full overflow-auto" data-theme-table>
-    <table className={cn('w-full caption-bottom text-sm', className)} {...props} />
+    <table className={cn('w-full caption-bottom text-sm md:text-[0.9375rem]', className)} {...props} />
   </div>
 )
 
@@ -27,7 +27,7 @@ const TableRow = ({ className, ...props }) => (
 const TableHead = ({ className, ...props }) => (
   <th
     className={cn(
-      'h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+      'h-10 px-2 text-left align-middle font-medium text-muted-foreground md:h-11 md:px-4 [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
       className,
     )}
     {...props}
@@ -37,7 +37,7 @@ const TableHead = ({ className, ...props }) => (
 const TableCell = ({ className, ...props }) => (
   <td
     className={cn(
-      'p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+      'p-2 align-middle md:px-4 md:py-3 [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
       className,
     )}
     {...props}

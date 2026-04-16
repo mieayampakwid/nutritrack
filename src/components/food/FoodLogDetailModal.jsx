@@ -1,9 +1,9 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { useEffect, useState } from 'react'
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { XIcon } from 'lucide-react'
+import { format } from 'date-fns'
+import { id as localeId } from 'date-fns/locale'
 import { Dialog, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from '@/components/ui/dialog'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Table,
   TableBody,
@@ -16,16 +16,13 @@ import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
 import { formatDateId, formatNumberId } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-const WAKTU = [
-  { key: 'pagi', label: 'Pagi' },
-  { key: 'siang', label: 'Siang' },
-  { key: 'malam', label: 'Malam' },
-  { key: 'snack', label: 'Snack' },
-]
+const WAKTU_LABELS = {
+  pagi: 'Sarapan',
+  siang: 'Makan siang',
+  malam: 'Makan malam',
+  snack: 'Snack',
+}
 
-const TAB_SPRING = { type: 'spring', stiffness: 450, damping: 34, mass: 0.85 }
-
-/** Smooth stretch on the dialog shell when tab / content height changes */
 const DIALOG_LAYOUT = {
   type: 'spring',
   stiffness: 200,
@@ -37,69 +34,17 @@ const DIALOG_LAYOUT = {
 
 const MotionDialogContent = motion(DialogPrimitive.Content)
 
-export function FoodLogDetailModal({ open, onOpenChange, tanggal, logsByMeal, itemsByLogId }) {
-  const [tab, setTab] = useState('pagi')
-
-  useEffect(() => {
-    if (open) setTab('pagi')
-  }, [open, tanggal])
-
-  const totalHari = WAKTU.reduce((acc, { key }) => {
-    const log = logsByMeal[key]
-    return acc + (log ? Number(log.total_kalori) : 0)
-  }, 0)
-
-  function renderTabBody(key) {
-    const log = logsByMeal[key]
-    const items = log ? itemsByLogId[log.id] ?? [] : []
-
-    if (!log) {
-      return (
-        <div className="flex min-h-[5.5rem] items-center justify-center rounded-xl border border-border/80 bg-card px-4 py-8 shadow-sm">
-          <p className="text-center text-sm text-muted-foreground">Tidak ada entri.</p>
-        </div>
-      )
-    }
-    if (items.length === 0) {
-      return (
-        <div className="flex min-h-[5.5rem] items-center justify-center rounded-xl border border-border/80 bg-card px-4 py-8 shadow-sm">
-          <p className="text-center text-sm text-muted-foreground">Tidak ada item.</p>
-        </div>
-      )
-    }
-
-    return (
-      <div className="overflow-hidden rounded-xl border border-amber-200/50 bg-amber-50/40 shadow-sm ring-1 ring-amber-200/25">
-        <div className="max-h-[min(55dvh,420px)] overflow-y-auto overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-amber-200/50 bg-amber-50/70 hover:bg-amber-50/80">
-                <TableHead>Makanan</TableHead>
-                <TableHead className="text-center">Jml</TableHead>
-                <TableHead className="text-center">Satuan</TableHead>
-                <TableHead className="text-center">Kkal</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((it) => (
-                <TableRow
-                  key={it.id}
-                  className="border-amber-100/60 bg-amber-50/85 hover:bg-amber-50 data-[state=selected]:bg-amber-100/50"
-                >
-                  <TableCell className="max-w-[40%]">{it.nama_makanan}</TableCell>
-                  <TableCell className="text-center tabular-nums">{formatNumberId(it.jumlah)}</TableCell>
-                  <TableCell className="text-center text-sm">{it.unit_nama}</TableCell>
-                  <TableCell className="text-center tabular-nums font-medium">
-                    {formatNumberId(it.kalori_estimasi)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-    )
+function formatLogTime(iso) {
+  if (!iso) return '—'
+  try {
+    return format(new Date(iso), 'HH:mm', { locale: localeId })
+  } catch {
+    return '—'
   }
+}
+
+export function FoodLogDetailModal({ open, onOpenChange, tanggal, logsForDay, itemsByLogId }) {
+  const totalHari = (logsForDay ?? []).reduce((a, log) => a + (Number(log.total_kalori) || 0), 0)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -119,71 +64,94 @@ export function FoodLogDetailModal({ open, onOpenChange, tanggal, logsByMeal, it
             'data-[state=open]:slide-in-from-bottom-3 data-[state=closed]:slide-out-to-bottom-3',
           )}
         >
-        <DialogHeader className="shrink-0 space-y-1 text-left">
-          <DialogTitle className="flex flex-wrap items-baseline gap-x-2 gap-y-1 pr-8 text-base leading-snug sm:text-lg">
-            <span>{formatDateId(tanggal)}</span>
-            <span className="text-muted-foreground">—</span>
-            <span className="text-muted-foreground">Total</span>
-            <span className="inline-flex items-baseline gap-1.5">
-              <span className="text-lg font-semibold tabular-nums text-foreground sm:text-xl">
-                {formatNumberId(totalHari)}
+          <DialogHeader className="shrink-0 space-y-1 text-left">
+            <DialogTitle className="flex flex-wrap items-baseline gap-x-2 gap-y-1 pr-8 text-base leading-snug sm:text-lg">
+              <span>{formatDateId(tanggal)}</span>
+              <span className="text-muted-foreground">—</span>
+              <span className="text-muted-foreground">Total</span>
+              <span className="inline-flex items-baseline gap-1.5">
+                <span className="text-lg font-semibold tabular-nums text-foreground sm:text-xl">
+                  {formatNumberId(totalHari)}
+                </span>
+                <span className="text-sm font-semibold text-muted-foreground sm:text-base">kkal</span>
               </span>
-              <span className="text-sm font-semibold text-muted-foreground sm:text-base">kkal</span>
-            </span>
-          </DialogTitle>
-        </DialogHeader>
+            </DialogTitle>
+          </DialogHeader>
 
-        <Tabs value={tab} onValueChange={setTab} className="flex w-full flex-col gap-3">
-          <LayoutGroup id="food-log-detail-tabs">
-            <TabsList className="grid h-11 w-full shrink-0 grid-cols-4 gap-1 rounded-xl bg-muted p-1">
-              {WAKTU.map(({ key, label }) => (
-                <TabsTrigger
-                  key={key}
-                  value={key}
-                  className={cn(
-                    'relative z-0 flex h-full min-h-0 items-center justify-center rounded-lg px-2 py-0 text-xs font-semibold transition-colors',
-                    'text-muted-foreground',
-                    'data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                  )}
-                >
-                  {tab === key ? (
-                    <motion.span
-                      layoutId="food-log-detail-tab-chip"
-                      className="pointer-events-none absolute inset-0 z-0 rounded-lg border border-border/60 bg-background shadow-sm ring-1 ring-black/[0.04]"
-                      transition={TAB_SPRING}
-                    />
-                  ) : null}
-                  <span className="relative z-10">{label}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </LayoutGroup>
-
-          <div className="w-full">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={tab}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="w-full"
-              >
-                {renderTabBody(tab)}
-              </motion.div>
-            </AnimatePresence>
+          <div className="flex max-h-[min(62dvh,480px)] flex-col gap-3 overflow-y-auto pr-0.5">
+            {!logsForDay?.length ? (
+              <div className="flex min-h-[5.5rem] items-center justify-center rounded-xl border border-border/80 bg-card px-4 py-8 shadow-sm">
+                <p className="text-center text-sm text-muted-foreground">Tidak ada entri.</p>
+              </div>
+            ) : (
+              logsForDay.map((log) => {
+                const items = itemsByLogId[log.id] ?? []
+                return (
+                  <section
+                    key={log.id}
+                    className="overflow-hidden rounded-xl border border-amber-200/50 bg-amber-50/40 shadow-sm ring-1 ring-amber-200/25"
+                  >
+                    <header className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/40 bg-amber-50/70 px-3 py-2 text-sm">
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatLogTime(log.created_at)}
+                        <span className="mx-2 font-normal text-muted-foreground">·</span>
+                        {WAKTU_LABELS[log.waktu_makan] ?? log.waktu_makan}
+                      </span>
+                      <span className="text-sm font-semibold tabular-nums text-primary">
+                        {formatNumberId(log.total_kalori)} kkal
+                      </span>
+                    </header>
+                    {items.length === 0 ? (
+                      <p className="px-3 py-4 text-center text-xs text-muted-foreground">Tidak ada item.</p>
+                    ) : (
+                      <div className="max-h-56 overflow-y-auto overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-amber-200/50 bg-amber-50/70 hover:bg-amber-50/80">
+                              <TableHead>Jam</TableHead>
+                              <TableHead>Makanan</TableHead>
+                              <TableHead className="text-center">Jml</TableHead>
+                              <TableHead className="text-center">Satuan</TableHead>
+                              <TableHead className="text-center">Kkal</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {items.map((it) => (
+                              <TableRow
+                                key={it.id}
+                                className="border-amber-100/60 bg-amber-50/85 hover:bg-amber-50 data-[state=selected]:bg-amber-100/50"
+                              >
+                                <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
+                                  {formatLogTime(it.created_at ?? log.created_at)}
+                                </TableCell>
+                                <TableCell className="max-w-[36%]">{it.nama_makanan}</TableCell>
+                                <TableCell className="text-center tabular-nums">
+                                  {formatNumberId(it.jumlah)}
+                                </TableCell>
+                                <TableCell className="text-center text-sm">{it.unit_nama}</TableCell>
+                                <TableCell className="text-center tabular-nums font-medium">
+                                  {formatNumberId(it.kalori_estimasi)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </section>
+                )
+              })
+            )}
           </div>
-        </Tabs>
 
-        <CalorieDisclaimer className="shrink-0 border-t border-border/50 pt-3" />
+          <CalorieDisclaimer className="shrink-0 border-t border-border/50 pt-3" />
 
-        <DialogPrimitive.Close
-          className="absolute top-3 right-3 rounded-full opacity-70 ring-offset-background transition-all duration-200 hover:scale-110 hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
-        >
-          <XIcon />
-          <span className="sr-only">Tutup</span>
-        </DialogPrimitive.Close>
+          <DialogPrimitive.Close
+            className="absolute top-3 right-3 rounded-full opacity-70 ring-offset-background transition-all duration-200 hover:scale-110 hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+          >
+            <XIcon />
+            <span className="sr-only">Tutup</span>
+          </DialogPrimitive.Close>
         </MotionDialogContent>
       </DialogPortal>
     </Dialog>
