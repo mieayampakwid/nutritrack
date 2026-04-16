@@ -1,9 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { differenceInYears } from 'date-fns'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Dialog,
   DialogContent,
@@ -11,12 +13,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/hooks/useAuth'
 import { calculateBMI, getBMICategoryAsiaPacific } from '@/lib/bmiCalculator'
 import { APP_DISPLAY_NAME } from '@/lib/appMeta'
-import { formatNumberId, parseIsoDateLocal } from '@/lib/format'
+import { compareIsoDates } from '@/lib/foodLogRange'
+import { formatNumberId, parseIsoDateLocal, toIsoDateLocal } from '@/lib/format'
 import { normalizeIndonesiaWhatsAppDigits } from '@/lib/whatsappPhone'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
@@ -27,10 +38,19 @@ function sexLabel(v) {
   return '—'
 }
 
+const EVAL_LABEL = 'text-xs font-medium leading-snug sm:text-sm'
+
 function ClientQuickSummaryBody({ clientId, linkPrefix }) {
   const { profile: staff } = useAuth()
+  const qc = useQueryClient()
   const [resumeOpen, setResumeOpen] = useState(false)
   const [notes, setNotes] = useState('')
+  const [evalDateFrom, setEvalDateFrom] = useState('')
+  const [evalDateTo, setEvalDateTo] = useState('')
+  const [exerciseFreq, setExerciseFreq] = useState('')
+  const [sleepEnough, setSleepEnough] = useState('')
+  const [vegTimesPerDay, setVegTimesPerDay] = useState('')
+  const [evalBmiStr, setEvalBmiStr] = useState('')
 
   const { data: client, isLoading } = useQuery({
     queryKey: ['profile', clientId],
@@ -67,6 +87,68 @@ function ClientQuickSummaryBody({ clientId, linkPrefix }) {
   const bmi = calculateBMI(client?.berat_badan, client?.tinggi_badan)
   const bmiCat = getBMICategoryAsiaPacific(bmi)
   const energy = latestAssessment?.energi_total
+
+  const { dateFrom: evalRangeFrom, dateTo: evalRangeTo } = useMemo(() => {
+    let a = evalDateFrom
+    let b = evalDateTo
+    if (a && b && compareIsoDates(a, b) > 0) {
+      ;[a, b] = [b, a]
+    }
+    return { dateFrom: a, dateTo: b }
+  }, [evalDateFrom, evalDateTo])
+  const evalRangeReady = Boolean(evalRangeFrom && evalRangeTo)
+
+  const saveEvaluation = useMutation({
+    mutationFn: async () => {
+      if (!clientId) throw new Error('Klien tidak valid.')
+      if (!evalRangeReady) throw new Error('Tanggal mulai dan selesai wajib diisi.')
+
+      const veg = vegTimesPerDay === '' ? null : Number(vegTimesPerDay)
+      const bmiNum = evalBmiStr.trim() === '' ? null : Number(evalBmiStr)
+      if (veg != null && (!Number.isFinite(veg) || veg < 0)) {
+        throw new Error('Konsumsi sayur harus berupa angka >= 0.')
+      }
+      if (bmiNum != null && (!Number.isFinite(bmiNum) || bmiNum <= 0)) {
+        throw new Error('BMI harus berupa angka > 0.')
+      }
+
+      const payload = {
+        user_id: clientId,
+        date_from: evalRangeFrom,
+        date_to: evalRangeTo,
+        exercise_freq: exerciseFreq.trim() || null,
+        sleep_enough: sleepEnough === '' ? null : sleepEnough === 'yes',
+        veg_times_per_day: veg,
+        usage_notes: notes.trim() || null,
+        bmi: bmiNum,
+        created_by: staff?.id ?? null,
+      }
+
+      const { error } = await supabase.from('user_evaluations').insert(payload)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      toast.success('Evaluasi disimpan.')
+      qc.invalidateQueries({ queryKey: ['user_evaluations', clientId] })
+    },
+    onError: (e) => {
+      toast.error(e.message ?? 'Gagal menyimpan evaluasi.')
+      console.error(e)
+    },
+  })
+
+  function toggleResume() {
+    setResumeOpen((v) => {
+      const next = !v
+      if (!v && next) {
+        const t = toIsoDateLocal(new Date())
+        setEvalDateFrom(t)
+        setEvalDateTo(t)
+        setEvalBmiStr(bmi != null ? String(bmi) : '')
+      }
+      return next
+    })
+  }
 
   const waDigits = normalizeIndonesiaWhatsAppDigits(client?.phone_whatsapp) ?? normalizeIndonesiaWhatsAppDigits(client?.nomor_wa)
 
@@ -137,7 +219,7 @@ function ClientQuickSummaryBody({ clientId, linkPrefix }) {
         </div>
       </dl>
 
-      <Button type="button" variant="outline" className="w-full" onClick={() => setResumeOpen((v) => !v)}>
+      <Button type="button" variant="outline" className="w-full" onClick={toggleResume}>
         {resumeOpen ? 'Sembunyikan resume' : 'Generate resume'}
       </Button>
 
@@ -158,6 +240,106 @@ function ClientQuickSummaryBody({ clientId, linkPrefix }) {
           className="resize-none text-sm"
         />
       </div>
+
+      {resumeOpen ? (
+        <div className="space-y-3 rounded-xl border border-border/70 bg-muted/15 p-3">
+          <div>
+            <p className="text-xs font-medium text-foreground">Simpan sebagai evaluasi rutin</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Tampil di halaman Progres klien. Catatan di atas disimpan sebagai catatan evaluasi.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="eval-from" className={EVAL_LABEL}>
+                Tanggal mulai
+              </Label>
+              <DatePicker
+                id="eval-from"
+                value={evalDateFrom}
+                onChange={setEvalDateFrom}
+                placeholder="Mulai"
+                className="h-9 w-full justify-start font-normal"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="eval-to" className={EVAL_LABEL}>
+                Tanggal selesai
+              </Label>
+              <DatePicker
+                id="eval-to"
+                value={evalDateTo}
+                onChange={setEvalDateTo}
+                placeholder="Selesai"
+                className="h-9 w-full justify-start font-normal"
+              />
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="resume-eval-exercise" className={EVAL_LABEL}>
+                Frekuensi olahraga
+              </Label>
+              <Input
+                id="resume-eval-exercise"
+                value={exerciseFreq}
+                onChange={(e) => setExerciseFreq(e.target.value)}
+                placeholder="Contoh: 3x/minggu"
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="resume-eval-sleep" className={EVAL_LABEL}>
+                Istirahat cukup
+              </Label>
+              <Select value={sleepEnough} onValueChange={setSleepEnough}>
+                <SelectTrigger id="resume-eval-sleep" className="h-9">
+                  <SelectValue placeholder="Pilih" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="yes">Ya</SelectItem>
+                  <SelectItem value="no">Tidak</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="resume-eval-veg" className={EVAL_LABEL}>
+                Konsumsi sayur (kali/hari)
+              </Label>
+              <Input
+                id="resume-eval-veg"
+                inputMode="numeric"
+                value={vegTimesPerDay}
+                onChange={(e) => setVegTimesPerDay(e.target.value)}
+                placeholder="0"
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="resume-eval-bmi" className={EVAL_LABEL}>
+                BMI
+              </Label>
+              <Input
+                id="resume-eval-bmi"
+                inputMode="decimal"
+                value={evalBmiStr}
+                onChange={(e) => setEvalBmiStr(e.target.value)}
+                placeholder="Contoh: 23.5"
+                className="h-9"
+              />
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="w-full sm:w-auto"
+            disabled={!evalRangeReady || saveEvaluation.isPending}
+            onClick={() => saveEvaluation.mutate()}
+          >
+            {saveEvaluation.isPending ? 'Menyimpan…' : 'Simpan evaluasi'}
+          </Button>
+        </div>
+      ) : null}
 
       <Button type="button" variant="secondary" className="w-full" disabled={!waDigits} onClick={openWhatsApp}>
         Kirim via WhatsApp

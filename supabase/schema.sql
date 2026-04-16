@@ -82,6 +82,23 @@ create table if not exists public.assessments (
 
 create index if not exists assessments_user_created_idx on public.assessments (user_id, created_at desc);
 
+create table if not exists public.user_evaluations (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  date_from date not null,
+  date_to date not null,
+  exercise_freq text,
+  sleep_enough boolean,
+  veg_times_per_day numeric(6,2),
+  usage_notes text,
+  bmi numeric(5,2),
+  created_by uuid references public.profiles(id),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists user_evaluations_user_date_to_idx
+  on public.user_evaluations (user_id, date_to desc, created_at desc);
+
 create or replace view public.food_name_suggestions as
 select nama_makanan, count(*)::bigint as frekuensi
 from public.food_log_items
@@ -171,6 +188,7 @@ alter table public.food_logs enable row level security;
 alter table public.food_log_items enable row level security;
 alter table public.food_units enable row level security;
 alter table public.assessments enable row level security;
+alter table public.user_evaluations enable row level security;
 
 drop policy if exists "profiles_self" on public.profiles;
 create policy "profiles_self" on public.profiles
@@ -224,6 +242,14 @@ create policy "assessments_klien_select" on public.assessments
 
 drop policy if exists "assessments_staff_all" on public.assessments;
 create policy "assessments_staff_all" on public.assessments
+  for all using (public.jwt_is_staff());
+
+drop policy if exists "user_evaluations_klien_select" on public.user_evaluations;
+create policy "user_evaluations_klien_select" on public.user_evaluations
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "user_evaluations_staff_all" on public.user_evaluations;
+create policy "user_evaluations_staff_all" on public.user_evaluations
   for all using (public.jwt_is_staff());
 
 grant usage on schema public to postgres, anon, authenticated, service_role;
