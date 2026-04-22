@@ -1,38 +1,40 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8'
 
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || '*'
+
 const corsHeaders: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
 }
 
 const MAX_ITEMS = 40
+const MAX_JUMLAH = 10000
 
-function buildPrompt(
+function sanitize(s: string, maxLen = 100): string {
+  return s
+    .replace(/[\n\r\t\x00-\x1f]/g, ' ')
+    .replace(/[^\p{L}\p{N}\s.,&()\-/]/gu, '')
+    .trim()
+    .slice(0, maxLen)
+}
+
+const SYSTEM_MESSAGE = `Kamu adalah ahli gizi. Estimasi kalori untuk setiap makanan yang diberikan user.
+Berikan response HANYA dalam format JSON array, tanpa teks lain.
+Format: [{ "nama_makanan": "...", "kalori": 123 }, ...]
+Gunakan estimasi kalori yang umum untuk makanan Indonesia.
+Jika makanan tidak dikenal, estimasi berdasarkan bahan utama yang paling mungkin.`
+
+function buildUserMessage(
   items: { nama_makanan: string; jumlah: number; unit_nama: string }[],
 ) {
-  return `
-Kamu adalah ahli gizi. Estimasi kalori untuk setiap makanan berikut.
-Berikan response HANYA dalam format JSON array, tanpa teks lain.
-
-Format response:
-[
-  { "nama_makanan": "...", "kalori": 123 },
-  ...
-]
-
-Data makanan:
-${items
-  .map(
-    (item, i) =>
-      `${i + 1}. ${item.nama_makanan} - ${item.jumlah} ${item.unit_nama}`,
-  )
-  .join('\n')}
-
-Gunakan estimasi kalori yang umum untuk makanan Indonesia.
-Jika makanan tidak dikenal, estimasi berdasarkan bahan utama yang paling mungkin.
-`
+  return `Data makanan:\n${items
+    .map(
+      (item, i) =>
+        `${i + 1}. ${item.nama_makanan} - ${item.jumlah} ${item.unit_nama}`,
+    )
+    .join('\n')}`
 }
 
 Deno.serve(async (req) => {
@@ -116,10 +118,25 @@ Deno.serve(async (req) => {
     }
 
     const normalized = items.map((item: Record<string, unknown>) => ({
-      nama_makanan: String(item.nama_makanan ?? '').trim(),
-      jumlah: Number(item.jumlah),
-      unit_nama: String(item.unit_nama ?? '').trim(),
+      nama_makanan: sanitize(String(item.nama_makanan ?? '')),
+      jumlah: Math.min(Number(item.jumlah), MAX_JUMLAH),
+      unit_nama: sanitize(String(item.unit_nama ?? ''), 50),
     }))
+
+    if (
+      items.some(
+        (item: Record<string, unknown>) =>
+          Number(item.jumlah) > MAX_JUMLAH,
+      )
+    ) {
+      return new Response(
+        JSON.stringify({ error: 'Jumlah melebihi batas maksimum (10.000).' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
+    }
 
     if (
       normalized.some(
@@ -147,7 +164,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    const prompt = buildPrompt(normalized)
+    const userMessage = buildUserMessage(normalized)
     const model = Deno.env.get('OPENAI_MODEL') ?? 'gpt-4o-mini'
 
     const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -158,7 +175,10 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [
+          { role: 'system', content: SYSTEM_MESSAGE },
+          { role: 'user', content: userMessage },
+        ],
         temperature: 0.3,
         max_tokens: 500,
       }),

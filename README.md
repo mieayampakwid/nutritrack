@@ -43,6 +43,7 @@ The dev server runs on `http://localhost:5174` (strict port).
 | `DEV_HMR_HOST` | `.env` (Vite only, no `VITE_` prefix) | No |
 | `OPENAI_API_KEY` | Supabase secrets / `supabase/.env.local` | Yes (server-side only) |
 | `OPENAI_MODEL` | Supabase secrets (optional) | No |
+| `ALLOWED_ORIGIN` | Supabase secrets (optional, defaults to `*` for local dev) | No |
 
 Never expose `OPENAI_API_KEY` via a `VITE_*` variable. See `.env.example` for details.
 
@@ -64,6 +65,7 @@ Never expose `OPENAI_API_KEY` via a `VITE_*` variable. See `.env.example` for de
    ```bash
    supabase secrets set OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
    supabase secrets set OPENAI_MODEL=gpt-4o-mini
+   supabase secrets set ALLOWED_ORIGIN=https://<production-domain>
    supabase functions deploy estimate-calories
    ```
 
