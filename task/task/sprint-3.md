@@ -169,14 +169,6 @@ If vulnerabilities remain after `fix`:
 - [ ] `npm run dev` starts without errors
 - [ ] Results documented (even if "0 vulnerabilities found")
 
-### Negative Scenarios
-
-| # | Scenario | Action | Expected Result |
-|---|----------|--------|-----------------|
-| N1 | Breaking upgrade | `npm audit fix --force` changes a major version | Build fails; rollback to safe version and use manual fix |
-| N2 | Dev-only vulnerability | Critical CVE in a devDependency (e.g. ESLint plugin) | Documented as low risk (not in production bundle); upgrade if possible |
-| N3 | Unfixable transitive dep | Vulnerability in a deep transitive dependency with no patch | Documented with risk assessment; tracked for future fix |
-
 ---
 
 ## Task 10 -- Sanitize Error Output (Low)
@@ -266,15 +258,6 @@ Staff have `for select` on `food_logs` and `food_log_items`, but `for all` on `p
 - [ ] Staff access to `food_logs` and `food_log_items` is verified and documented
 - [ ] If a gap exists, it is fixed with appropriate policy + comment
 
-### Negative Scenarios
-
-| # | Scenario | Action | Expected Result |
-|---|----------|--------|-----------------|
-| N1 | Staff inserts food log for client | `ahli_gizi` runs `insert into food_logs (user_id, ...) values ('<klien_id>', ...)` | Either succeeds (if intentional) or fails (if restricted) -- result must match documented intent |
-| N2 | Staff deletes client food log | `ahli_gizi` runs `delete from food_logs where user_id = '<klien_id>'` | Same as above -- verified and documented |
-| N3 | Staff updates food log calories | `admin` updates `total_kalori` on a client's food log | Same as above -- verified and documented |
-| N4 | Client modifies another client's log | `klien_A` tries to update `klien_B`'s food log | Blocked by `foodlogs_klien` RLS policy (`auth.uid() = user_id`) |
-
 ---
 
 ## Task 12 -- Audit `anon` Role Grants (Low)
@@ -312,16 +295,6 @@ The `anon` Postgres role has `usage on schema public`. This is required by Supab
 - [ ] Confirmed that no table returns data for unauthenticated requests
 - [ ] Comment documenting `anon` grant rationale added to `schema.sql`
 - [ ] Audit date recorded
-
-### Negative Scenarios
-
-| # | Scenario | Action | Expected Result |
-|---|----------|--------|-----------------|
-| N1 | Unauthenticated profile read | `curl .../rest/v1/profiles -H "apikey: <anon_key>"` (no JWT) | Empty array `[]` or `401`; no user data returned |
-| N2 | Unauthenticated food log read | `curl .../rest/v1/food_logs -H "apikey: <anon_key>"` | Empty array or `401` |
-| N3 | Unauthenticated measurement read | `curl .../rest/v1/body_measurements -H "apikey: <anon_key>"` | Empty array or `401` |
-| N4 | Unauthenticated view access | `curl .../rest/v1/food_name_suggestions -H "apikey: <anon_key>"` | Empty array or `401`; no food names exposed |
-| N5 | Unauthenticated insert attempt | `curl -X POST .../rest/v1/profiles -H "apikey: <anon_key>" -d '{...}'` | Rejected; no row created |
 
 ---
 
