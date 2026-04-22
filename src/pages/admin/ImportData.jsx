@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import * as XLSX from 'xlsx'
+import * as XLSX from 'xlsx-js-style'
+import { logError } from '@/lib/logger'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -54,7 +55,7 @@ export function ImportData() {
         setRows(mapped)
         toast.success(`${mapped.length} baris di-parse.`)
       } catch (err) {
-        console.error(err)
+        logError('ImportData.parse', err)
         toast.error('Gagal membaca file.')
       }
     }

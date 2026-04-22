@@ -1,6 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { useIdleTimeout } from '@/hooks/useIdleTimeout'
+import { logError } from '@/lib/logger'
 
 const AuthContext = createContext(null)
 
@@ -21,7 +24,7 @@ export function AuthProvider({ children }) {
       .eq('id', userId)
       .maybeSingle()
     if (error) {
-      console.error(error)
+      logError('loadProfile', error)
       setProfileLoadError(error.message ?? String(error))
       setProfile(null)
       return
@@ -68,7 +71,7 @@ export function AuthProvider({ children }) {
         .maybeSingle()
       if (cancelled) return
       if (error) {
-        console.error(error)
+        logError('AuthProvider.profileLoad', error)
         setProfileLoadError(error.message ?? String(error))
         setProfile(null)
       } else {
@@ -92,6 +95,24 @@ export function AuthProvider({ children }) {
   const refreshProfile = useCallback(async () => {
     if (session?.user?.id) await loadProfile(session.user.id)
   }, [loadProfile, session])
+
+  const onWarning = useCallback(
+    () =>
+    toast.warning('Sesi akan berakhir dalam 2 menit karena tidak ada aktivitas.')
+    ,
+    [],
+  )
+
+  const onTimeout = useCallback(() => {
+    supabase.auth.signOut()
+    toast.info('Sesi berakhir karena tidak ada aktivitas.')
+  }, [])
+
+  useIdleTimeout({
+    enabled: !!session,
+    onWarning,
+    onTimeout,
+  })
 
   return (
     <AuthContext.Provider
