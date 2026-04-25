@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
+import { logError } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import {
@@ -133,7 +134,7 @@ function ClientQuickSummaryBody({ clientId, linkPrefix }) {
     },
     onError: (e) => {
       toast.error(e.message ?? 'Gagal menyimpan evaluasi.')
-      console.error(e)
+      logError('ClientQuickSummary.evalMutation', e)
     },
   })
 

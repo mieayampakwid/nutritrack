@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { ClipboardList, ExternalLink } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { logError } from '@/lib/logger'
 import { AppShell } from '@/components/layout/AppShell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -135,7 +136,7 @@ export function FoodLogMonitor() {
     },
     onError: (e) => {
       toast.error(e.message ?? 'Gagal menyimpan evaluasi.')
-      console.error(e)
+      logError('FoodLogMonitor.evalMutation', e)
     },
   })
 

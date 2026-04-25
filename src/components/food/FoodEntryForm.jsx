@@ -27,6 +27,8 @@ import { mealSlotFromLocalTime } from '@/lib/mealSlotFromTime'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
+import { foodEntrySchema } from '@/lib/validators'
+import { logError } from '@/lib/logger'
 
 const WAKTU = [
   { key: 'pagi', label: 'Sarapan pagi' },
@@ -386,6 +388,18 @@ export function FoodEntryForm({ userId }) {
       return
     }
 
+    const vResult = foodEntrySchema.safeParse({
+      items: filled.map((x) => ({
+        nama_makanan: x.nama_makanan,
+        jumlah: x.jumlah,
+        unit_nama: x.unit_nama,
+      })),
+    })
+    if (!vResult.success) {
+      setError(vResult.error.issues[0].message)
+      return
+    }
+
     const submittedAt = new Date()
     const tanggal = toIsoDateLocal(submittedAt)
     const waktu = mealSlotFromLocalTime(submittedAt, isSnack)
@@ -454,7 +468,7 @@ export function FoodEntryForm({ userId }) {
       setIsSnack(false)
       toast.success('Data tersimpan.')
     } catch (e) {
-      console.error(e)
+      logError('FoodEntryForm.handleAnalyze', e)
       setError(e.message ?? 'Terjadi kesalahan.')
       toast.error('Gagal menganalisa atau menyimpan.')
     } finally {

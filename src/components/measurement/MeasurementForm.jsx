@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { calculateBMI, getBMICategory } from '@/lib/bmiCalculator'
 import { formatDateId, formatNumberId } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
+import { bodyMeasurementSchema } from '@/lib/validators'
+import { logError } from '@/lib/logger'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 
@@ -99,6 +101,18 @@ export function MeasurementForm({
       if (!tanggal) throw new Error('Tanggal wajib diisi.')
       if (bb == null || tb == null) throw new Error('Berat dan tinggi badan wajib diisi.')
 
+      const vResult = bodyMeasurementSchema.safeParse({
+        tanggal,
+        berat_badan: bb,
+        tinggi_badan: tb,
+        massa_otot: mo,
+        massa_lemak: ml,
+        catatan: catatan.trim() || undefined,
+      })
+      if (!vResult.success) {
+        throw new Error(vResult.error.issues[0].message)
+      }
+
       const row = {
         user_id: targetUserId,
         tanggal,
@@ -123,7 +137,7 @@ export function MeasurementForm({
     },
     onError: (e) => {
       toast.error(e.message ?? 'Gagal menyimpan.')
-      console.error(e)
+      logError('MeasurementForm.mutate', e)
     },
   })
 

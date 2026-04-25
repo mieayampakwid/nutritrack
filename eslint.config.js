@@ -5,11 +5,17 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'reference/**']),
+  globalIgnores(['dist', 'reference/**', 'coverage/**']),
   {
     files: ['vite.config.js'],
     languageOptions: {
       globals: globals.node,
+    },
+  },
+  {
+    files: ['src/test/setup.js'],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.node },
     },
   },
   {

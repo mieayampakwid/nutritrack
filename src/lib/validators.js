@@ -1,0 +1,35 @@
+import { z } from 'zod'
+
+export const loginSchema = z.object({
+  email: z.string().email('Format email tidak valid'),
+  password: z.string().min(6, 'Kata sandi minimal 6 karakter'),
+})
+
+export const userCreateSchema = z.object({
+  nama: z.string().min(1, 'Nama wajib diisi').max(200),
+  email: z.string().email('Format email tidak valid'),
+  role: z.enum(['admin', 'ahli_gizi', 'klien']),
+  nomor_wa: z.string().max(50).optional(),
+  phone_whatsapp: z.string().max(50).optional(),
+  tgl_lahir: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format: YYYY-MM-DD').optional().or(z.literal('')),
+  instalasi: z.string().max(200).optional(),
+})
+
+export const foodEntryItemSchema = z.object({
+  nama_makanan: z.string().min(1, 'Nama makanan wajib diisi').max(100),
+  jumlah: z.number().positive('Jumlah harus lebih dari 0').max(10000, 'Jumlah terlalu besar'),
+  unit_nama: z.string().min(1, 'Satuan wajib dipilih'),
+})
+
+export const foodEntrySchema = z.object({
+  items: z.array(foodEntryItemSchema).min(1, 'Minimal 1 makanan'),
+})
+
+export const bodyMeasurementSchema = z.object({
+  tanggal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format tanggal tidak valid'),
+  berat_badan: z.number().positive().max(500).optional().nullable(),
+  tinggi_badan: z.number().positive().max(300).optional().nullable(),
+  massa_otot: z.number().min(0).max(200).optional().nullable(),
+  massa_lemak: z.number().min(0).max(100).optional().nullable(),
+  catatan: z.string().max(1000).optional(),
+})

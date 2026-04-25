@@ -35,6 +35,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { formatDateId } from '@/lib/format'
 import { roleLabel, USERS_PAGE_SIZE } from '@/lib/adminUsers'
 import { supabase } from '@/lib/supabase'
+import { userCreateSchema } from '@/lib/validators'
 
 function randomPassword() {
   const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -102,6 +103,10 @@ export function UserManagement() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      const result = userCreateSchema.safeParse(form)
+      if (!result.success) {
+        throw new Error(result.error.issues[0].message)
+      }
       const pw = form.password || randomPassword()
       const { data, error } = await supabase.auth.signUp({
         email: form.email.trim(),

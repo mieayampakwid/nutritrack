@@ -31,3 +31,9 @@ reference/dapurasri/
 
 # Supabase CLI local cache
 supabase/.temp/
+
+# Test coverage output
+coverage/
+
+# Local agent/IDE config
+.claude/

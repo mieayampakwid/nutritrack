@@ -99,7 +99,9 @@ create table if not exists public.user_evaluations (
 create index if not exists user_evaluations_user_date_to_idx
   on public.user_evaluations (user_id, date_to desc, created_at desc);
 
-create or replace view public.food_name_suggestions as
+create or replace view public.food_name_suggestions
+  with (security_invoker = true)
+as
 select nama_makanan, count(*)::bigint as frekuensi
 from public.food_log_items
 group by nama_makanan
@@ -196,7 +198,13 @@ create policy "profiles_self" on public.profiles
 
 drop policy if exists "profiles_self_update" on public.profiles;
 create policy "profiles_self_update" on public.profiles
-  for update using (auth.uid() = id);
+  for update
+  using (auth.uid() = id)
+  with check (
+    auth.uid() = id
+    AND role = (select p.role from public.profiles p where p.id = auth.uid())
+    AND is_active = (select p.is_active from public.profiles p where p.id = auth.uid())
+  );
 
 drop policy if exists "profiles_staff" on public.profiles;
 create policy "profiles_staff" on public.profiles
@@ -210,6 +218,7 @@ drop policy if exists "measurements_staff" on public.body_measurements;
 create policy "measurements_staff" on public.body_measurements
   for all using (public.jwt_is_staff());
 
+-- food_logs: klien can CRUD own logs; staff can only read (monitoring, not data entry).
 drop policy if exists "foodlogs_klien" on public.food_logs;
 create policy "foodlogs_klien" on public.food_logs
   for all using (auth.uid() = user_id);
@@ -218,6 +227,7 @@ drop policy if exists "foodlogs_staff_read" on public.food_logs;
 create policy "foodlogs_staff_read" on public.food_logs
   for select using (public.jwt_is_staff());
 
+-- food_log_items: klien can CRUD items in own logs; staff can only read.
 drop policy if exists "food_items_klien" on public.food_log_items;
 create policy "food_items_klien" on public.food_log_items
   for all
@@ -252,6 +262,11 @@ drop policy if exists "user_evaluations_staff_all" on public.user_evaluations;
 create policy "user_evaluations_staff_all" on public.user_evaluations
   for all using (public.jwt_is_staff());
 
+-- GRANTS
+-- The `anon` role requires schema usage for Supabase PostgREST to function,
+-- but all RLS policies require auth.uid() or authenticated role.
+-- No table data is accessible without a valid JWT.
+-- Audit date: 2026-04-22
 grant usage on schema public to postgres, anon, authenticated, service_role;
 grant all on all tables in schema public to postgres, service_role;
 grant select, insert, update, delete on all tables in schema public to authenticated;

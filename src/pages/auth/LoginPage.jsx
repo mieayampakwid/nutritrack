@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
@@ -12,6 +12,7 @@ import { getLoginGreetingTemplate } from '@/lib/dashboardGreeting'
 import { APP_ACRONYM, APP_DISPLAY_NAME, APP_TAGLINE } from '@/lib/appMeta'
 import { cn } from '@/lib/utils'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
+import { loginSchema } from '@/lib/validators'
 import laperLogo from '@/assets/laper-logo.png'
 
 function dashboardPath(role) {
@@ -27,7 +28,7 @@ function LoginLogoBlock() {
       <img
         src={laperLogo}
         alt={`${APP_ACRONYM} — ${APP_TAGLINE}`}
-        className="block h-auto w-full max-w-[14rem] object-contain sm:max-w-[15.5rem]"
+        className="block h-auto w-full max-w-56 object-contain sm:max-w-62"
         width={400}
         height={100}
         decoding="async"
@@ -46,18 +47,18 @@ function LoginGreetingCard() {
     <div className="w-full">
       <div
         className={cn(
-          'relative z-10 overflow-hidden rounded-xl border border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100/95',
-          'px-2.5 py-2 text-left shadow-[0_2px_16px_-6px_hsl(38_60%_30%_/_0.12)]',
+          'relative z-10 overflow-hidden rounded-xl border border-amber-200/90 bg-linear-to-br from-amber-50 via-yellow-50 to-amber-100/95',
+          'px-2.5 py-2 text-left shadow-[0_2px_16px_-6px_hsl(38_60%_30%/0.12)]',
           'ring-1 ring-inset ring-amber-100/90 backdrop-blur-md',
-          'after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-[1] after:h-[3px] after:bg-gradient-to-b after:from-amber-100/95 after:to-amber-100',
+          'after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-1 after:h-[3px] after:bg-linear-to-b after:from-amber-100/95 after:to-amber-100',
         )}
       >
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgb(254_252_232_/_0.9),transparent_55%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgb(254_252_232/0.9),transparent_55%)]"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute bottom-2 left-0 top-2 w-px rounded-full bg-gradient-to-b from-transparent via-amber-400/55 to-transparent shadow-[2px_0_10px_hsl(38_70%_40%_/_0.12)]"
+          className="pointer-events-none absolute bottom-2 left-0 top-2 w-px rounded-full bg-linear-to-b from-transparent via-amber-400/55 to-transparent shadow-[2px_0_10px_hsl(38_70%_40%/0.12)]"
           aria-hidden
         />
         <p
@@ -90,6 +91,30 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [failCount, setFailCount] = useState(0)
+  const [lockedUntil, setLockedUntil] = useState(null)
+  const [countdown, setCountdown] = useState(0)
+
+  useEffect(() => {
+    if (!lockedUntil || Date.now() >= lockedUntil) return
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000))
+      setCountdown(remaining)
+      if (remaining <= 0) setLockedUntil(null)
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [lockedUntil])
+
+  const isLocked = Boolean(lockedUntil) && countdown > 0
+
+  function getLockoutDuration(failures) {
+    if (failures < 5) return 0
+    const base = 30_000
+    const multiplier = Math.min(Math.pow(2, Math.floor((failures - 5) / 5)), 10)
+    return Math.min(base * multiplier, 5 * 60_000)
+  }
 
   if (!isSupabaseConfigured()) {
     return (
@@ -116,7 +141,7 @@ export function LoginPage() {
     return (
       <LoginPageChrome>
         <>
-          <div className="flex min-h-[12rem] items-center justify-center rounded-xl border border-border/50 bg-card/80 shadow-sm">
+          <div className="flex min-h-48 items-center justify-center rounded-xl border border-border/50 bg-card/80 shadow-sm">
             <Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Memuat" />
           </div>
           <div className="mt-3 w-full max-w-none">
@@ -170,11 +195,24 @@ export function LoginPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (isLocked) return
+    const result = loginSchema.safeParse({ email, password })
+    if (!result.success) {
+      toast.error(result.error.issues[0].message)
+      return
+    }
     setBusy(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setBusy(false)
     if (error) {
+      const newCount = failCount + 1
+      setFailCount(newCount)
+      const lockMs = getLockoutDuration(newCount)
+      if (lockMs > 0) setLockedUntil(Date.now() + lockMs)
       toast.error(error.message)
+    } else {
+      setFailCount(0)
+      setLockedUntil(null)
     }
   }
 
@@ -185,7 +223,7 @@ export function LoginPage() {
     <LoginPageChrome>
       <>
         <div className="animate-card-in">
-          <Card className="overflow-hidden rounded-xl border border-border/55 bg-card/95 shadow-[0_10px_40px_-18px_rgba(0,0,0,0.18)] ring-1 ring-black/[0.03] dark:shadow-[0_12px_40px_-20px_rgba(0,0,0,0.45)] dark:ring-white/[0.06]">
+          <Card className="overflow-hidden rounded-xl border border-border/55 bg-card/95 shadow-[0_10px_40px_-18px_rgba(0,0,0,0.18)] ring-1 ring-black/3 dark:shadow-[0_12px_40px_-20px_rgba(0,0,0,0.45)] dark:ring-white/6">
             <CardContent className="px-4 pb-5 pt-3 sm:px-5">
               <div className="space-y-2.5">
                 <LoginGreetingCard />
@@ -233,7 +271,7 @@ export function LoginPage() {
                     </div>
                   </div>
 
-                  <Button type="submit" className="mt-1 w-full text-sm font-semibold" disabled={busy}>
+                  <Button type="submit" className="mt-1 w-full text-sm font-semibold" disabled={busy || isLocked}>
                     {busy ? (
                       <>
                         <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
@@ -243,6 +281,11 @@ export function LoginPage() {
                       'Masuk'
                     )}
                   </Button>
+                  {isLocked && countdown > 0 && (
+                    <p className="text-center text-xs text-destructive">
+                      Terlalu banyak percobaan. Coba lagi dalam {countdown} detik.
+                    </p>
+                  )}
                 </form>
               </div>
             </CardContent>
