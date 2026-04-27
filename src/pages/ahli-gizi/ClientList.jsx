@@ -1,10 +1,10 @@
 import { AppShell } from '@/components/layout/AppShell'
-import { ClientDirectory } from '@/components/clients/ClientDirectory'
+import { UnifiedClientList } from '@/components/clients/UnifiedClientList'
 
 export function ClientList() {
   return (
     <AppShell>
-      <ClientDirectory linkPrefix="/gizi/clients" title="Klien" />
+      <UnifiedClientList linkPrefix="/gizi/clients" staffBase="/gizi" isAdmin={false} />
     </AppShell>
   )
 }

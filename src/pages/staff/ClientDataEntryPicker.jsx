@@ -61,8 +61,8 @@ export function ClientDataEntryPicker() {
                       <p className="text-sm text-muted-foreground">{c.instalasi ?? '—'}</p>
                     </div>
                     <Button asChild size="sm" className="shrink-0 gap-1">
-                      <Link to={`${clientsBase}/${c.id}/data-entry`}>
-                        Buka entri
+                      <Link to={`${clientsBase}?client=${encodeURIComponent(c.id)}&tab=bmi`}>
+                        Buka di daftar klien
                         <ChevronRight className="h-4 w-4" aria-hidden />
                       </Link>
                     </Button>

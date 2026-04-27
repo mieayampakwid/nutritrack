@@ -3,14 +3,11 @@ import { Link, useLocation } from 'react-router-dom'
 import { DashboardHero } from '@/components/dashboard/DashboardHero'
 import {
   Apple,
-  ClipboardList,
-  ClipboardPen,
   EllipsisVertical,
   LayoutDashboard,
   LogOut,
   Ruler,
   Settings2,
-  TrendingUp,
   Upload,
   Users,
 } from 'lucide-react'
@@ -41,12 +38,9 @@ const ROLE_NAV = {
   admin: {
     primary: [
       { to: '/admin/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-      { to: '/admin/food-logs', label: 'Evaluasi', icon: ClipboardList },
-      { to: '/admin/users', label: 'User', icon: Users },
+      { to: '/admin/clients', label: 'Klien', icon: Users },
     ],
     more: [
-      { to: '/admin/clients', label: 'Klien', icon: TrendingUp },
-      { to: '/admin/data-entry', label: 'Entri data', icon: ClipboardPen },
       { to: '/admin/import', label: 'Impor', icon: Upload },
       { to: '/admin/food-units', label: 'Master ukuran', icon: Settings2 },
     ],
@@ -54,9 +48,7 @@ const ROLE_NAV = {
   ahli_gizi: {
     primary: [
       { to: '/gizi/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-      { to: '/gizi/food-logs', label: 'Evaluasi', icon: ClipboardList },
       { to: '/gizi/clients', label: 'Klien', icon: Users },
-      { to: '/gizi/data-entry', label: 'Entri data', icon: ClipboardPen },
     ],
     more: [],
   },

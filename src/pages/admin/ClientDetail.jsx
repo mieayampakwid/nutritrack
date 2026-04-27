@@ -39,6 +39,7 @@ export function ClientDetail() {
   const loc = useLocation()
   const { profile: staff } = useAuth()
   const listPath = loc.pathname.startsWith('/admin') ? '/admin/clients' : '/gizi/clients'
+  const staffBase = loc.pathname.startsWith('/admin') ? '/admin' : '/gizi'
 
   const { data: client, isLoading: loadingClient } = useQuery({
     queryKey: ['profile', id],
@@ -94,6 +95,12 @@ export function ClientDetail() {
         </Button>
         <Button variant="outline" size="sm" asChild>
           <Link to={`${listPath}/${id}/data-entry`}>Entri data (BMI &amp; asesmen)</Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link to={`${staffBase}/bmi/${id}`}>BMI</Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link to={`${staffBase}/calorie-needs/${id}`}>Kebutuhan energi</Link>
         </Button>
       </div>
 

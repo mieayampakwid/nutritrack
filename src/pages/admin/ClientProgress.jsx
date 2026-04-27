@@ -1,10 +1,17 @@
+import { useSearchParams } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
-import { ClientDirectory } from '@/components/clients/ClientDirectory'
+import { UnifiedClientList } from '@/components/clients/UnifiedClientList'
+import { AdminUserDetail } from '@/pages/admin/AdminUserDetail'
 
 export function ClientProgress() {
+  const [searchParams] = useSearchParams()
+  const userDetailId = searchParams.get('user')
+  if (userDetailId) {
+    return <AdminUserDetail />
+  }
   return (
     <AppShell>
-      <ClientDirectory linkPrefix="/admin/clients" title="Klien" />
+      <UnifiedClientList linkPrefix="/admin/clients" staffBase="/admin" isAdmin />
     </AppShell>
   )
 }

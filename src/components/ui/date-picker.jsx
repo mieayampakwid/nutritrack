@@ -42,13 +42,13 @@ export function DatePicker({
           variant="outline"
           disabled={disabled}
           className={cn(
-            'h-10 min-h-[44px] w-full justify-start text-left text-base font-normal md:h-9 md:min-h-0',
+            'h-10 min-h-[44px] w-full justify-start text-left text-sm font-normal leading-snug md:h-9 md:min-h-0',
             !date && 'text-muted-foreground',
             className,
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-          <span className="truncate">
+          <span className={cn('truncate', !date && 'text-[13px] leading-snug')}>
             {date ? format(date, 'dd MMM yyyy', { locale: localeId }) : placeholder}
           </span>
         </Button>

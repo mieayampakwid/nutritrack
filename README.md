@@ -1,16 +1,33 @@
-# React + Vite
+# NutriTrack (PER)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Laporan Asupan & Evaluasi Rutin** — role-based nutrition tracking for clients, dietitians, and admins (React, Vite, Supabase).
 
-Currently, two official plugins are available:
+## Documentation
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+All detailed documentation lives in **[`readme/`](readme/README.md)**:
 
-## React Compiler
+- **[readme/README.md](readme/README.md)** — documentation index and reading order  
+- **[readme/PROJECT_SPECIFICATION.md](readme/PROJECT_SPECIFICATION.md)** — full tech spec and features  
+- **[readme/FEATURES.md](readme/FEATURES.md)** — feature list (Indonesian)  
+- **[readme/TECH_SPEC.md](readme/TECH_SPEC.md)** — technical specification (detailed)  
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Quick start
 
-## Expanding the ESLint configuration
+1. Copy environment template: `.env.example` → `.env` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.  
+2. Install and run:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+```
+
+3. For AI calorie estimation and Supabase Edge Functions, follow the comments in [`.env.example`](.env.example) and [`readme/PROJECT_SPECIFICATION.md`](readme/PROJECT_SPECIFICATION.md) (OpenAI secrets, function deploy).
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Vite dev server (`--host`) |
+| `npm run build` | Production build |
+| `npm run preview` | Preview production build |
+| `npm run lint` | ESLint |

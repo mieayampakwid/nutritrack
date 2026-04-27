@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { AppShellLoadingSkeleton } from '@/components/shared/AppShellLoadingSkeleton'
 import { useAuth, AuthProvider } from '@/hooks/useAuth'
 
@@ -10,41 +10,20 @@ const LoginPage = lazy(() =>
 const AdminDashboard = lazy(() =>
   import('@/pages/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
 )
-const UserManagement = lazy(() =>
-  import('@/pages/admin/UserManagement').then((m) => ({ default: m.UserManagement })),
-)
-const AdminUserDetail = lazy(() =>
-  import('@/pages/admin/AdminUserDetail').then((m) => ({ default: m.AdminUserDetail })),
-)
 const FoodUnitMaster = lazy(() =>
   import('@/pages/admin/FoodUnitMaster').then((m) => ({ default: m.FoodUnitMaster })),
 )
 const ClientProgress = lazy(() =>
   import('@/pages/admin/ClientProgress').then((m) => ({ default: m.ClientProgress })),
 )
-const AdminClientDetail = lazy(() =>
-  import('@/pages/admin/ClientDetail').then((m) => ({ default: m.ClientDetail })),
-)
 const ImportData = lazy(() =>
   import('@/pages/admin/ImportData').then((m) => ({ default: m.ImportData })),
-)
-const FoodLogMonitor = lazy(() =>
-  import('@/pages/staff/FoodLogMonitor').then((m) => ({ default: m.FoodLogMonitor })),
-)
-const ClientUserDataEntry = lazy(() =>
-  import('@/pages/staff/ClientUserDataEntry').then((m) => ({ default: m.ClientUserDataEntry })),
-)
-const ClientDataEntryPicker = lazy(() =>
-  import('@/pages/staff/ClientDataEntryPicker').then((m) => ({ default: m.ClientDataEntryPicker })),
 )
 const GiziDashboard = lazy(() =>
   import('@/pages/ahli-gizi/GiziDashboard').then((m) => ({ default: m.GiziDashboard })),
 )
 const ClientList = lazy(() =>
   import('@/pages/ahli-gizi/ClientList').then((m) => ({ default: m.ClientList })),
-)
-const GiziClientDetail = lazy(() =>
-  import('@/pages/ahli-gizi/ClientDetail').then((m) => ({ default: m.ClientDetail })),
 )
 const KlienDashboard = lazy(() =>
   import('@/pages/klien/KlienDashboard').then((m) => ({ default: m.KlienDashboard })),
@@ -55,7 +34,6 @@ const FoodEntry = lazy(() =>
 const MyProgress = lazy(() =>
   import('@/pages/klien/MyProgress').then((m) => ({ default: m.MyProgress })),
 )
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 60 * 1000, retry: 1 },
@@ -95,6 +73,79 @@ function RouteFallback() {
   return <AppShellLoadingSkeleton />
 }
 
+function RedirectAdminClientsLegacy() {
+  const { id } = useParams()
+  return <Navigate to={id ? `/admin/clients?client=${encodeURIComponent(id)}` : '/admin/clients'} replace />
+}
+
+function RedirectGiziClientsLegacy() {
+  const { id } = useParams()
+  return <Navigate to={id ? `/gizi/clients?client=${encodeURIComponent(id)}` : '/gizi/clients'} replace />
+}
+
+function RedirectAdminClientDataEntry() {
+  const { id } = useParams()
+  return <Navigate to={`/admin/clients?client=${encodeURIComponent(id)}&tab=bmi`} replace />
+}
+
+function RedirectGiziClientDataEntry() {
+  const { id } = useParams()
+  return <Navigate to={`/gizi/clients?client=${encodeURIComponent(id)}&tab=bmi`} replace />
+}
+
+function RedirectAdminBmi() {
+  const { clientId } = useParams()
+  return (
+    <Navigate
+      to={clientId ? `/admin/clients?client=${encodeURIComponent(clientId)}&tab=bmi` : '/admin/clients'}
+      replace
+    />
+  )
+}
+
+function RedirectGiziBmi() {
+  const { clientId } = useParams()
+  return (
+    <Navigate
+      to={clientId ? `/gizi/clients?client=${encodeURIComponent(clientId)}&tab=bmi` : '/gizi/clients'}
+      replace
+    />
+  )
+}
+
+function RedirectAdminCalorie() {
+  const { clientId } = useParams()
+  return (
+    <Navigate
+      to={
+        clientId ? `/admin/clients?client=${encodeURIComponent(clientId)}&tab=bmi` : '/admin/clients'
+      }
+      replace
+    />
+  )
+}
+
+function RedirectGiziCalorie() {
+  const { clientId } = useParams()
+  return (
+    <Navigate
+      to={
+        clientId ? `/gizi/clients?client=${encodeURIComponent(clientId)}&tab=bmi` : '/gizi/clients'
+      }
+      replace
+    />
+  )
+}
+
+function RedirectAdminUsersToClients() {
+  return <Navigate to="/admin/clients?list=pengguna" replace />
+}
+
+function RedirectAdminUserDetailLegacy() {
+  const { id } = useParams()
+  return <Navigate to={`/admin/clients?user=${encodeURIComponent(id)}`} replace />
+}
+
 function AppRoutes() {
   return (
     <Suspense fallback={<RouteFallback />}>
@@ -114,7 +165,7 @@ function AppRoutes() {
           path="/admin/users"
           element={
             <RequireAuth roles={['admin']}>
-              <UserManagement />
+              <RedirectAdminUsersToClients />
             </RequireAuth>
           }
         />
@@ -122,7 +173,7 @@ function AppRoutes() {
           path="/admin/users/:id"
           element={
             <RequireAuth roles={['admin']}>
-              <AdminUserDetail />
+              <RedirectAdminUserDetailLegacy />
             </RequireAuth>
           }
         />
@@ -146,7 +197,7 @@ function AppRoutes() {
           path="/admin/clients/:id"
           element={
             <RequireAuth roles={['admin']}>
-              <AdminClientDetail />
+              <RedirectAdminClientsLegacy />
             </RequireAuth>
           }
         />
@@ -154,7 +205,7 @@ function AppRoutes() {
           path="/admin/clients/:id/data-entry"
           element={
             <RequireAuth roles={['admin']}>
-              <ClientUserDataEntry />
+              <RedirectAdminClientDataEntry />
             </RequireAuth>
           }
         />
@@ -162,7 +213,7 @@ function AppRoutes() {
           path="/admin/data-entry"
           element={
             <RequireAuth roles={['admin']}>
-              <ClientDataEntryPicker />
+              <Navigate to="/admin/clients" replace />
             </RequireAuth>
           }
         />
@@ -178,7 +229,39 @@ function AppRoutes() {
           path="/admin/food-logs"
           element={
             <RequireAuth roles={['admin']}>
-              <FoodLogMonitor />
+              <Navigate to="/admin/clients" replace />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/bmi"
+          element={
+            <RequireAuth roles={['admin']}>
+              <Navigate to="/admin/clients" replace />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/bmi/:clientId"
+          element={
+            <RequireAuth roles={['admin']}>
+              <RedirectAdminBmi />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/calorie-needs"
+          element={
+            <RequireAuth roles={['admin']}>
+              <Navigate to="/admin/clients" replace />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/calorie-needs/:clientId"
+          element={
+            <RequireAuth roles={['admin']}>
+              <RedirectAdminCalorie />
             </RequireAuth>
           }
         />
@@ -203,7 +286,7 @@ function AppRoutes() {
           path="/gizi/clients/:id"
           element={
             <RequireAuth roles={['ahli_gizi']}>
-              <GiziClientDetail />
+              <RedirectGiziClientsLegacy />
             </RequireAuth>
           }
         />
@@ -211,7 +294,7 @@ function AppRoutes() {
           path="/gizi/clients/:id/data-entry"
           element={
             <RequireAuth roles={['ahli_gizi']}>
-              <ClientUserDataEntry />
+              <RedirectGiziClientDataEntry />
             </RequireAuth>
           }
         />
@@ -219,7 +302,7 @@ function AppRoutes() {
           path="/gizi/data-entry"
           element={
             <RequireAuth roles={['ahli_gizi']}>
-              <ClientDataEntryPicker />
+              <Navigate to="/gizi/clients" replace />
             </RequireAuth>
           }
         />
@@ -227,7 +310,39 @@ function AppRoutes() {
           path="/gizi/food-logs"
           element={
             <RequireAuth roles={['ahli_gizi']}>
-              <FoodLogMonitor />
+              <Navigate to="/gizi/clients" replace />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/gizi/bmi"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <Navigate to="/gizi/clients" replace />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/gizi/bmi/:clientId"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <RedirectGiziBmi />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/gizi/calorie-needs"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <Navigate to="/gizi/clients" replace />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/gizi/calorie-needs/:clientId"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <RedirectGiziCalorie />
             </RequireAuth>
           }
         />

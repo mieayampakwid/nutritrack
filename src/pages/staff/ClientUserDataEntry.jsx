@@ -20,22 +20,14 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { LargeNumericKeypad } from '@/components/staff/LargeNumericKeypad'
 import { useAuth } from '@/hooks/useAuth'
 import { calculateBMI, getBMICategoryAsiaPacific } from '@/lib/bmiCalculator'
+import {
+  CALORIE_ACTIVITY_OPTIONS as ACTIVITY,
+  CALORIE_STRESS_OPTIONS as STRESS,
+} from '@/lib/calorieFactors'
 import { formatNumberId, parseIsoDateLocal } from '@/lib/format'
+import { harrisBenedictBmr } from '@/lib/harrisBenedict'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
-
-const ACTIVITY = [
-  { label: 'Bed Rest', value: 1.15 },
-  { label: 'Normal (not bed rest)', value: 1.25 },
-]
-
-const STRESS = [
-  { label: 'No stress', desc: '—', value: 1.25 },
-  { label: 'Mild stress', desc: 'GI inflammation, cancer, elective surgery, trauma, fever', value: 1.35 },
-  { label: 'Moderate stress', desc: 'Sepsis, bone surgery, burns, liver disease', value: 1.45 },
-  { label: 'Severe stress', desc: 'HIV/AIDS, multi-system surgery, pulmonary TB, complications', value: 1.55 },
-  { label: 'Severe stress — head injury', desc: 'Head injury', value: 1.7 },
-]
 
 function appendDigit(raw, d) {
   if (d === '.') {
@@ -78,15 +70,6 @@ function changeAgeDigits(setter) {
     if (n > 150) return
     setter(s)
   }
-}
-
-function harrisBenedictBmr({ sex, bbKg, tbCm, ageYears }) {
-  if (!Number.isFinite(ageYears) || ageYears < 1 || !Number.isFinite(bbKg) || !Number.isFinite(tbCm)) {
-    return null
-  }
-  if (sex === 'male') return 66 + 13.7 * bbKg + 5 * tbCm - 6.8 * ageYears
-  if (sex === 'female') return 655 + 9.6 * bbKg + 1.8 * tbCm - 4.7 * ageYears
-  return null
 }
 
 function profileFormKey(client) {
@@ -371,7 +354,7 @@ function ClientUserDataEntryForm({ client, clientId, listPath }) {
                   <SelectContent>
                     {ACTIVITY.map((a) => (
                       <SelectItem key={a.value} value={String(a.value)}>
-                        {a.label}
+                        {a.range ? `${a.label} (${a.range})` : a.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -388,9 +371,7 @@ function ClientUserDataEntryForm({ client, clientId, listPath }) {
                     {STRESS.map((s) => (
                       <SelectItem key={s.value} value={String(s.value)} className="whitespace-normal py-2">
                         <span className="font-medium">{s.label}</span>
-                        {s.desc !== '—' ? (
-                          <span className="mt-0.5 block text-xs text-muted-foreground">{s.desc}</span>
-                        ) : null}
+                        <span className="mt-0.5 block text-xs text-muted-foreground">Rentang {s.range}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>

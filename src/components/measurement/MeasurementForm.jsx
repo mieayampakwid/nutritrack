@@ -119,6 +119,8 @@ export function MeasurementForm({
     onSuccess: () => {
       toast.success('Pengukuran disimpan.')
       qc.invalidateQueries({ queryKey: ['measurements', targetUserId] })
+      qc.invalidateQueries({ queryKey: ['staff_clients_unified'] })
+      qc.invalidateQueries({ queryKey: ['client_directory'] })
       setCatatan('')
     },
     onError: (e) => {

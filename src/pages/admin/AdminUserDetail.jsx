@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ArrowLeft } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
@@ -31,8 +31,12 @@ import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { ClientNutritionSummaryCard } from '@/components/clients/ClientNutritionSummaryCard'
 
+const USERS_LIST_HREF = '/admin/clients?list=pengguna'
+
 export function AdminUserDetail() {
-  const { id } = useParams()
+  const { id: idFromRoute } = useParams()
+  const [searchParams] = useSearchParams()
+  const id = idFromRoute || searchParams.get('user')
   const qc = useQueryClient()
   const [editOpen, setEditOpen] = useState(false)
   const [editRow, setEditRow] = useState(null)
@@ -78,6 +82,7 @@ export function AdminUserDetail() {
       qc.invalidateQueries({ queryKey: ['profile_admin_detail', id] })
       qc.invalidateQueries({ queryKey: ['profiles_admin'] })
       qc.invalidateQueries({ queryKey: ['client_directory'] })
+      qc.invalidateQueries({ queryKey: ['staff_clients_unified'] })
     },
     onError: (e) => toast.error(e.message ?? 'Gagal menyimpan.'),
   })
@@ -91,6 +96,7 @@ export function AdminUserDetail() {
       qc.invalidateQueries({ queryKey: ['profile_admin_detail', id] })
       qc.invalidateQueries({ queryKey: ['profiles_admin'] })
       qc.invalidateQueries({ queryKey: ['client_directory'] })
+      qc.invalidateQueries({ queryKey: ['staff_clients_unified'] })
       toast.success('Status diperbarui.')
     },
     onError: (e) => toast.error(e.message ?? 'Gagal.'),
@@ -109,7 +115,7 @@ export function AdminUserDetail() {
       <AppShell>
         <p className="text-destructive">Gagal memuat data pengguna.</p>
         <Button asChild variant="link" className="mt-2 px-0">
-          <Link to="/admin/users">Kembali ke daftar</Link>
+          <Link to={USERS_LIST_HREF}>Kembali ke daftar</Link>
         </Button>
       </AppShell>
     )
@@ -120,7 +126,7 @@ export function AdminUserDetail() {
       <AppShell>
         <p className="text-muted-foreground">Pengguna tidak ditemukan.</p>
         <Button asChild variant="link" className="mt-2 px-0">
-          <Link to="/admin/users">Kembali ke daftar</Link>
+          <Link to={USERS_LIST_HREF}>Kembali ke daftar</Link>
         </Button>
       </AppShell>
     )
@@ -136,9 +142,9 @@ export function AdminUserDetail() {
       <div className="mx-auto max-w-2xl space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="ghost" size="sm" className="-ml-2 gap-1 px-2" asChild>
-            <Link to="/admin/users">
+            <Link to={USERS_LIST_HREF}>
               <ArrowLeft className="h-4 w-4" />
-              Daftar user
+              Daftar pengguna
             </Link>
           </Button>
         </div>
@@ -206,7 +212,7 @@ export function AdminUserDetail() {
               </Button>
               {profile.role === 'klien' ? (
                 <Button variant="secondary" className="w-full sm:w-auto" asChild>
-                  <Link to={`/admin/clients/${profile.id}`}>Lihat sebagai klien</Link>
+                  <Link to={`/admin/clients?client=${encodeURIComponent(profile.id)}`}>Lihat sebagai klien</Link>
                 </Button>
               ) : null}
             </div>
@@ -217,7 +223,9 @@ export function AdminUserDetail() {
           <div className="space-y-3">
             <ClientNutritionSummaryCard profile={profile} />
             <Button variant="outline" className="w-full sm:w-auto" asChild>
-              <Link to={`/admin/clients/${profile.id}/data-entry`}>Entri / ubah data BMI &amp; asesmen</Link>
+              <Link to={`/admin/clients?client=${encodeURIComponent(profile.id)}&tab=bmi`}>
+                BMI &amp; kebutuhan energi (daftar klien)
+              </Link>
             </Button>
           </div>
         ) : null}

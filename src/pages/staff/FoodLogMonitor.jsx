@@ -33,11 +33,11 @@ const STAFF_LOG_STALE_MS = 10 * 60 * 1000
 
 /** Compact filter row: smaller type + shorter controls (scoped to this page). */
 const FILTER_LABEL_CLASS = 'text-xs font-medium leading-snug sm:text-sm'
-/** Klien + Jumlah hari: smaller text only in the closed field ([&>span] = SelectValue); dropdown list stays normal. */
+/** Klien + Jumlah hari: closed field ([&>span] = SelectValue); dropdown list stays normal. */
 const FILTER_SELECT_TRIGGER_CLASS = cn(
   'h-8 min-h-0 w-full gap-1.5 px-2.5 py-1 md:h-8',
   '[&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:shrink-0',
-  '[&>span]:text-xs [&>span]:leading-tight',
+  '[&>span]:text-[13px] [&>span]:leading-snug',
 )
 const FILTER_SELECT_CONTENT_CLASS = 'max-h-72 text-sm'
 const FILTER_SELECT_ITEM_CLASS = 'py-1.5 pl-2 pr-8 text-sm sm:py-1.5'
@@ -229,9 +229,9 @@ export function FoodLogMonitor() {
 
             {userId && selectedClient ? (
               <Button variant="outline" size="sm" asChild className="gap-2">
-                <Link to={`${clientsBase}/${userId}`}>
+                <Link to={`${clientsBase}?client=${encodeURIComponent(userId)}`}>
                   <ExternalLink className="h-4 w-4" aria-hidden />
-                  Buka profil & antropometri
+                  Buka daftar klien (baris ini)
                 </Link>
               </Button>
             ) : null}

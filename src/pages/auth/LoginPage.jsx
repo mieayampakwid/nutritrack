@@ -179,7 +179,7 @@ export function LoginPage() {
   }
 
   const loginInputClass =
-    'h-8 border-border/70 bg-background/80 px-2.5 py-1 text-sm shadow-sm placeholder:text-muted-foreground/80 file:text-sm focus-visible:ring-1 focus-visible:ring-offset-0'
+    'h-8 border-border/70 bg-background/80 px-2.5 py-1 text-sm shadow-sm placeholder:text-[13px] placeholder:leading-snug placeholder:text-muted-foreground/80 file:text-sm focus-visible:ring-1 focus-visible:ring-offset-0'
 
   return (
     <LoginPageChrome>
@@ -202,7 +202,7 @@ export function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="nama@contoh.com"
-                      className={cn(loginInputClass, 'placeholder:text-[0.6875rem] placeholder:leading-normal')}
+                      className={loginInputClass}
                       autoFocus
                     />
                   </div>

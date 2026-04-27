@@ -60,14 +60,14 @@ const DialogFooter = ({ className, ...props }) => (
 
 const DialogTitle = ({ className, ...props }) => (
   <DialogPrimitive.Title
-    className={cn('text-lg font-semibold leading-none tracking-tight', className)}
+    className={cn('text-lg font-semibold leading-snug tracking-tight', className)}
     {...props}
   />
 )
 
 const DialogDescription = ({ className, ...props }) => (
   <DialogPrimitive.Description
-    className={cn('text-sm text-muted-foreground', className)}
+    className={cn('text-sm leading-relaxed text-muted-foreground', className)}
     {...props}
   />
 )

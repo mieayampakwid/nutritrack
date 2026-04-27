@@ -129,7 +129,7 @@ export function ClientNutritionSummaryCard({ profile, className }) {
             </div>
           ) : (
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Belum ada asesmen tersimpan. Gunakan menu Entri data (BMI &amp; asesmen) untuk menghitung kebutuhan
+              Belum ada asesmen tersimpan. Gunakan tab BMI &amp; Kalori pada daftar klien untuk menghitung kebutuhan
               energi.
             </p>
           )}

@@ -287,6 +287,8 @@ supabase functions serve estimate-calories --env-file supabase/.env.local
 
 ## 13. Related documents
 
+All documentation files live in the **`readme/`** folder. See **[README.md](README.md)** for the index.
+
 - **`TECH_SPEC.md`** — earlier technical write-up (partial overlap; this file supersedes for routing/schema currency).
 - **`FEATURES.md`** — Indonesian feature list for stakeholders.
 
