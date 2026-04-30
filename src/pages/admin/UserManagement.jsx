@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ChevronRight } from 'lucide-react'
+import { Check, X, ChevronRight, Loader2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -62,11 +62,18 @@ export function UserManagement() {
 
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [filter, setFilter] = useState('all')
 
   const filtered = useMemo(() => {
+    let result = users
+    if (filter === 'pending') {
+      result = users.filter((u) => u.is_active === false)
+    } else if (filter === 'approved') {
+      result = users.filter((u) => u.is_active === true)
+    }
     const q = search.trim().toLowerCase()
-    if (!q) return users
-    return users.filter(
+    if (!q) return result
+    return result.filter(
       (u) =>
         (u.nama || '').toLowerCase().includes(q) ||
         (u.email || '').toLowerCase().includes(q) ||
@@ -74,7 +81,7 @@ export function UserManagement() {
         (u.nomor_wa || '').toLowerCase().includes(q) ||
         (u.phone_whatsapp || '').toLowerCase().includes(q),
     )
-  }, [users, search])
+  }, [users, search, filter])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / USERS_PAGE_SIZE))
   const effectivePage = Math.max(1, Math.min(page, pageCount))
@@ -159,6 +166,38 @@ export function UserManagement() {
     },
   })
 
+  const approveMutation = useMutation({
+    mutationFn: async (userId) => {
+      const { error } = await supabase.from('profiles').update({ is_active: true }).eq('id', userId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      toast.success('Pengguna disetujui.')
+      qc.invalidateQueries({ queryKey: ['profiles_admin'] })
+      qc.invalidateQueries({ queryKey: ['client_directory'] })
+    },
+    onError: (e) => {
+      toast.error(e.message ?? 'Gagal menyetujui.')
+    },
+  })
+
+  const rejectMutation = useMutation({
+    mutationFn: async (userId) => {
+      const { error: authErr } = await supabase.auth.admin.deleteUser(userId)
+      if (authErr) throw authErr
+      const { error: profileErr } = await supabase.from('profiles').delete().eq('id', userId)
+      if (profileErr) throw profileErr
+    },
+    onSuccess: () => {
+      toast.success('Pengguna ditolak.')
+      qc.invalidateQueries({ queryKey: ['profiles_admin'] })
+      qc.invalidateQueries({ queryKey: ['client_directory'] })
+    },
+    onError: (e) => {
+      toast.error(e.message ?? 'Gagal menolak.')
+    },
+  })
+
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl">
@@ -191,21 +230,58 @@ export function UserManagement() {
 
             <div className="border-t border-border/60 bg-background">
               <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 md:px-5">
-                <Input
-                  type="search"
-                  placeholder="Cari nama, email, instalasi, WA…"
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value)
-                    setPage(1)
-                  }}
-                  className="h-9 w-full border-input bg-background text-foreground shadow-sm sm:max-w-md"
-                  autoComplete="off"
-                />
-                <p className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                  {filtered.length} cocok
-                  {search ? ` · ${users.length} total` : ''}
-                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    type="search"
+                    placeholder="Cari nama, email, instalasi, WA…"
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value)
+                      setPage(1)
+                    }}
+                    className="h-9 w-full border-input bg-background text-foreground shadow-sm sm:max-w-md"
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    variant={filter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setFilter('all')
+                      setPage(1)
+                    }}
+                    className="h-8"
+                  >
+                    Semua
+                  </Button>
+                  <Button
+                    variant={filter === 'pending' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setFilter('pending')
+                      setPage(1)
+                    }}
+                    className="h-8"
+                  >
+                    Pending
+                  </Button>
+                  <Button
+                    variant={filter === 'approved' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setFilter('approved')
+                      setPage(1)
+                    }}
+                    className="h-8"
+                  >
+                    Approved
+                  </Button>
+                  <p className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                    {filtered.length} cocok
+                    {search || filter !== 'all' ? ` · ${users.length} total` : ''}
+                  </p>
+                </div>
               </div>
 
               {isLoading ? (
@@ -220,10 +296,9 @@ export function UserManagement() {
                 <>
                   <div className="divide-y divide-border border-t border-border/60 md:hidden">
                     {pageSlice.map((u) => (
-                      <Link
+                      <div
                         key={u.id}
-                        to={`/admin/users/${u.id}`}
-                        className="flex min-h-10 items-center gap-2 bg-card px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 active:bg-muted/70"
+                        className="flex min-h-10 items-center gap-2 bg-card px-3 py-2 text-left text-sm"
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
@@ -233,11 +308,11 @@ export function UserManagement() {
                             </Badge>
                             {u.is_active === false ? (
                               <Badge variant="destructive" className="px-1.5 py-0 text-[10px]">
-                                Nonaktif
+                                Pending
                               </Badge>
                             ) : (
                               <Badge className="shrink-0 bg-primary/12 px-1.5 py-0 text-[10px] text-primary">
-                                Aktif
+                                Approved
                               </Badge>
                             )}
                           </div>
@@ -245,8 +320,49 @@ export function UserManagement() {
                             {u.email}
                           </p>
                         </div>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                      </Link>
+                        <div className="flex items-center gap-1">
+                          {u.is_active === false && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-green-600 hover:bg-green-50 hover:text-green-700"
+                                onClick={() => approveMutation.mutate(u.id)}
+                                disabled={approveMutation.isPending}
+                              >
+                                {approveMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Check className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                onClick={() => rejectMutation.mutate(u.id)}
+                                disabled={rejectMutation.isPending}
+                              >
+                                {rejectMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <X className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            asChild
+                          >
+                            <Link to={`/admin/users/${u.id}`}>
+                              <ChevronRight className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
                     ))}
                   </div>
 
@@ -255,43 +371,42 @@ export function UserManagement() {
                       <Table className="text-xs">
                         <TableHeader className="sticky top-0 z-[1] bg-table-header shadow-[0_1px_0_0_var(--color-table-line)]">
                           <TableRow className="border-table-line hover:bg-transparent">
-                            <TableHead className="h-8 w-[28%] min-w-[8rem] py-1.5 pl-3 pr-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-[26%] min-w-[8rem] py-1.5 pl-3 pr-1 font-semibold text-table-header-foreground">
                               Nama
                             </TableHead>
                             <TableHead className="h-8 min-w-[10rem] py-1.5 px-1 font-semibold text-table-header-foreground">
                               Email
                             </TableHead>
-                            <TableHead className="h-8 w-[7rem] py-1.5 px-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-[6.5rem] py-1.5 px-1 font-semibold text-table-header-foreground">
                               Peran
                             </TableHead>
-                            <TableHead className="h-8 w-[5.5rem] py-1.5 px-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-[6rem] py-1.5 px-1 font-semibold text-table-header-foreground">
                               Status
                             </TableHead>
-                            <TableHead className="h-8 w-[6.5rem] py-1.5 px-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-[6rem] py-1.5 px-1 font-semibold text-table-header-foreground">
                               Terdaftar
                             </TableHead>
-                            <TableHead className="h-8 w-8 p-1 pr-2" aria-hidden />
+                            <TableHead className="h-8 w-[10rem] py-1.5 px-1 font-semibold text-table-header-foreground text-right">
+                              Aksi
+                            </TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {pageSlice.map((u) => (
                             <TableRow
                               key={u.id}
-                              role="link"
-                              tabIndex={0}
-                              className="cursor-pointer border-table-line hover:bg-table-row-hover"
-                              onClick={() => navigate(`/admin/users/${u.id}`)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault()
-                                  navigate(`/admin/users/${u.id}`)
-                                }
-                              }}
+                              className="border-table-line hover:bg-table-row-hover"
                             >
-                              <TableCell className="py-1.5 pl-3 pr-1 font-medium">
+                              <TableCell
+                                className="py-1.5 pl-3 pr-1 font-medium cursor-pointer hover:underline"
+                                onClick={() => navigate(`/admin/users/${u.id}`)}
+                              >
                                 <span className="line-clamp-2">{u.nama}</span>
                               </TableCell>
-                              <TableCell className="max-w-0 py-1.5 px-1">
+                              <TableCell
+                                className="max-w-0 py-1.5 px-1 cursor-pointer hover:underline"
+                                onClick={() => navigate(`/admin/users/${u.id}`)}
+                              >
                                 <span className="block truncate text-muted-foreground" title={u.email}>
                                   {u.email}
                                 </span>
@@ -304,20 +419,62 @@ export function UserManagement() {
                               <TableCell className="py-1.5 px-1">
                                 {u.is_active === false ? (
                                   <Badge variant="destructive" className="text-[10px]">
-                                    Off
+                                    Pending
                                   </Badge>
                                 ) : (
-                                  <Badge className="text-[10px]">Aktif</Badge>
+                                  <Badge className="text-[10px]">Approved</Badge>
                                 )}
                               </TableCell>
                               <TableCell className="whitespace-nowrap py-1.5 px-1 text-muted-foreground">
                                 {formatDateId(u.created_at?.slice(0, 10))}
                               </TableCell>
-                              <TableCell className="py-1 pr-2 pl-0">
-                                <ChevronRight
-                                  className="mx-auto h-3.5 w-3.5 text-muted-foreground"
-                                  aria-hidden
-                                />
+                              <TableCell className="py-1 px-1 pr-2 text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  {u.is_active === false && (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 text-green-600 hover:bg-green-50 hover:text-green-700"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          approveMutation.mutate(u.id)
+                                        }}
+                                        disabled={approveMutation.isPending}
+                                      >
+                                        {approveMutation.isPending ? (
+                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                          <Check className="h-3.5 w-3.5" />
+                                        )}
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          rejectMutation.mutate(u.id)
+                                        }}
+                                        disabled={rejectMutation.isPending}
+                                      >
+                                        {rejectMutation.isPending ? (
+                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                          <X className="h-3.5 w-3.5" />
+                                        )}
+                                      </Button>
+                                    </>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => navigate(`/admin/users/${u.id}`)}
+                                  >
+                                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))}

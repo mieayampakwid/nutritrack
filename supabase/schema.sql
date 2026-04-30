@@ -125,7 +125,7 @@ begin
     r := 'klien';
   end if;
 
-  v_is_active := (r <> 'ahli_gizi');
+  v_is_active := false;
 
   v_berat := nullif(trim(coalesce(new.raw_user_meta_data->>'berat_badan', '')), '')::numeric;
   v_tinggi := nullif(trim(coalesce(new.raw_user_meta_data->>'tinggi_badan', '')), '')::numeric;
