@@ -209,6 +209,30 @@ export function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setBusy(false)
     if (error) {
+      // Check if error is about email confirmation and user might be pending admin approval
+      const isEmailConfirmError =
+        error.message?.toLowerCase().includes('email not confirmed') ||
+        error.message?.toLowerCase().includes('email confirmation')
+
+      if (isEmailConfirmError) {
+        // Try to get user profile to check if they exist (registered but pending approval)
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('is_active')
+          .eq('email', email.trim())
+          .maybeSingle()
+
+        if (profileData) {
+          // User exists but is pending admin approval
+          const newCount = failCount + 1
+          setFailCount(newCount)
+          const lockMs = getLockoutDuration(newCount)
+          if (lockMs > 0) setLockedUntil(Date.now() + lockMs)
+          toast.error('Akun Anda belum diverifikasi oleh admin. Hubungi admin untuk aktivasi.')
+          return
+        }
+      }
+
       const newCount = failCount + 1
       setFailCount(newCount)
       const lockMs = getLockoutDuration(newCount)
