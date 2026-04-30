@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Eye, EyeOff, Loader2, MailCheck } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -75,15 +75,16 @@ export function RegisterPage() {
         <div className="animate-card-in">
           <Card className="border border-border/55 bg-card/95 shadow-[0_10px_40px_-18px_rgba(0,0,0,0.18)]">
             <CardContent className="flex flex-col items-center gap-4 px-8 py-10 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-                <MailCheck className="h-7 w-7 text-primary" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/20">
+                <Clock className="h-7 w-7 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="space-y-1.5">
-                <h1 className="text-lg font-bold tracking-tight">Cek email kamu</h1>
+                <h1 className="text-lg font-bold tracking-tight">Menunggu Persetujuan Admin</h1>
                 <p className="text-sm text-muted-foreground">
-                  Kami telah mengirimkan tautan konfirmasi ke{' '}
-                  <span className="font-medium text-foreground">{form.email}</span>. Buka email dan
-                  klik tautan tersebut untuk mengaktifkan akun.
+                  Akun kamu telah berhasil dibuat dengan email{' '}
+                  <span className="font-medium text-foreground">{form.email}</span>. Admin akan
+                  meninjau dan menyetujui pendaftaran kamu. Kamu akan bisa masuk setelah
+                  disetujui.
                 </p>
               </div>
               <Link to="/login" className="text-sm font-medium text-primary hover:underline">
@@ -127,6 +128,7 @@ export function RegisterPage() {
       email: form.email.trim(),
       password: form.password,
       options: {
+        emailConfirm: false,
         data: {
           nama: form.nama.trim(),
           role: form.role,
