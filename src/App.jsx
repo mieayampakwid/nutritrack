@@ -7,6 +7,14 @@ import { useAuth, AuthProvider } from '@/hooks/useAuth'
 const LoginPage = lazy(() =>
   import('@/pages/auth/LoginPage').then((m) => ({ default: m.LoginPage })),
 )
+const RegisterPage = lazy(() =>
+  import('@/pages/auth/RegisterPage').then((m) => ({ default: m.RegisterPage })),
+)
+const ApprovalPendingPage = lazy(() =>
+  import('@/pages/auth/ApprovalPendingPage').then((m) => ({
+    default: m.ApprovalPendingPage,
+  })),
+)
 const AdminDashboard = lazy(() =>
   import('@/pages/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
 )
@@ -69,22 +77,24 @@ function dashboardPath(role) {
 }
 
 function RootRedirect() {
-  const { session, profile, loading } = useAuth()
+  const { session, profile, loading, isInactive } = useAuth()
   if (loading) {
     return <AppShellLoadingSkeleton />
   }
   if (!session || !profile) return <Navigate to="/login" replace />
+  if (isInactive) return <Navigate to="/menunggu-persetujuan" replace />
   return <Navigate to={dashboardPath(profile.role)} replace />
 }
 
 function RequireAuth({ roles, children }) {
-  const { session, profile, loading } = useAuth()
+  const { session, profile, loading, isInactive } = useAuth()
   const location = useLocation()
   if (loading) {
     return <AppShellLoadingSkeleton />
   }
   if (!session) return <Navigate to="/login" replace state={{ from: location }} />
   if (!profile) return <Navigate to="/login" replace state={{ from: location }} />
+  if (isInactive) return <Navigate to="/menunggu-persetujuan" replace />
   if (roles && !roles.includes(profile.role)) {
     return <Navigate to={dashboardPath(profile.role)} replace />
   }
@@ -100,6 +110,8 @@ function AppRoutes() {
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/menunggu-persetujuan" element={<ApprovalPendingPage />} />
         <Route path="/" element={<RootRedirect />} />
 
         <Route

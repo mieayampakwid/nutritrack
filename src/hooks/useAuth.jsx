@@ -77,11 +77,6 @@ export function AuthProvider({ children }) {
       } else {
         setProfileLoadError(null)
         setProfile(data)
-        if (data && data.is_active === false) {
-          await supabase.auth.signOut()
-          setProfile(null)
-          setSession(null)
-        }
       }
       setLoading(false)
     })()
@@ -114,9 +109,11 @@ export function AuthProvider({ children }) {
     onTimeout,
   })
 
+  const isInactive = profile?.is_active === false
+
   return (
     <AuthContext.Provider
-      value={{ session, profile, loading, profileLoadError, signOut, refreshProfile }}
+      value={{ session, profile, loading, profileLoadError, signOut, refreshProfile, isInactive }}
     >
       {children}
     </AuthContext.Provider>

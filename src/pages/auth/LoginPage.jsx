@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { AdBannerCarousel } from '@/components/dashboard/AdBannerCarousel'
@@ -157,6 +157,10 @@ export function LoginPage() {
     return <Navigate to={to} replace />
   }
 
+  if (session && profile && profile.is_active === false) {
+    return <Navigate to="/menunggu-persetujuan" replace />
+  }
+
   if (session && !loading && !profile) {
     return (
       <LoginPageChrome>
@@ -287,6 +291,12 @@ export function LoginPage() {
                     </p>
                   )}
                 </form>
+                <p className="text-center text-xs text-muted-foreground">
+                  Belum punya akun?{' '}
+                  <Link to="/register" className="font-medium text-primary hover:underline">
+                    Daftar
+                  </Link>
+                </p>
               </div>
             </CardContent>
           </Card>
