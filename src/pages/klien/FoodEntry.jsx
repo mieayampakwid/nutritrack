@@ -51,7 +51,7 @@ export function FoodEntry() {
             className={cn(
               'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:delay-75 motion-safe:fill-mode-both',
               'relative overflow-hidden p-4 shadow-sm sm:p-5',
-              'border-border/70 bg-white/90 text-neutral-900 ring-1 ring-black/[0.05] backdrop-blur-sm',
+              'border-border/70 bg-white/90 text-neutral-900 ring-1 ring-black/5 backdrop-blur-sm',
               'max-md:shadow-md md:shadow-[0_1px_0_rgba(255,255,255,0.55)_inset,0_18px_48px_-18px_rgba(0,0,0,0.22)]',
               MOBILE_DASHBOARD_CARD_SHELL,
             )}

@@ -221,7 +221,7 @@ export function UserManagement() {
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl">
-        <Card className="overflow-hidden rounded-2xl border border-border/80 bg-card text-card-foreground shadow-sm ring-1 ring-black/[0.04]">
+        <Card className="overflow-hidden rounded-2xl border border-border/80 bg-card text-card-foreground shadow-sm ring-1 ring-black/4">
           <CardContent className="p-0">
             <div className="p-4 md:p-5">
               <div>
@@ -389,24 +389,24 @@ export function UserManagement() {
                   <div className="hidden border-t border-border/60 md:block">
                     <div className="max-h-[min(70vh,720px)] overflow-auto bg-card">
                       <Table className="text-xs">
-                        <TableHeader className="sticky top-0 z-[1] bg-table-header shadow-[0_1px_0_0_var(--color-table-line)]">
+                        <TableHeader className="sticky top-0 z-1 bg-table-header shadow-[0_1px_0_0_var(--color-table-line)]">
                           <TableRow className="border-table-line hover:bg-transparent">
-                            <TableHead className="h-8 w-[26%] min-w-[8rem] py-1.5 pl-3 pr-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-[26%] min-w-32 py-1.5 pl-3 pr-1 font-semibold text-table-header-foreground">
                               Nama
                             </TableHead>
-                            <TableHead className="h-8 min-w-[10rem] py-1.5 px-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 min-w-40 py-1.5 px-1 font-semibold text-table-header-foreground">
                               Email
                             </TableHead>
-                            <TableHead className="h-8 w-[6.5rem] py-1.5 px-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-26 py-1.5 px-1 font-semibold text-table-header-foreground">
                               Peran
                             </TableHead>
-                            <TableHead className="h-8 w-[6rem] py-1.5 px-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-24 py-1.5 px-1 font-semibold text-table-header-foreground">
                               Status
                             </TableHead>
-                            <TableHead className="h-8 w-[6rem] py-1.5 px-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-24 py-1.5 px-1 font-semibold text-table-header-foreground">
                               Terdaftar
                             </TableHead>
-                            <TableHead className="h-8 w-[10rem] py-1.5 px-1 font-semibold text-table-header-foreground text-right">
+                            <TableHead className="h-8 w-40 py-1.5 px-1 font-semibold text-table-header-foreground text-right">
                               Aksi
                             </TableHead>
                           </TableRow>

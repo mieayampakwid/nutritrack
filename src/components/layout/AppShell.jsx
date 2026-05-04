@@ -111,7 +111,7 @@ function SidebarContent({ className }) {
                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
               )}
             >
-              <IconComponent className="h-4 w-4 shrink-0 md:h-[1.125rem] md:w-[1.125rem]" />
+              <IconComponent className="h-4 w-4 shrink-0 md:h-4.5 md:w-4.5" />
               {item.label}
             </Link>
           )
@@ -129,7 +129,7 @@ function SidebarContent({ className }) {
                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
               )}
             >
-              <IconComponent className="h-4 w-4 shrink-0 md:h-[1.125rem] md:w-[1.125rem]" />
+              <IconComponent className="h-4 w-4 shrink-0 md:h-4.5 md:w-4.5" />
               {item.label}
             </Link>
           )
@@ -199,7 +199,7 @@ function MobileBottomNav() {
   return (
     <>
       <nav className="fixed inset-x-0 bottom-5 z-40 px-4 safe-bottom md:hidden">
-        <Card className="pointer-events-auto mx-auto w-full max-w-lg rounded-[2rem] border border-border/70 bg-transparent px-2 py-2 shadow-[0_12px_30px_rgba(0,0,0,0.18)] ring-1 ring-foreground/10 backdrop-blur-xl backdrop-saturate-150">
+        <Card className="pointer-events-auto mx-auto w-full max-w-lg rounded-4xl border border-border/70 bg-transparent px-2 py-2 shadow-[0_12px_30px_rgba(0,0,0,0.18)] ring-1 ring-foreground/10 backdrop-blur-xl backdrop-saturate-150">
           <LayoutGroup id="mobile-bottom-nav">
             <div
               className="relative z-10 grid gap-0.5"
@@ -337,7 +337,7 @@ export function AppShell({
 
   return (
     <div className="flex h-dvh min-h-screen overflow-hidden bg-background">
-      <aside className="z-10 hidden min-h-0 w-56 flex-shrink-0 flex-col bg-sidebar p-3 text-sidebar-foreground shadow-[4px_0_15px_rgba(0,0,0,0.1)] md:flex md:w-60 md:p-4 lg:w-64 lg:p-5">
+      <aside className="z-10 hidden min-h-0 w-56 shrink-0 flex-col bg-sidebar p-3 text-sidebar-foreground shadow-[4px_0_15px_rgba(0,0,0,0.1)] md:flex md:w-60 md:p-4 lg:w-64 lg:p-5">
         <SidebarBrand />
         <SidebarContent className="min-h-0 flex-1" />
       </aside>

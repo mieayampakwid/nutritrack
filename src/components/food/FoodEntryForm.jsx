@@ -94,11 +94,11 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
           animate={{ opacity: 1, y: 0 }}
           exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
           transition={{ duration: reduceMotion ? 0.15 : 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.07] via-background to-teal-500/[0.06] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]"
+          className="relative overflow-hidden rounded-2xl border border-primary/25 bg-linear-to-br from-primary/[0.07] via-background to-teal-500/6 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]"
         >
           {!reduceMotion ? (
             <Motion.div
-              className="pointer-events-none absolute -left-1/2 top-0 h-px w-[200%] bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+              className="pointer-events-none absolute -left-1/2 top-0 h-px w-[200%] bg-linear-to-r from-transparent via-primary/40 to-transparent"
               animate={{ x: ['-30%', '30%'] }}
               transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
             />
@@ -121,7 +121,7 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
           ) : null}
 
           <div className="relative flex gap-3.5 sm:gap-4">
-            <div className="relative flex h-[3.25rem] w-[3.25rem] shrink-0 items-center justify-center sm:h-14 sm:w-14">
+            <div className="relative flex h-13 w-13 shrink-0 items-center justify-center sm:h-14 sm:w-14">
               <div className="absolute inset-0 rounded-full border-2 border-primary/15" />
               <Motion.div
                 className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary border-r-primary/40"
@@ -147,14 +147,14 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
 
             <div className="min-w-0 flex-1 space-y-2 pt-0.5">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="font-[family-name:var(--font-greeting)] text-sm font-semibold tracking-tight text-foreground sm:text-base">
+                <p className="font-greeting text-sm font-semibold tracking-tight text-foreground sm:text-base">
                   Menganalisa dengan AI
                 </p>
                 <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                   tunggu sebentar
                 </span>
               </div>
-              <div className="relative min-h-[2.75rem] sm:min-h-[2.5rem]">
+              <div className="relative min-h-11 sm:min-h-10">
                 <AnimatePresence mode="wait">
                   <Motion.p
                     key={lineIdx}
@@ -173,12 +173,12 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
                 {!reduceMotion ? (
                   <>
                     <Motion.div
-                      className="absolute inset-y-0 left-0 w-2/5 rounded-full bg-gradient-to-r from-primary/20 via-primary to-primary/20"
+                      className="absolute inset-y-0 left-0 w-2/5 rounded-full bg-linear-to-r from-primary/20 via-primary to-primary/20"
                       initial={false}
                       animate={{ left: ['-40%', '100%'] }}
                       transition={barTransition}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/25 to-transparent" />
                   </>
                 ) : (
                   <div className="h-full w-full rounded-full bg-primary/40" />
@@ -529,7 +529,7 @@ export function FoodEntryForm({ userId }) {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-teal-700/85">
                   Struk estimasi
                 </p>
-                <p className="mt-2 font-[family-name:var(--font-greeting)] text-[1.35rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-2xl">
+                <p className="mt-2 font-greeting text-[1.35rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-2xl">
                   Tersimpan
                 </p>
                 <p className="mx-auto mt-2 max-w-[18rem] text-xs leading-relaxed text-neutral-600">
@@ -611,7 +611,7 @@ export function FoodEntryForm({ userId }) {
                 role="presentation"
               />
 
-              <div className="relative bg-gradient-to-r from-teal-600/[0.09] via-teal-600/[0.05] to-transparent px-5 py-5 sm:px-7">
+              <div className="relative bg-linear-to-r from-teal-600/9 via-teal-600/5 to-transparent px-5 py-5 sm:px-7">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-teal-900/70">
@@ -674,7 +674,7 @@ export function FoodEntryForm({ userId }) {
             )}
           >
             <div className="shrink-0 self-stretch overflow-hidden rounded-l-xl" aria-hidden>
-              <div className="h-full w-1 bg-gradient-to-b from-primary/55 via-primary/35 to-primary/15 sm:w-1.5" />
+              <div className="h-full w-1 bg-linear-to-b from-primary/55 via-primary/35 to-primary/15 sm:w-1.5" />
             </div>
             <div className="min-w-0 flex-1 p-3 sm:p-3.5">
               <div className="flex items-start gap-3">
@@ -728,7 +728,7 @@ export function FoodEntryForm({ userId }) {
                   className="shrink-0 self-stretch overflow-hidden rounded-l-xl"
                   aria-hidden
                 >
-                  <div className="h-full w-1 bg-gradient-to-b from-primary/55 via-primary/35 to-primary/15 motion-safe:transition-opacity motion-safe:group-hover:opacity-100 sm:w-1.5" />
+                  <div className="h-full w-1 bg-linear-to-b from-primary/55 via-primary/35 to-primary/15 motion-safe:transition-opacity motion-safe:group-hover:opacity-100 sm:w-1.5" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 border-b border-border/50 bg-muted/25 px-3 py-2">
@@ -902,7 +902,7 @@ export function FoodEntryForm({ userId }) {
         )}
         <Button
           type="button"
-          className="order-1 h-9 w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:order-2 sm:w-auto sm:min-w-[11rem]"
+          className="order-1 h-9 w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:order-2 sm:w-auto sm:min-w-44"
           disabled={loading}
           onClick={handleAnalyze}
         >
