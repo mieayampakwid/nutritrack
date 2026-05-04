@@ -150,11 +150,11 @@ export function ParticipantEvaluation() {
             'max-md:rounded-2xl max-md:border max-md:border-border/80 max-md:bg-card max-md:p-4 max-md:shadow-sm max-md:ring-1 max-md:ring-black/4',
           )}
         >
-          <h1 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+          <h1 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground sm:text-xl md:text-white">
             <CalendarRange className="h-5 w-5 shrink-0 text-primary sm:h-6 sm:w-6" aria-hidden />
             Evaluasi peserta
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5 md:text-white/85">
             Pilih klien dan rentang minimal 14 hari. Tinjau log makan, data antropometri terbaru, dan simpan
             rekomendasi untuk periode tersebut.
           </p>

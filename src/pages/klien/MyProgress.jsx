@@ -53,7 +53,7 @@ export function MyProgress() {
   return (
     <AppShell>
       <div className="mx-auto max-w-5xl space-y-4 pb-1">
-        <h1 className="text-center text-lg font-semibold tracking-tight text-white max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)] sm:text-xl md:text-foreground">
+        <h1 className="text-center text-lg font-semibold tracking-tight text-white max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)] sm:text-xl md:text-white">
           Progres pengukuran
         </h1>
 

@@ -96,8 +96,8 @@ export function FoodUnitMaster() {
       <div className="mx-auto max-w-3xl space-y-5 md:space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="max-md:px-0.5">
-            <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">Master ukuran</h1>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5">
+            <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl md:text-white">Master ukuran</h1>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5 md:text-white/85">
               Daftar satuan porsi (mis. centong, sendok) untuk entri makanan. Hapus hanya jika tidak dipakai data.
             </p>
           </div>

@@ -31,10 +31,10 @@ export function ClientDataEntryPicker() {
     <AppShell>
       <div className="mx-auto max-w-2xl space-y-4">
         <div>
-          <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl md:text-white">
             Entri data klien
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground md:text-white/85">
             Pilih klien untuk mengisi BMI dan asesmen Harris–Benedict (kartu A &amp; B).
           </p>
         </div>

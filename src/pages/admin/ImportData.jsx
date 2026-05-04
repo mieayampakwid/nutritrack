@@ -121,8 +121,8 @@ export function ImportData() {
     <AppShell>
       <div className="mx-auto max-w-4xl space-y-5 md:space-y-6">
         <div className="max-md:px-0.5">
-          <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">Impor Excel</h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl md:text-white">Impor Excel</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5 md:text-white/85">
             Unggah spreadsheet untuk membuat akun klien massal. Pratinjau baris di bawah sebelum menjalankan impor.
           </p>
         </div>

@@ -82,10 +82,10 @@ export function ClientDirectory({ linkPrefix, title }) {
     <div className="mx-auto max-w-7xl space-y-6 md:space-y-7">
       {title ? (
         <div className="max-md:px-0.5 max-md:pb-1">
-          <h1 className="text-xl font-semibold tracking-tight text-white max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)] sm:text-2xl md:text-foreground md:drop-shadow-none">
+          <h1 className="text-xl font-semibold tracking-tight text-white max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)] sm:text-2xl md:text-white md:drop-shadow-none">
             {title}
           </h1>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/90 max-md:drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] sm:text-[0.9375rem] md:mt-2 md:text-muted-foreground md:drop-shadow-none">
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/90 max-md:drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] sm:text-[0.9375rem] md:mt-2 md:text-white/85 md:drop-shadow-none">
             Ringkasan antropometri dan asupan kalori terbaru. Ketuk kartu untuk detail.
           </p>
         </div>
