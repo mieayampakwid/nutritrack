@@ -37,6 +37,10 @@ Jika input ADALAH makanan/minuman manusia yang valid, balas dengan:
 }
 
 Bersikap tegas tetapi adil. Makanan daerah/tradisional tetap valid.
+Jika diberikan beberapa input sekaligus, tetap balas HANYA SATU JSON object:
+- valid=true bila SEMUA input adalah makanan/minuman manusia yang valid
+- valid=false bila ADA minimal satu input yang tidak valid, dan "message" harus menyebutkan input mana yang tidak valid
+
 Balas hanya dalam JSON. Jangan berikan penjelasan di luar JSON.`
 
 function buildUserMessage(items: string[]) {
@@ -54,6 +58,92 @@ function isValidateResult(x: unknown): x is ValidateResult {
     typeof (x as { valid: unknown }).valid === 'boolean' &&
     (!('message' in x) || typeof (x as { message?: unknown }).message === 'string')
   )
+}
+
+type ValidatePerItem = { valid: boolean; message?: string; input?: string }
+
+function looksLikeValidatePerItem(x: unknown): x is ValidatePerItem {
+  return (
+    x != null &&
+    typeof x === 'object' &&
+    'valid' in x &&
+    typeof (x as { valid: unknown }).valid === 'boolean' &&
+    (!('message' in x) || typeof (x as { message?: unknown }).message === 'string') &&
+    (!('input' in x) || typeof (x as { input?: unknown }).input === 'string')
+  )
+}
+
+function tryExtractJson(text: string): unknown | null {
+  const raw = text.replace(/```(?:json)?|```/gi, '').trim()
+  if (!raw) return null
+
+  try {
+    return JSON.parse(raw)
+  } catch {
+    // fallthrough: sometimes the model returns extra text around JSON
+  }
+
+  const firstObj = raw.indexOf('{')
+  const lastObj = raw.lastIndexOf('}')
+  if (firstObj !== -1 && lastObj !== -1 && lastObj > firstObj) {
+    const slice = raw.slice(firstObj, lastObj + 1)
+    try {
+      return JSON.parse(slice)
+    } catch {
+      // keep trying
+    }
+  }
+
+  const firstArr = raw.indexOf('[')
+  const lastArr = raw.lastIndexOf(']')
+  if (firstArr !== -1 && lastArr !== -1 && lastArr > firstArr) {
+    const slice = raw.slice(firstArr, lastArr + 1)
+    try {
+      return JSON.parse(slice)
+    } catch {
+      // noop
+    }
+  }
+
+  return null
+}
+
+function foldValidateResult(parsed: unknown, items: string[]): ValidateResult | null {
+  if (isValidateResult(parsed)) return parsed
+
+  // Some models respond with per-item array. Fold it into a single verdict.
+  if (Array.isArray(parsed) && parsed.length > 0 && parsed.every(looksLikeValidatePerItem)) {
+    const invalids = parsed
+      .map((r, idx) => ({ r, idx }))
+      .filter(({ r }) => r.valid === false)
+
+    if (invalids.length === 0) return { valid: true }
+
+    const listed = invalids
+      .map(({ r, idx }) => r.input?.trim() || items[idx] || `Item #${idx + 1}`)
+      .filter(Boolean)
+      .slice(0, 6)
+      .join(', ')
+
+    const msgFromModel = invalids.map(({ r }) => r.message?.trim()).find(Boolean)
+    const message =
+      msgFromModel ||
+      (listed
+        ? `"${listed}" sepertinya bukan makanan/minuman yang bisa kami nilai. Silakan masukkan makanan atau hidangan yang nyata agar kami dapat menghitung nilai gizinya.`
+        : 'Ada input yang bukan makanan/minuman yang bisa kami nilai. Silakan periksa kembali.')
+
+    return { valid: false, message }
+  }
+
+  // Some models wrap results: { result: {...} } or { results: [...] }
+  if (parsed != null && typeof parsed === 'object') {
+    const maybe = parsed as Record<string, unknown>
+    if (isValidateResult(maybe.result)) return maybe.result
+    if (Array.isArray(maybe.results)) return foldValidateResult(maybe.results, items)
+    if (Array.isArray(maybe.data)) return foldValidateResult(maybe.data, items)
+  }
+
+  return null
 }
 
 Deno.serve(async (req) => {
@@ -192,23 +282,23 @@ Deno.serve(async (req) => {
       })
     }
 
-    const clean = raw.replace(/```json|```/g, '').trim()
-    const parsed: unknown = JSON.parse(clean)
-    if (!isValidateResult(parsed)) {
+    const parsed = tryExtractJson(raw)
+    const folded = parsed == null ? null : foldValidateResult(parsed, items)
+    if (!folded) {
       return new Response(JSON.stringify({ error: 'Format AI tidak dikenali' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    if (parsed.valid === false && (!parsed.message || !parsed.message.trim())) {
+    if (folded.valid === false && (!folded.message || !folded.message.trim())) {
       return new Response(JSON.stringify({ error: 'Format AI tidak dikenali' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    return new Response(JSON.stringify(parsed), {
+    return new Response(JSON.stringify(folded), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
