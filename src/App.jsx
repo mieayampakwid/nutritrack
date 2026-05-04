@@ -42,6 +42,14 @@ const AllClients = lazy(() =>
 const FoodLogMonitor = lazy(() =>
   import('@/pages/staff/FoodLogMonitor').then((m) => ({ default: m.FoodLogMonitor })),
 )
+const ParticipantEvaluation = lazy(() =>
+  import('@/pages/staff/ParticipantEvaluation').then((m) => ({
+    default: m.ParticipantEvaluation,
+  })),
+)
+const ClientChangeLog = lazy(() =>
+  import('@/pages/staff/ClientChangeLog').then((m) => ({ default: m.ClientChangeLog })),
+)
 const ClientUserDataEntry = lazy(() =>
   import('@/pages/staff/ClientUserDataEntry').then((m) => ({ default: m.ClientUserDataEntry })),
 )
@@ -182,6 +190,14 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/admin/clients/:id/change-log"
+          element={
+            <RequireAuth roles={['admin']}>
+              <ClientChangeLog />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/admin/data-entry"
           element={
             <RequireAuth roles={['admin']}>
@@ -202,6 +218,14 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['admin']}>
               <FoodLogMonitor />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/evaluation"
+          element={
+            <RequireAuth roles={['admin']}>
+              <ParticipantEvaluation />
             </RequireAuth>
           }
         />
@@ -239,6 +263,14 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/gizi/clients/:id/change-log"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <ClientChangeLog />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/gizi/data-entry"
           element={
             <RequireAuth roles={['ahli_gizi']}>
@@ -251,6 +283,14 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['ahli_gizi']}>
               <FoodLogMonitor />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/gizi/evaluation"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <ParticipantEvaluation />
             </RequireAuth>
           }
         />

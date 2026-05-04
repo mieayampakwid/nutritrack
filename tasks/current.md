@@ -8,10 +8,10 @@ Optional reference: `LAPER_Backlog_Sprint_Prototype_Perfection_.md` (original do
 
 | Field | Value |
 | --- | --- |
-| **Status** | Sprint 1 complete |
-| **Last touched** | Sprint 1 verified against code: #5 + #1 + #2 implemented |
+| **Status** | Sprint 2 complete |
+| **Last touched** | Sprint 2: #3 waist + change log (DB triggers + `/…/change-log`); #4 evaluation page (`/gizi/evaluation`, `/admin/evaluation`); Vitest passing |
 | **Blockers** | none |
-| **Resume here** | Start Sprint 2 with backlog **#3** (extended profile + change log). |
+| **Resume here** | Apply `supabase/migration_sprint2_anthropometric_log.sql` on Supabase if not yet run; then continue next backlog / Sprint 3. |
 
 ---
 
@@ -138,5 +138,5 @@ Order: **#3 → #4**. **#4** depends on extended profile/anthropometric data fro
 
 **Sprint 2** (deferred until Sprint 1 complete unless explicitly parallelized)
 
-- [ ] #3 — Extended profile fields, BMI, Harris-Benedict, change log + dedicated log page
-- [ ] #4 — Evaluation page (≥2 week range, food log + latest anthropometrics, saved recommendations)
+- [x] #3 — Extended profile fields, BMI, Harris-Benedict, change log + dedicated log page
+- [x] #4 — Evaluation page (≥2 week range, food log + latest anthropometrics, saved recommendations)

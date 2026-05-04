@@ -188,8 +188,8 @@ export function MyProgress() {
                         <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">
                           {e.bmi == null ? '—' : formatNumberId(e.bmi)}
                         </TableCell>
-                        <TableCell className="min-w-[16rem] px-2 text-left sm:px-3">
-                          {e.usage_notes ?? '—'}
+                        <TableCell className="min-w-[16rem] whitespace-pre-wrap px-2 text-left sm:px-3">
+                          {[e.usage_notes, e.recommendations].filter(Boolean).join('\n\n') || '—'}
                         </TableCell>
                       </TableRow>
                     ))}

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { DashboardHero } from '@/components/dashboard/DashboardHero'
 import {
   Apple,
+  CalendarRange,
   ClipboardList,
   ClipboardPen,
   EllipsisVertical,
@@ -41,7 +42,8 @@ const ROLE_NAV = {
   admin: {
     primary: [
       { to: '/admin/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-      { to: '/admin/food-logs', label: 'Evaluasi', icon: ClipboardList },
+      { to: '/admin/evaluation', label: 'Evaluasi', icon: CalendarRange },
+      { to: '/admin/food-logs', label: 'Log makan', icon: ClipboardList },
       { to: '/admin/users', label: 'User', icon: Users },
     ],
     more: [
@@ -54,7 +56,8 @@ const ROLE_NAV = {
   ahli_gizi: {
     primary: [
       { to: '/gizi/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-      { to: '/gizi/food-logs', label: 'Evaluasi', icon: ClipboardList },
+      { to: '/gizi/evaluation', label: 'Evaluasi', icon: CalendarRange },
+      { to: '/gizi/food-logs', label: 'Log makan', icon: ClipboardList },
       { to: '/gizi/clients', label: 'Klien', icon: Users },
       { to: '/gizi/data-entry', label: 'Entri data', icon: ClipboardPen },
     ],

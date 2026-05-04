@@ -27,6 +27,7 @@ export function MeasurementChart({ measurements, metric }) {
     bmi: m.bmi != null ? Number(m.bmi) : null,
     massa_otot: m.massa_otot != null ? Number(m.massa_otot) : null,
     massa_lemak: m.massa_lemak != null ? Number(m.massa_lemak) : null,
+    lingkar_pinggang: m.lingkar_pinggang != null ? Number(m.lingkar_pinggang) : null,
   }))
 
   const key =
@@ -36,13 +37,16 @@ export function MeasurementChart({ measurements, metric }) {
         ? 'bmi'
         : metric === 'massa_otot'
           ? 'massa_otot'
-          : 'massa_lemak'
+          : metric === 'lingkar_pinggang'
+            ? 'lingkar_pinggang'
+            : 'massa_lemak'
 
   const labels = {
     berat_badan: 'Berat badan (kg)',
     bmi: 'BMI',
     massa_otot: 'Massa otot (kg)',
     massa_lemak: 'Massa lemak (%)',
+    lingkar_pinggang: 'Lingkar pinggang (cm)',
   }
 
   if (!data.length) {

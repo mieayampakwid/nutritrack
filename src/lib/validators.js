@@ -49,5 +49,6 @@ export const bodyMeasurementSchema = z.object({
   tinggi_badan: z.number().positive().max(300).optional().nullable(),
   massa_otot: z.number().min(0).max(200).optional().nullable(),
   massa_lemak: z.number().min(0).max(100).optional().nullable(),
+  lingkar_pinggang: z.number().min(0).max(300).optional().nullable(),
   catatan: z.string().max(1000).optional(),
 })

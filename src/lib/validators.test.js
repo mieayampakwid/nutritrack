@@ -138,8 +138,29 @@ describe('bodyMeasurementSchema', () => {
       tinggi_badan: null,
       massa_otot: null,
       massa_lemak: null,
+      lingkar_pinggang: null,
     })
     expect(result.success).toBe(true)
+  })
+
+  it('accepts valid lingkar_pinggang', () => {
+    const result = bodyMeasurementSchema.safeParse({
+      tanggal: '2025-01-15',
+      berat_badan: 70,
+      tinggi_badan: 170,
+      lingkar_pinggang: 88.5,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects lingkar_pinggang above max', () => {
+    const result = bodyMeasurementSchema.safeParse({
+      tanggal: '2025-01-15',
+      berat_badan: 70,
+      tinggi_badan: 170,
+      lingkar_pinggang: 301,
+    })
+    expect(result.success).toBe(false)
   })
 
   it('rejects berat_badan exceeding max', () => {
