@@ -309,6 +309,16 @@ export function FoodEntryForm({ userId }) {
 
   const unitMap = useMemo(() => Object.fromEntries(units.map((u) => [u.id, u])), [units])
 
+  const filledCount = useMemo(() => {
+    return rows.reduce((acc, r) => {
+      const namaOk = Boolean(r.nama?.trim())
+      const jumlah = r.jumlah === '' ? NaN : Number(r.jumlah)
+      const jumlahOk = Number.isFinite(jumlah) && jumlah > 0
+      const unitOk = Boolean(r.unitId)
+      return acc + (namaOk && jumlahOk && unitOk ? 1 : 0)
+    }, 0)
+  }, [rows])
+
   useEffect(() => {
     setExpandedRowId((ex) => {
       if (!rows.length) return ex
@@ -649,7 +659,7 @@ export function FoodEntryForm({ userId }) {
             variant="secondary"
             className="w-fit shrink-0 text-sm font-medium tabular-nums transition-colors duration-200"
           >
-            {rows.length} item
+            {filledCount}/{rows.length} lengkap
           </Badge>
         </div>
 
