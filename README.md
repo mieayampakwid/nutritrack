@@ -86,6 +86,7 @@ Never expose `OPENAI_API_KEY` via a `VITE_*` variable. See `.env.example` for de
 | `npm test`              | Run Vitest suite once                        |
 | `npm run test:watch`    | Vitest watch mode                            |
 | `npm run test:coverage` | Coverage report (HTML + lcov in `coverage/`) |
+| `npm run test:related`  | Only tests related to changed files          |
 
 ## Testing
 
