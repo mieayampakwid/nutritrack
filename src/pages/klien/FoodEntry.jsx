@@ -12,35 +12,35 @@ export function FoodEntry() {
     <AppShell>
       <div className="mx-auto max-w-2xl space-y-3 pb-1 sm:space-y-4">
         <header className="space-y-2 text-center">
-          <h1 className="text-center text-lg font-semibold tracking-tight text-white md:text-foreground sm:text-xl">
+          <h1 className="text-center text-lg font-semibold tracking-tight text-white sm:text-xl">
             Catat makanan harian
           </h1>
-          <p className="mx-auto max-w-md text-sm leading-relaxed text-white/85 max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.28)] md:text-muted-foreground">
+          <p className="mx-auto max-w-md text-sm leading-relaxed text-white/85 max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.28)]">
             Pilih waktu makan, tulis item dan porsinya, lalu biarkan AI menghitung estimasi kalori sebelum
             disimpan.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
             <Badge
               variant="secondary"
-              className="border-white/18 bg-white/12 text-[11px] font-semibold tracking-wide text-white shadow-sm backdrop-blur md:border-border/60 md:bg-muted/60 md:text-foreground"
+              className="border-white/18 bg-white/12 text-[11px] font-semibold tracking-wide text-white shadow-sm backdrop-blur"
             >
               1) Waktu makan
             </Badge>
-            <span className="text-white/55 md:text-muted-foreground" aria-hidden>
+            <span className="text-white/55" aria-hidden>
               →
             </span>
             <Badge
               variant="secondary"
-              className="border-white/18 bg-white/12 text-[11px] font-semibold tracking-wide text-white shadow-sm backdrop-blur md:border-border/60 md:bg-muted/60 md:text-foreground"
+              className="border-white/18 bg-white/12 text-[11px] font-semibold tracking-wide text-white shadow-sm backdrop-blur"
             >
               2) Item & porsi
             </Badge>
-            <span className="text-white/55 md:text-muted-foreground" aria-hidden>
+            <span className="text-white/55" aria-hidden>
               →
             </span>
             <Badge
               variant="secondary"
-              className="border-white/18 bg-white/12 text-[11px] font-semibold tracking-wide text-white shadow-sm backdrop-blur md:border-border/60 md:bg-muted/60 md:text-foreground"
+              className="border-white/18 bg-white/12 text-[11px] font-semibold tracking-wide text-white shadow-sm backdrop-blur"
             >
               3) Analisa & simpan
             </Badge>
