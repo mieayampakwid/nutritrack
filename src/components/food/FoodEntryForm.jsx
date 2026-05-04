@@ -17,13 +17,12 @@ import {
 } from '@/components/ui/select'
 import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
 import { useFoodNameSuggestions, useFoodUnits } from '@/hooks/useFoodLog'
-import { estimateCalories } from '@/lib/openai'
+import { estimateCalories, validateFoodInput } from '@/lib/openai'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { APP_ACRONYM } from '@/lib/appMeta'
 import { formatDateId, formatNumberId, toIsoDateLocal } from '@/lib/format'
-import { mealSlotFromLocalTime } from '@/lib/mealSlotFromTime'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
@@ -31,7 +30,7 @@ import { foodEntrySchema } from '@/lib/validators'
 import { logError } from '@/lib/logger'
 
 const WAKTU = [
-  { key: 'pagi', label: 'Sarapan pagi' },
+  { key: 'pagi', label: 'Sarapan' },
   { key: 'siang', label: 'Makan siang' },
   { key: 'malam', label: 'Makan malam' },
   { key: 'snack', label: 'Snack' },
@@ -293,7 +292,7 @@ export function FoodEntryForm({ userId }) {
   const { data: units = [] } = useFoodUnits()
   const { data: suggestions = [] } = useFoodNameSuggestions()
 
-  const [isSnack, setIsSnack] = useState(false)
+  const [mealKey, setMealKey] = useState('')
   const [rows, setRows] = useState(() => [emptyRow()])
   const [expandedRowId, setExpandedRowId] = useState(() => rows[0].id)
   const [suggestionsOpenRowId, setSuggestionsOpenRowId] = useState(null)
@@ -370,6 +369,11 @@ export function FoodEntryForm({ userId }) {
     setError('')
     setResult(null)
 
+    if (!mealKey) {
+      setError('Pilih waktu makan terlebih dahulu.')
+      return
+    }
+
     const filled = rows
       .map((r) => {
         const unit = unitMap[r.unitId]
@@ -402,10 +406,16 @@ export function FoodEntryForm({ userId }) {
 
     const submittedAt = new Date()
     const tanggal = toIsoDateLocal(submittedAt)
-    const waktu = mealSlotFromLocalTime(submittedAt, isSnack)
+    const waktu = mealKey
 
     setLoading(true)
     try {
+      const validation = await validateFoodInput(filled.map((x) => x.nama_makanan))
+      if (validation.valid === false) {
+        setError(validation.message)
+        return
+      }
+
       const est = await estimateCalories(
         filled.map((x) => ({
           nama_makanan: x.nama_makanan,
@@ -465,7 +475,7 @@ export function FoodEntryForm({ userId }) {
       const nextRow = emptyRow()
       setRows([nextRow])
       setExpandedRowId(nextRow.id)
-      setIsSnack(false)
+      setMealKey('')
       toast.success('Data tersimpan.')
     } catch (e) {
       logError('FoodEntryForm.handleAnalyze', e)
@@ -481,35 +491,33 @@ export function FoodEntryForm({ userId }) {
       <section className="space-y-2 text-center">
         <div
           className={cn(
-            'mx-auto flex max-w-md items-center justify-center gap-3 rounded-xl border border-border/80 bg-muted/20 px-4 py-3',
-            isSnack && 'border-rose-900/35 bg-rose-50/80',
+            'mx-auto flex max-w-md flex-col gap-2 rounded-xl border border-border/80 bg-muted/20 px-4 py-3 text-left',
           )}
         >
-          <Cookie
-            className={cn('h-5 w-5 shrink-0 text-muted-foreground', isSnack && 'text-rose-800')}
-            aria-hidden
-          />
-          <div className="flex flex-1 flex-col items-start gap-1 text-left">
-            <Label htmlFor="food-entry-snack" className={cn(typeLabel, 'cursor-pointer')}>
-              Camilan (Snack)
-            </Label>
-            <p className={cn(typeMuted, 'text-xs leading-snug')}>
-              Aktifkan jika ini camilan. Jika tidak, kategori waktu makan ditetapkan otomatis dari jam
-              saat Anda menekan Analisa &amp; simpan.
-            </p>
+          <div className="flex items-start gap-3">
+            <Cookie className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+            <div className="min-w-0 flex-1 space-y-1">
+              <Label htmlFor="food-entry-meal" className={typeLabel}>
+                Waktu makan
+              </Label>
+              <p className={cn(typeMuted, 'text-xs leading-snug')}>
+                Pilih kategori waktu makan sebelum menyimpan.
+              </p>
+            </div>
           </div>
-          <input
-            id="food-entry-snack"
-            type="checkbox"
-            checked={isSnack}
-            onChange={(e) => setIsSnack(e.target.checked)}
-            className="h-5 w-5 shrink-0 rounded border-input accent-[#7a1e2c]"
-            aria-label="Tandai sebagai snack"
-          />
+          <Select value={mealKey} onValueChange={setMealKey}>
+            <SelectTrigger id="food-entry-meal" className="w-full bg-background/80">
+              <SelectValue placeholder="Pilih waktu makan" />
+            </SelectTrigger>
+            <SelectContent align="start">
+              {WAKTU.map((w) => (
+                <SelectItem key={w.key} value={w.key}>
+                  {w.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <p className={cn(typeMuted, 'text-center text-xs sm:text-sm')}>
-          Sarapan 05:00–10:59 · Siang 11:00–14:59 · Malam 15:00–04:59 (termasuk makan malam larut).
-        </p>
       </section>
 
       {result ? (

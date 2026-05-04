@@ -37,3 +37,6 @@ coverage/
 
 # Local agent/IDE config
 .claude/
+.agents/
+skills/
+skills-lock.json

@@ -8,9 +8,12 @@ vi.mock('@/hooks/useFoodLog', () => ({
   useFoodNameSuggestions: () => ({ data: [], isLoading: false }),
 }))
 
-vi.mock('@/lib/openai', () => ({
+const openaiMock = vi.hoisted(() => ({
   estimateCalories: vi.fn().mockResolvedValue([{ kalori: 200, nama_makanan: 'Nasi Goreng' }]),
+  validateFoodInput: vi.fn().mockResolvedValue({ valid: true }),
 }))
+
+vi.mock('@/lib/openai', () => openaiMock)
 
 const { supabaseMock } = vi.hoisted(() => {
   const makeChain = () => {
@@ -73,6 +76,17 @@ describe('FoodEntryForm', () => {
 
     await waitFor(() =>
       expect(screen.getByRole('alert')).toBeInTheDocument(),
+    )
+  })
+
+  it('blocks submit until meal type selected', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<FoodEntryForm userId="u1" />)
+
+    await user.click(screen.getByRole('button', { name: /analisa & simpan/i }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent(/pilih waktu makan/i),
     )
   })
 })

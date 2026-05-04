@@ -36,6 +36,9 @@ const AdminClientDetail = lazy(() =>
 const ImportData = lazy(() =>
   import('@/pages/admin/ImportData').then((m) => ({ default: m.ImportData })),
 )
+const AllClients = lazy(() =>
+  import('@/pages/admin/AllClients').then((m) => ({ default: m.AllClients })),
+)
 const FoodLogMonitor = lazy(() =>
   import('@/pages/staff/FoodLogMonitor').then((m) => ({ default: m.FoodLogMonitor })),
 )
@@ -151,6 +154,14 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['admin']}>
               <ClientProgress />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/all-clients"
+          element={
+            <RequireAuth roles={['admin']}>
+              <AllClients />
             </RequireAuth>
           }
         />
