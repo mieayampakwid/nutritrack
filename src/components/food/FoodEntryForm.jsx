@@ -192,9 +192,9 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
   )
 }
 
-/** Same chrome as `SelectTrigger` (select.jsx): flex, h-9, border, padding, shadow. */
+/** Same chrome as `Input` / `SelectTrigger`: mobile 44px, md compact 36px. */
 const foodRowControlShell =
-  'flex h-9 min-h-0 w-full items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input bg-background/80 px-3 py-2 text-xs shadow-sm ring-offset-background transition-[color,box-shadow,border-color] duration-200'
+  'flex h-10 min-h-[44px] w-full items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input bg-background/80 px-3.5 py-2 text-base shadow-sm ring-offset-background transition-[color,box-shadow,border-color] duration-200 md:h-9 md:min-h-0 md:px-3 md:py-1'
 
 /** Mobile: match `input { font-size: 16px }` in index.css (SelectTrigger is a button). */
 const foodRowSelectMobileType = 'food-row-select-sync'
@@ -208,13 +208,13 @@ const foodSuggestPanelClass =
 
 /** Dapurasri SalesEntryDialog: inline − / number / + inside bordered shell. */
 const foodQtyStepperShellClass =
-  'inline-flex h-9 shrink-0 items-center overflow-hidden rounded-md border border-input bg-background/80'
+  'inline-flex h-10 min-h-[44px] shrink-0 items-center overflow-hidden rounded-md border border-input bg-background/80 md:h-9 md:min-h-0'
 
 const foodQtyStepperInnerInputClass =
-  'food-entry-compact-input h-full min-h-0 min-w-0 w-14 rounded-none border-0 bg-transparent px-0 text-center text-xs tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0'
+  'food-entry-compact-input h-full min-h-0 min-w-0 w-14 rounded-none border-0 bg-transparent px-0 text-center text-base tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm'
 
 const foodQtyStepperBtnClass =
-  'flex h-full w-8 shrink-0 items-center justify-center text-xs font-medium text-muted-foreground transition-colors hover:bg-accent'
+  'flex h-full w-10 shrink-0 items-center justify-center text-sm font-medium text-muted-foreground transition-colors hover:bg-accent md:w-8 md:text-xs'
 
 function FoodNameSuggestField({
   inputId,
@@ -243,7 +243,7 @@ function FoodNameSuggestField({
         id={inputId}
         placeholder="Nama makanan"
         autoComplete="off"
-        className="food-entry-compact-input bg-background/80 text-xs leading-tight transition-shadow duration-200"
+        className="food-entry-compact-input bg-background/80 text-base leading-tight transition-shadow duration-200 md:text-sm"
         value={value}
         onChange={(e) => {
           const v = e.target.value
@@ -488,44 +488,12 @@ export function FoodEntryForm({ userId }) {
 
   return (
     <div className="space-y-2 sm:space-y-3">
-      <section className="space-y-2 text-center">
-        <div
-          className={cn(
-            'mx-auto flex max-w-md flex-col gap-2 rounded-xl border border-border/80 bg-muted/20 px-4 py-3 text-left',
-          )}
-        >
-          <div className="flex items-start gap-3">
-            <Cookie className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
-            <div className="min-w-0 flex-1 space-y-1">
-              <Label htmlFor="food-entry-meal" className={typeLabel}>
-                Waktu makan
-              </Label>
-              <p className={cn(typeMuted, 'text-xs leading-snug')}>
-                Pilih kategori waktu makan sebelum menyimpan.
-              </p>
-            </div>
-          </div>
-          <Select value={mealKey} onValueChange={setMealKey}>
-            <SelectTrigger id="food-entry-meal" className="w-full bg-background/80">
-              <SelectValue placeholder="Pilih waktu makan" />
-            </SelectTrigger>
-            <SelectContent align="start">
-              {WAKTU.map((w) => (
-                <SelectItem key={w.key} value={w.key}>
-                  {w.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </section>
-
       {result ? (
         <div
           ref={resultRef}
           id="food-entry-result"
           tabIndex={-1}
-          className="scroll-mt-3 text-left outline-none sm:scroll-mt-4"
+          className="scroll-mt-24 text-left outline-none sm:scroll-mt-28"
           aria-live="polite"
         >
           <Card
@@ -685,16 +653,48 @@ export function FoodEntryForm({ userId }) {
           </Badge>
         </div>
 
-        <div
-          className="hidden gap-2 text-sm font-medium leading-none text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-center sm:px-0.5"
-          aria-hidden
-        >
-          <span>Makanan</span>
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="w-[7.25rem] shrink-0 sm:text-left">Jumlah</span>
-            <span className="min-w-0 flex-1">Satuan</span>
+        <section className="space-y-2">
+          <div
+            className={cn(
+              'group flex overflow-visible rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm',
+              'ring-1 ring-border/30',
+              'transition-[border-color,box-shadow,ring-color] duration-200',
+              'motion-safe:hover:border-primary/30 motion-safe:hover:shadow-md motion-safe:hover:ring-primary/20',
+              'focus-within:border-primary/35 focus-within:shadow-md focus-within:ring-2 focus-within:ring-ring/35',
+            )}
+          >
+            <div className="shrink-0 self-stretch overflow-hidden rounded-l-xl" aria-hidden>
+              <div className="h-full w-1 bg-gradient-to-b from-primary/55 via-primary/35 to-primary/15 sm:w-1.5" />
+            </div>
+            <div className="min-w-0 flex-1 p-3 sm:p-3.5">
+              <div className="flex items-start gap-3">
+                <Cookie className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+                <div className="min-w-0 flex-1 space-y-1">
+                  <Label htmlFor="food-entry-meal" className={typeLabel}>
+                    Waktu makan
+                  </Label>
+                  <p className={cn(typeMuted, 'text-xs leading-snug')}>
+                    Pilih kategori waktu makan sebelum menyimpan.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-2">
+                <Select value={mealKey} onValueChange={setMealKey}>
+                  <SelectTrigger id="food-entry-meal" className="w-full bg-background/80">
+                    <SelectValue placeholder="Pilih waktu makan" />
+                  </SelectTrigger>
+                  <SelectContent align="start">
+                    {WAKTU.map((w) => (
+                      <SelectItem key={w.key} value={w.key}>
+                        {w.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
         <div className="space-y-2.5">
           {rows.map((r, i) => {
@@ -769,7 +769,7 @@ export function FoodEntryForm({ userId }) {
                       aria-labelledby={`food-row-label-${r.id}`}
                       className="p-3 sm:p-3.5"
                     >
-                      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
+                      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_8.5rem_minmax(0,1fr)] sm:items-end">
                         <div className="grid gap-1.5">
                           <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-name-${r.id}`}>
                             Makanan
@@ -795,70 +795,65 @@ export function FoodEntryForm({ userId }) {
                             onChangeNama={(nama) => setRow(i, { nama })}
                           />
                         </div>
-                        <div className="flex min-w-0 flex-wrap items-end gap-2">
-                          <div className="grid shrink-0 gap-1.5">
-                            <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-qty-${r.id}`}>
-                              Jumlah
-                            </Label>
-                            <div className={foodQtyStepperShellClass}>
-                              <button
-                                type="button"
-                                className={foodQtyStepperBtnClass}
-                                onClick={() => adjustRowJumlah(i, -1)}
-                                aria-label="Kurangi jumlah"
-                              >
-                                -
-                              </button>
-                              <Input
-                                id={`food-qty-${r.id}`}
-                                type="number"
-                                inputMode="decimal"
-                                step="any"
-                                min={0}
-                                placeholder="0"
-                                className={foodQtyStepperInnerInputClass}
-                                value={r.jumlah}
-                                onChange={(e) => setRow(i, { jumlah: e.target.value })}
-                                onFocus={(e) => e.target.select()}
-                              />
-                              <button
-                                type="button"
-                                className={foodQtyStepperBtnClass}
-                                onClick={() => adjustRowJumlah(i, 1)}
-                                aria-label="Tambah jumlah"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                          <div className="grid min-w-0 flex-1 basis-[10rem] gap-1.5">
-                            <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-unit-${r.id}`}>
-                              Satuan
-                            </Label>
-                            <Select
-                              value={r.unitId || undefined}
-                              onValueChange={(v) => setRow(i, { unitId: v })}
+                        <div className="grid gap-1.5">
+                          <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-qty-${r.id}`}>
+                            Jumlah
+                          </Label>
+                          <div className={foodQtyStepperShellClass}>
+                            <button
+                              type="button"
+                              className={foodQtyStepperBtnClass}
+                              onClick={() => adjustRowJumlah(i, -1)}
+                              aria-label="Kurangi jumlah"
                             >
-                              <SelectTrigger
-                                id={`food-unit-${r.id}`}
-                                className={cn(
-                                  foodRowControlShell,
-                                  foodRowSelectFocus,
-                                  foodRowSelectMobileType,
-                                  'min-w-0 w-full',
-                                )}
-                              >
-                                <SelectValue placeholder="Satuan" />
-                              </SelectTrigger>
-                              <SelectContent align="end" className="text-xs">
-                                {units.map((u) => (
-                                  <SelectItem key={u.id} value={u.id} className="text-xs">
-                                    {u.nama}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              -
+                            </button>
+                            <Input
+                              id={`food-qty-${r.id}`}
+                              type="number"
+                              inputMode="decimal"
+                              step="any"
+                              min={0}
+                              placeholder="0"
+                              className={foodQtyStepperInnerInputClass}
+                              value={r.jumlah}
+                              onChange={(e) => setRow(i, { jumlah: e.target.value })}
+                              onFocus={(e) => e.target.select()}
+                            />
+                            <button
+                              type="button"
+                              className={foodQtyStepperBtnClass}
+                              onClick={() => adjustRowJumlah(i, 1)}
+                              aria-label="Tambah jumlah"
+                            >
+                              +
+                            </button>
                           </div>
+                        </div>
+                        <div className="grid min-w-0 gap-1.5">
+                          <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-unit-${r.id}`}>
+                            Satuan
+                          </Label>
+                          <Select value={r.unitId || undefined} onValueChange={(v) => setRow(i, { unitId: v })}>
+                            <SelectTrigger
+                              id={`food-unit-${r.id}`}
+                              className={cn(
+                                foodRowControlShell,
+                                foodRowSelectFocus,
+                                foodRowSelectMobileType,
+                                'min-w-0 w-full',
+                              )}
+                            >
+                              <SelectValue placeholder="Satuan" />
+                            </SelectTrigger>
+                            <SelectContent align="end" className="text-xs">
+                              {units.map((u) => (
+                                <SelectItem key={u.id} value={u.id} className="text-xs">
+                                  {u.nama}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
