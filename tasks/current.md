@@ -8,10 +8,10 @@ Optional reference: `LAPER_Backlog_Sprint_Prototype_Perfection_.md` (original do
 
 | Field | Value |
 | --- | --- |
-| **Status** | not started |
-| **Last touched** | — (set to backlog #, e.g. #5, plus one-line note when you pause) |
+| **Status** | Sprint 1 complete |
+| **Last touched** | Sprint 1 verified against code: #5 + #1 + #2 implemented |
 | **Blockers** | none |
-| **Resume here** | Start Sprint 1 with backlog **#5** (meal type dropdown). |
+| **Resume here** | Start Sprint 2 with backlog **#3** (extended profile + change log). |
 
 ---
 
@@ -132,9 +132,9 @@ Order: **#3 → #4**. **#4** depends on extended profile/anthropometric data fro
 
 **Sprint 1**
 
-- [ ] #5 — Add required meal-type dropdown; remove time-based auto meal type
-- [ ] #1 — AI validate-before-save + inline invalid warning + block save until valid
-- [ ] #2 — All clients table/page; nutritionist + admin only; row → profile
+- [x] #5 — Add required meal-type dropdown; remove time-based auto meal type
+- [x] #1 — AI validate-before-save + inline invalid warning + block save until valid
+- [x] #2 — All clients table/page; nutritionist + admin only; row → profile
 
 **Sprint 2** (deferred until Sprint 1 complete unless explicitly parallelized)
 
