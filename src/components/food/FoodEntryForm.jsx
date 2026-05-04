@@ -208,13 +208,13 @@ const foodSuggestPanelClass =
 
 /** Dapurasri SalesEntryDialog: inline − / number / + inside bordered shell. */
 const foodQtyStepperShellClass =
-  'inline-flex h-10 min-h-[44px] shrink-0 items-center overflow-hidden rounded-md border border-input bg-background/80 md:h-9 md:min-h-0'
+  'flex h-10 min-h-[44px] w-full min-w-0 items-center overflow-hidden rounded-md border border-input bg-background/80 md:h-9 md:min-h-0'
 
 const foodQtyStepperInnerInputClass =
-  'food-entry-compact-input h-full min-h-0 min-w-0 w-14 rounded-none border-0 bg-transparent px-0 text-center text-base tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm'
+  'food-entry-compact-input h-full min-h-0 min-w-0 w-12 flex-1 rounded-none border-0 bg-transparent px-0 text-center text-base tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-14 sm:flex-none md:text-sm'
 
 const foodQtyStepperBtnClass =
-  'flex h-full w-10 shrink-0 items-center justify-center text-sm font-medium text-muted-foreground transition-colors hover:bg-accent md:w-8 md:text-xs'
+  'flex h-full w-9 shrink-0 items-center justify-center text-sm font-medium text-muted-foreground transition-colors hover:bg-accent sm:w-10 md:w-8 md:text-xs'
 
 function FoodNameSuggestField({
   inputId,
