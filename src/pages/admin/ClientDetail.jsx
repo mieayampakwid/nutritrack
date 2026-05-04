@@ -100,17 +100,17 @@ export function ClientDetail() {
 
   return (
     <AppShell>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" asChild className="gap-2">
+      <div className="mb-4 flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <Button variant="ghost" size="sm" asChild className="w-full justify-start gap-2 sm:w-auto sm:justify-center">
           <Link to={listPath}>
             <ArrowLeft className="h-4 w-4" />
             Kembali ke daftar
           </Link>
         </Button>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" asChild className="w-full justify-start sm:w-auto sm:justify-center">
           <Link to={`${listPath}/${id}/data-entry`}>Entri data (BMI &amp; asesmen)</Link>
         </Button>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" asChild className="w-full justify-start sm:w-auto sm:justify-center">
           <Link to={`${listPath}/${id}/change-log`}>Riwayat perubahan antropometri</Link>
         </Button>
       </div>
