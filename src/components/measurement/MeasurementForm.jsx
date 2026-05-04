@@ -82,6 +82,7 @@ export function MeasurementForm({
   const [tinggi, setTinggi] = useState('')
   const [otot, setOtot] = useState('')
   const [lemak, setLemak] = useState('')
+  const [pinggang, setPinggang] = useState('')
   const [catatan, setCatatan] = useState('')
 
   const bmi = useMemo(() => {
@@ -98,6 +99,7 @@ export function MeasurementForm({
       const tb = tinggi === '' ? null : Number(tinggi)
       const mo = otot === '' ? null : Number(otot)
       const ml = lemak === '' ? null : Number(lemak)
+      const lp = pinggang === '' ? null : Number(pinggang)
       if (!tanggal) throw new Error('Tanggal wajib diisi.')
       if (bb == null || tb == null) throw new Error('Berat dan tinggi badan wajib diisi.')
 
@@ -107,6 +109,7 @@ export function MeasurementForm({
         tinggi_badan: tb,
         massa_otot: mo,
         massa_lemak: ml,
+        lingkar_pinggang: lp,
         catatan: catatan.trim() || undefined,
       })
       if (!vResult.success) {
@@ -120,6 +123,7 @@ export function MeasurementForm({
         tinggi_badan: tb,
         massa_otot: mo,
         massa_lemak: ml,
+        lingkar_pinggang: lp,
         bmi: calculateBMI(bb, tb),
         catatan: catatan.trim() || null,
         created_by: staffId ?? null,
@@ -179,6 +183,11 @@ export function MeasurementForm({
                         {formatNumberId(lastMeasurement.tinggi_badan)} cm
                       </li>
                       <li>BMI: {formatNumberId(lastMeasurement.bmi)}</li>
+                      {lastMeasurement.lingkar_pinggang != null ? (
+                        <li>
+                          Lingkar pinggang: {formatNumberId(lastMeasurement.lingkar_pinggang)} cm
+                        </li>
+                      ) : null}
                     </ul>
                   ) : (
                     <p className="mt-2 text-muted-foreground">Belum ada data.</p>
@@ -205,6 +214,12 @@ export function MeasurementForm({
             <NumField label="Tinggi badan (cm)" value={tinggi} onChange={setTinggi} step={0.5} />
             <NumField label="Massa otot (kg)" value={otot} onChange={setOtot} step={0.1} />
             <NumField label="Massa lemak (%)" value={lemak} onChange={setLemak} step={0.1} />
+            <NumField
+              label="Lingkar pinggang (cm)"
+              value={pinggang}
+              onChange={setPinggang}
+              step={0.5}
+            />
 
             <Card className="border bg-muted/30 shadow-none">
               <CardContent className="space-y-1 p-4">

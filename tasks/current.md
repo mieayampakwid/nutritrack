@@ -1,177 +1,142 @@
-# Current Tasks
+# LAPER — Prototype Perfection (agent handoff)
 
-## Completed
-- [x] **LAPER-001**: Self-Registration for Klien (auto-activation on email confirmation)
-- [x] **LAPER-002**: Self-Registration for Ahli Gizi (pending approval screen + route guard)
-- [x] **LAPER-003**: Build shared registration form UI
-- [x] **REG-001**: Update registration mechanism — ALL users require admin approval
-- [x] **REG-002**: Build Admin User Management with approve/reject functionality
+Optional reference: `LAPER_Backlog_Sprint_Prototype_Perfection_.md` (original download). This file is the in-repo source of truth.
 
 ---
 
-## Active Work
-None — registration flow is complete and committed.
+## Checkpoint (update often)
+
+| Field | Value |
+| --- | --- |
+| **Status** | Sprint 2 complete |
+| **Last touched** | Sprint 2: #3 waist + change log (DB triggers + `/…/change-log`); #4 evaluation page (`/gizi/evaluation`, `/admin/evaluation`); Vitest passing |
+| **Blockers** | none |
+| **Resume here** | Apply `supabase/migration_sprint2_anthropometric_log.sql` on Supabase if not yet run; then continue next backlog / Sprint 3. |
 
 ---
 
-## Backlog: Features from LAPER_Backlog_v2.md vs Current Code State
+## Decisions
 
-### Epic 1 — User Management (5 stories total)
-
-| US | Description | Status | Notes |
-|----|-------------|--------|-------|
-| US-01 | Register with email, password, name, DOB, gender, WhatsApp | ✅ Done | Implemented in RegisterPage |
-| US-02 | Login and logout | ✅ Done | LoginPage existing, role-based redirect working |
-| US-03 | Admin approve/reject user registration | ✅ Done | **COMPLETED** — S-17 with filter tabs + inline approve/reject |
-| US-22 | Ahli Gizi register/login with nutritionist role | ✅ Done | Role selector in register |
-| US-38 | User cannot edit own profile; only admin/ahli gizi can | ⚠️ Partial | Route guard exists, but profile edit form not built |
-
-**Epic 1 Progress: 4/5 complete (80%)**
+- none yet
 
 ---
 
-### Epic 2 — Food Logging (9 stories total)
+## Sprint 1 — Day 1 (do first)
 
-| US | Description | Status | Notes |
-|----|-------------|--------|-------|
-| US-04 | Type food in Indonesian → AI returns calorie + macro | ❌ Todo | Food log entry page (S-07) not built |
-| US-05 | Confirm entry before submitting | ❌ Todo | Part of S-07 UI flow |
-| US-08 | Vague input → prompt user to specify | ❌ Todo | Edge function logic needed |
-| US-13 | Meal category selector + meal time notifications | ❌ Todo | Categories in form, notification system not built |
-| US-42 | Dynamic multi-item entry (cashier-style) | ❌ Todo | Key feature of S-07 |
-| US-43 | Receipt-style summary after submit | ❌ Todo | S-08 screen not built |
-| US-40 | Log physical activity (type + duration) | ❌ Todo | S-10 screen not built |
+Order: **#5 → #1 → #2** (small/isolated items first; #2 read-only UI).
 
-**Epic 2 Progress: 0/9 complete (0%)**
+### #5 — Food Log — Meal Type Selection
 
----
+**User story:** As a participant, I want to manually select the meal type when logging food, so that my food entries are categorized accurately regardless of what time I log them.
 
-### Epic 3 — Data Visualization (7 stories total)
+**Acceptance criteria:**
 
-| US | Description | Status | Notes |
-|----|-------------|--------|-------|
-| US-10 | Today's food log + summary + weekly chart with limit line | ❌ Todo | User dashboard (S-04) not built |
-| US-11 | Calorie log with flexible timeframe selector | ❌ Todo | Dashboard feature |
-| US-12 | Daily calorie target from Harris-Benedict + remaining display | ❌ Todo | Depends on assessment data |
-| US-36 | Profile chart: BB, TB, lemak, otot, lingkar perut, calorie needs | ❌ Todo | S-11 chart section |
-| US-44 | Trending food section on dashboard | ❌ Todo | Database query + UI for all dashboards |
-| US-45 | Complete food log history on Progress page | ❌ Todo | S-09 screen not built |
-| US-46 | Ad carousel banner (600×300, 3 PNG) on dashboard | ❌ Todo | AdBannerCarousel component exists, not wired to dashboards |
-
-**Epic 3 Progress: 0/7 complete (0%)**
+- Food log entry form includes a dropdown for meal type: Breakfast, Lunch, Dinner, Snack
+- Meal type selection is required before saving
+- The previous behavior (auto-detect meal type based on entry time) is removed
+- No changes to the food input UX — only the meal categorization flow is affected
 
 ---
 
-### Epic 4 — Admin & Research (5 stories total)
+### #1 — AI Input Hardening (Food Log)
 
-| US | Description | Status | Notes |
-|----|-------------|--------|-------|
-| US-14 | Export all user data as CSV | ❌ Todo | S-18 screen not built |
-| US-15 | Filter CSV export by date range | ❌ Todo | Part of S-18 |
-| US-16 | List of all registered users | ✅ Done | **COMPLETED** — S-17 with search + filter tabs |
-| US-17 | Delete user account | ✅ Done | **COMPLETED** — Reject button in S-17 |
-| US-37 | Admin/ahli gizi view and edit complete user profile | ❌ Todo | S-11 edit mode + S-12/13 assessment flow |
+**User story:** As a participant, I want the system to warn me if what I entered is not a valid human food, so that my food log remains accurate and calculable.
 
-**Epic 4 Progress: 3/5 complete (60%)**
+**Acceptance criteria:**
 
----
+- Before saving, AI validates whether the input is a recognizable human food
+- If input is invalid, AI returns a warning message before the log is saved
+- Warning message is friendly and explains why the input cannot be processed
+- User can either correct the input or cancel
+- Only valid food inputs proceed to calorie estimation and saving
 
-### Epic 5 — Polish & Growth (1 story total)
+**System prompt (fix if there is a better approach):**
 
-| US | Description | Status | Notes |
-|----|-------------|--------|-------|
-| US-18 | Save frequently logged foods as favorites | ❌ Todo | V2 feature |
+```
+You are a food validation assistant for a nutrition monitoring app.
+Your job is to determine whether the user's input is a valid human food
+that can be nutritionally assessed.
 
-**Epic 5 Progress: 0/1 complete (0%)**
+If the input is NOT a valid human food (e.g. non-food objects, abstract
+concepts, gibberish, or joke inputs), respond with:
+{
+  "valid": false,
+  "message": "\"[input]\" doesn't seem to be a food item we can assess.
+  Please enter a real food or meal so we can calculate its nutritional value."
+}
 
----
+If the input IS a valid human food, respond with:
+{
+  "valid": true
+}
 
-### Epic 6 — Nutrition Assessment (13 stories total)
+Be strict but fair. Regional or traditional foods are valid.
+Respond only in JSON. No explanation outside the JSON.
+```
 
-| US | Description | Status | Notes |
-|----|-------------|--------|-------|
-| US-23 | Ahli gizi select participant from user list | ❌ Todo | S-16 Participant List not built |
-| US-24 | Input weight (BB) and height (TB) | ❌ Todo | S-12 Assessment Form not built |
-| US-25 | BMI calculated automatically | ⚠️ Partial | bmiCalculator.js exists, not wired to UI |
-| US-26 | Mandatory reassessment: BB, TB, activity level → recalculate calorie needs | ❌ Todo | Core of S-12 |
-| US-29 | Record activity level (4 levels) | ❌ Todo | Part of S-12 |
-| US-34 | Input/update lingkar perut, massa otot, massa lemak | ❌ Todo | Part of S-12 |
-| US-30 | Write evaluation note per session | ❌ Todo | S-13 Evaluation Form not built |
-| US-31 | View full evaluation history (ahli gizi) | ❌ Todo | S-14 not built |
-| US-32 | View own evaluation history (user) | ❌ Todo | S-15 not built |
-| US-33 | 2-week interval enforcement + notifications | ❌ Todo | Backend rule + notification system |
-| US-35 | Log all profile changes: who, when, old→new | ❌ Todo | Audit trail system needed |
-| US-39 | Share evaluation to WhatsApp button | ❌ Todo | Post-submit action on S-13 |
-| US-28 | View BB/TB/BMI history per participant | ❌ Todo | Chart/visualization needed |
+**UI flow:**
 
-**Epic 6 Progress: 0/13 complete (0%)**
-
----
-
-## Screen Inventory Status (from LAPER_Screen_Inventory.md)
-
-| Screen | Route | Status |
-|--------|-------|--------|
-| S-01 Register | `/register` | ✅ Built |
-| S-02 Login | `/login` | ✅ Built |
-| S-03 Pending Approval | `/menunggu-persetujuan` | ✅ Built |
-| S-04 Dashboard — User | `/dashboard` (klien) | ❌ Todo |
-| S-05 Dashboard — Ahli Gizi | `/dashboard` (ahli_gizi) | ❌ Todo |
-| S-06 Dashboard — Admin | `/dashboard` (admin) | ❌ Todo |
-| S-07 Food Log Entry | `/food-log/new` | ❌ Todo |
-| S-08 Food Log Receipt | `/food-log/receipt` | ❌ Todo |
-| S-09 Progress Page | `/progress` | ❌ Todo |
-| S-10 Exercise Log | `/exercise-log` | ❌ Todo |
-| S-11 User Profile View | `/profile/:id` | ❌ Todo |
-| S-12 Assessment Form | `/assessment/:userId` | ❌ Todo |
-| S-13 Evaluation Form | `/evaluation/:userId` | ❌ Todo |
-| S-14 Evaluation History (AG) | `/evaluation/:userId/history` | ❌ Todo |
-| S-15 Evaluation History (User) | `/my-evaluations` | ❌ Todo |
-| S-16 Participant List | `/participants` | ❌ Todo |
-| S-17 Admin User Management | `/admin/users` | ✅ Built |
-| S-18 Admin Export CSV | `/admin/export` | ❌ Todo |
-
-**Screens Complete: 4/18 (22%)**
+1. User types food input → hits submit
+2. App calls AI validator before saving
+3. **If invalid:** inline warning appears below input field (friendly copy aligned with `message`); input stays open, save is blocked
+4. **If valid:** proceeds normally to calorie estimation
 
 ---
 
-## Priority Next Steps
+### #2 — All Clients Page
 
-Based on Sprint 1 goals (1 Mei 2026):
+**User story:** As a nutritionist, I want to see a list of all registered participants so that I can monitor and access their profiles quickly.
 
-**Sprint 1 — "Minimum Working Tracker"**
-- [ ] Food Log Entry (S-07) with multi-item dynamic entry
-- [ ] Food Log Receipt (S-08) with calorie/macros breakdown
-- [ ] User Dashboard (S-04) with today's log, summary, weekly chart
-- [ ] OpenAI integration for food calorie estimation
+**Acceptance criteria:**
 
-**Immediate Next:** Build Food Log Entry (S-07) as it's the core value proposition.
-
----
-
-## Database Schema Notes
-
-Current schema handles: profiles, body_measurements, food_units, food_logs, food_log_items, assessments, user_evaluations, food_name_suggestions
-
-**Missing for full features:**
-- `exercise_logs` table (US-40, S-10)
-- `assessment_sessions` proper structure (US-26, US-30, US-31) — may need refactor of existing assessments table
-- `change_logs` or audit table (US-35)
-- `notifications` table (US-13, US-33)
-- `favorites` table (US-18)
-- Food log meal category (US-13) — could be enum on food_log_items
+- Page displays a list/table of all registered participants
+- Each row shows key info (name, latest activity, BMI status)
+- Nutritionist can click a participant to view their full profile
+- Page is accessible only to nutritionist and admin roles
 
 ---
 
-## Recent Decisions
-- Registration form shared between Klien and Ahli Gizi roles
-- **ALL registrations require admin approval (is_active=false initially)**
-- **No email confirmation needed**
-- **User cannot login until admin approves**
-- Inactive users redirected to /menunggu-persetujuan
-- Admin User Management (S-17) has filter tabs + inline approve/reject buttons
-- handle_new_user trigger stores jenis_kelamin, berat_badan, tinggi_badan
-- First body_measurements record auto-inserted on registration
+## Sprint 2 — Day 2 (after Sprint 1)
 
-## Next Session
-Start Sprint 1: Build Food Log Entry (S-07) with OpenAI integration for calorie estimation.
+Order: **#3 → #4**. **#4** depends on extended profile/anthropometric data from **#3** and the existing food log.
+
+### #3 — Participant Profile — Extended Fields & Change Log
+
+**User story:** As a nutritionist, I want to record and update each participant's anthropometric data and have all changes logged automatically, so that I can track progress over time.
+
+**Acceptance criteria:**
+
+- Profile includes fields: Weight (BB), Height (TB), Muscle Mass, Body Fat Mass, Waist Circumference, Age, Gender
+- BMI is calculated and displayed automatically
+- Daily calorie needs calculated automatically using Harris-Benedict method
+- Every change to: BB, TB, Muscle Mass, Body Fat Mass, Waist Circumference, BMI result, and Calorie needs — is recorded in a change log with timestamp and previous/new value
+- Age and Gender are NOT logged on change
+- Change log is viewable on a separate dedicated page
+
+---
+
+### #4 — Evaluation Page (Nutritionist)
+
+**User story:** As a nutritionist, I want to evaluate a participant's progress over a minimum 2-week period, so that I can provide informed dietary recommendations.
+
+**Acceptance criteria:**
+
+- Nutritionist selects a participant and a date range (minimum 2 weeks)
+- Page displays: selected participant's info, complete food log within the selected period, latest anthropometric data
+- Nutritionist can write and save notes/recommendations in a dedicated input column
+- Saved recommendations are timestamped and linked to the evaluation period
+
+---
+
+## Next steps (rolling)
+
+**Sprint 1**
+
+- [x] #5 — Add required meal-type dropdown; remove time-based auto meal type
+- [x] #1 — AI validate-before-save + inline invalid warning + block save until valid
+- [x] #2 — All clients table/page; nutritionist + admin only; row → profile
+
+**Sprint 2** (deferred until Sprint 1 complete unless explicitly parallelized)
+
+- [x] #3 — Extended profile fields, BMI, Harris-Benedict, change log + dedicated log page
+- [x] #4 — Evaluation page (≥2 week range, food log + latest anthropometrics, saved recommendations)

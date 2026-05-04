@@ -17,13 +17,12 @@ import {
 } from '@/components/ui/select'
 import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
 import { useFoodNameSuggestions, useFoodUnits } from '@/hooks/useFoodLog'
-import { estimateCalories } from '@/lib/openai'
+import { estimateCalories, validateFoodInput } from '@/lib/openai'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { APP_ACRONYM } from '@/lib/appMeta'
 import { formatDateId, formatNumberId, toIsoDateLocal } from '@/lib/format'
-import { mealSlotFromLocalTime } from '@/lib/mealSlotFromTime'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
@@ -31,7 +30,7 @@ import { foodEntrySchema } from '@/lib/validators'
 import { logError } from '@/lib/logger'
 
 const WAKTU = [
-  { key: 'pagi', label: 'Sarapan pagi' },
+  { key: 'pagi', label: 'Sarapan' },
   { key: 'siang', label: 'Makan siang' },
   { key: 'malam', label: 'Makan malam' },
   { key: 'snack', label: 'Snack' },
@@ -95,11 +94,11 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
           animate={{ opacity: 1, y: 0 }}
           exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
           transition={{ duration: reduceMotion ? 0.15 : 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.07] via-background to-teal-500/[0.06] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]"
+          className="relative overflow-hidden rounded-2xl border border-primary/25 bg-linear-to-br from-primary/[0.07] via-background to-teal-500/6 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]"
         >
           {!reduceMotion ? (
             <Motion.div
-              className="pointer-events-none absolute -left-1/2 top-0 h-px w-[200%] bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+              className="pointer-events-none absolute -left-1/2 top-0 h-px w-[200%] bg-linear-to-r from-transparent via-primary/40 to-transparent"
               animate={{ x: ['-30%', '30%'] }}
               transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
             />
@@ -122,7 +121,7 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
           ) : null}
 
           <div className="relative flex gap-3.5 sm:gap-4">
-            <div className="relative flex h-[3.25rem] w-[3.25rem] shrink-0 items-center justify-center sm:h-14 sm:w-14">
+            <div className="relative flex h-13 w-13 shrink-0 items-center justify-center sm:h-14 sm:w-14">
               <div className="absolute inset-0 rounded-full border-2 border-primary/15" />
               <Motion.div
                 className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary border-r-primary/40"
@@ -148,14 +147,14 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
 
             <div className="min-w-0 flex-1 space-y-2 pt-0.5">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="font-[family-name:var(--font-greeting)] text-sm font-semibold tracking-tight text-foreground sm:text-base">
+                <p className="font-greeting text-sm font-semibold tracking-tight text-foreground sm:text-base">
                   Menganalisa dengan AI
                 </p>
                 <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                   tunggu sebentar
                 </span>
               </div>
-              <div className="relative min-h-[2.75rem] sm:min-h-[2.5rem]">
+              <div className="relative min-h-11 sm:min-h-10">
                 <AnimatePresence mode="wait">
                   <Motion.p
                     key={lineIdx}
@@ -174,12 +173,12 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
                 {!reduceMotion ? (
                   <>
                     <Motion.div
-                      className="absolute inset-y-0 left-0 w-2/5 rounded-full bg-gradient-to-r from-primary/20 via-primary to-primary/20"
+                      className="absolute inset-y-0 left-0 w-2/5 rounded-full bg-linear-to-r from-primary/20 via-primary to-primary/20"
                       initial={false}
                       animate={{ left: ['-40%', '100%'] }}
                       transition={barTransition}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/25 to-transparent" />
                   </>
                 ) : (
                   <div className="h-full w-full rounded-full bg-primary/40" />
@@ -193,9 +192,9 @@ function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
   )
 }
 
-/** Same chrome as `SelectTrigger` (select.jsx): flex, h-9, border, padding, shadow. */
+/** Same chrome as `Input` / `SelectTrigger`: mobile 44px, md compact 36px. */
 const foodRowControlShell =
-  'flex h-9 min-h-0 w-full items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input bg-background/80 px-3 py-2 text-xs shadow-sm ring-offset-background transition-[color,box-shadow,border-color] duration-200'
+  'flex h-10 min-h-[44px] w-full items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input bg-background/80 px-3.5 py-2 text-base shadow-sm ring-offset-background transition-[color,box-shadow,border-color] duration-200 md:h-9 md:min-h-0 md:px-3 md:py-1'
 
 /** Mobile: match `input { font-size: 16px }` in index.css (SelectTrigger is a button). */
 const foodRowSelectMobileType = 'food-row-select-sync'
@@ -209,13 +208,13 @@ const foodSuggestPanelClass =
 
 /** Dapurasri SalesEntryDialog: inline − / number / + inside bordered shell. */
 const foodQtyStepperShellClass =
-  'inline-flex h-9 shrink-0 items-center overflow-hidden rounded-md border border-input bg-background/80'
+  'flex h-10 min-h-[44px] w-full min-w-0 items-center overflow-hidden rounded-md border border-input bg-background/80 md:h-9 md:min-h-0'
 
 const foodQtyStepperInnerInputClass =
-  'food-entry-compact-input h-full min-h-0 min-w-0 w-14 rounded-none border-0 bg-transparent px-0 text-center text-xs tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0'
+  'food-entry-compact-input h-full min-h-0 min-w-0 w-12 flex-1 rounded-none border-0 bg-transparent px-0 text-center text-base tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-14 sm:flex-none md:text-sm'
 
 const foodQtyStepperBtnClass =
-  'flex h-full w-8 shrink-0 items-center justify-center text-xs font-medium text-muted-foreground transition-colors hover:bg-accent'
+  'flex h-full w-9 shrink-0 items-center justify-center text-sm font-medium text-muted-foreground transition-colors hover:bg-accent sm:w-10 md:w-8 md:text-xs'
 
 function FoodNameSuggestField({
   inputId,
@@ -244,7 +243,7 @@ function FoodNameSuggestField({
         id={inputId}
         placeholder="Nama makanan"
         autoComplete="off"
-        className="food-entry-compact-input bg-background/80 text-xs leading-tight transition-shadow duration-200"
+        className="food-entry-compact-input bg-background/80 text-base leading-tight transition-shadow duration-200 md:text-sm"
         value={value}
         onChange={(e) => {
           const v = e.target.value
@@ -293,7 +292,7 @@ export function FoodEntryForm({ userId }) {
   const { data: units = [] } = useFoodUnits()
   const { data: suggestions = [] } = useFoodNameSuggestions()
 
-  const [isSnack, setIsSnack] = useState(false)
+  const [mealKey, setMealKey] = useState('')
   const [rows, setRows] = useState(() => [emptyRow()])
   const [expandedRowId, setExpandedRowId] = useState(() => rows[0].id)
   const [suggestionsOpenRowId, setSuggestionsOpenRowId] = useState(null)
@@ -309,6 +308,16 @@ export function FoodEntryForm({ userId }) {
   )
 
   const unitMap = useMemo(() => Object.fromEntries(units.map((u) => [u.id, u])), [units])
+
+  const filledCount = useMemo(() => {
+    return rows.reduce((acc, r) => {
+      const namaOk = Boolean(r.nama?.trim())
+      const jumlah = r.jumlah === '' ? NaN : Number(r.jumlah)
+      const jumlahOk = Number.isFinite(jumlah) && jumlah > 0
+      const unitOk = Boolean(r.unitId)
+      return acc + (namaOk && jumlahOk && unitOk ? 1 : 0)
+    }, 0)
+  }, [rows])
 
   useEffect(() => {
     setExpandedRowId((ex) => {
@@ -370,6 +379,11 @@ export function FoodEntryForm({ userId }) {
     setError('')
     setResult(null)
 
+    if (!mealKey) {
+      setError('Pilih waktu makan terlebih dahulu.')
+      return
+    }
+
     const filled = rows
       .map((r) => {
         const unit = unitMap[r.unitId]
@@ -402,10 +416,16 @@ export function FoodEntryForm({ userId }) {
 
     const submittedAt = new Date()
     const tanggal = toIsoDateLocal(submittedAt)
-    const waktu = mealSlotFromLocalTime(submittedAt, isSnack)
+    const waktu = mealKey
 
     setLoading(true)
     try {
+      const validation = await validateFoodInput(filled.map((x) => x.nama_makanan))
+      if (validation.valid === false) {
+        setError(validation.message)
+        return
+      }
+
       const est = await estimateCalories(
         filled.map((x) => ({
           nama_makanan: x.nama_makanan,
@@ -465,7 +485,7 @@ export function FoodEntryForm({ userId }) {
       const nextRow = emptyRow()
       setRows([nextRow])
       setExpandedRowId(nextRow.id)
-      setIsSnack(false)
+      setMealKey('')
       toast.success('Data tersimpan.')
     } catch (e) {
       logError('FoodEntryForm.handleAnalyze', e)
@@ -478,46 +498,12 @@ export function FoodEntryForm({ userId }) {
 
   return (
     <div className="space-y-2 sm:space-y-3">
-      <section className="space-y-2 text-center">
-        <div
-          className={cn(
-            'mx-auto flex max-w-md items-center justify-center gap-3 rounded-xl border border-border/80 bg-muted/20 px-4 py-3',
-            isSnack && 'border-rose-900/35 bg-rose-50/80',
-          )}
-        >
-          <Cookie
-            className={cn('h-5 w-5 shrink-0 text-muted-foreground', isSnack && 'text-rose-800')}
-            aria-hidden
-          />
-          <div className="flex flex-1 flex-col items-start gap-1 text-left">
-            <Label htmlFor="food-entry-snack" className={cn(typeLabel, 'cursor-pointer')}>
-              Camilan (Snack)
-            </Label>
-            <p className={cn(typeMuted, 'text-xs leading-snug')}>
-              Aktifkan jika ini camilan. Jika tidak, kategori waktu makan ditetapkan otomatis dari jam
-              saat Anda menekan Analisa &amp; simpan.
-            </p>
-          </div>
-          <input
-            id="food-entry-snack"
-            type="checkbox"
-            checked={isSnack}
-            onChange={(e) => setIsSnack(e.target.checked)}
-            className="h-5 w-5 shrink-0 rounded border-input accent-[#7a1e2c]"
-            aria-label="Tandai sebagai snack"
-          />
-        </div>
-        <p className={cn(typeMuted, 'text-center text-xs sm:text-sm')}>
-          Sarapan 05:00–10:59 · Siang 11:00–14:59 · Malam 15:00–04:59 (termasuk makan malam larut).
-        </p>
-      </section>
-
       {result ? (
         <div
           ref={resultRef}
           id="food-entry-result"
           tabIndex={-1}
-          className="scroll-mt-3 text-left outline-none sm:scroll-mt-4"
+          className="scroll-mt-24 text-left outline-none sm:scroll-mt-28"
           aria-live="polite"
         >
           <Card
@@ -543,7 +529,7 @@ export function FoodEntryForm({ userId }) {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-teal-700/85">
                   Struk estimasi
                 </p>
-                <p className="mt-2 font-[family-name:var(--font-greeting)] text-[1.35rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-2xl">
+                <p className="mt-2 font-greeting text-[1.35rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-2xl">
                   Tersimpan
                 </p>
                 <p className="mx-auto mt-2 max-w-[18rem] text-xs leading-relaxed text-neutral-600">
@@ -625,7 +611,7 @@ export function FoodEntryForm({ userId }) {
                 role="presentation"
               />
 
-              <div className="relative bg-gradient-to-r from-teal-600/[0.09] via-teal-600/[0.05] to-transparent px-5 py-5 sm:px-7">
+              <div className="relative bg-linear-to-r from-teal-600/9 via-teal-600/5 to-transparent px-5 py-5 sm:px-7">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-teal-900/70">
@@ -673,20 +659,52 @@ export function FoodEntryForm({ userId }) {
             variant="secondary"
             className="w-fit shrink-0 text-sm font-medium tabular-nums transition-colors duration-200"
           >
-            {rows.length} item
+            {filledCount}/{rows.length} lengkap
           </Badge>
         </div>
 
-        <div
-          className="hidden gap-2 text-sm font-medium leading-none text-muted-foreground sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-center sm:px-0.5"
-          aria-hidden
-        >
-          <span>Makanan</span>
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="w-[7.25rem] shrink-0 sm:text-left">Jumlah</span>
-            <span className="min-w-0 flex-1">Satuan</span>
+        <section className="space-y-2">
+          <div
+            className={cn(
+              'group flex overflow-visible rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm',
+              'ring-1 ring-border/30',
+              'transition-[border-color,box-shadow,ring-color] duration-200',
+              'motion-safe:hover:border-primary/30 motion-safe:hover:shadow-md motion-safe:hover:ring-primary/20',
+              'focus-within:border-primary/35 focus-within:shadow-md focus-within:ring-2 focus-within:ring-ring/35',
+            )}
+          >
+            <div className="shrink-0 self-stretch overflow-hidden rounded-l-xl" aria-hidden>
+              <div className="h-full w-1 bg-linear-to-b from-primary/55 via-primary/35 to-primary/15 sm:w-1.5" />
+            </div>
+            <div className="min-w-0 flex-1 p-3 sm:p-3.5">
+              <div className="flex items-start gap-3">
+                <Cookie className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+                <div className="min-w-0 flex-1 space-y-1">
+                  <Label htmlFor="food-entry-meal" className={typeLabel}>
+                    Waktu makan
+                  </Label>
+                  <p className={cn(typeMuted, 'text-xs leading-snug')}>
+                    Pilih kategori waktu makan sebelum menyimpan.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-2">
+                <Select value={mealKey} onValueChange={setMealKey}>
+                  <SelectTrigger id="food-entry-meal" className="w-full bg-background/80">
+                    <SelectValue placeholder="Pilih waktu makan" />
+                  </SelectTrigger>
+                  <SelectContent align="start">
+                    {WAKTU.map((w) => (
+                      <SelectItem key={w.key} value={w.key}>
+                        {w.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
         <div className="space-y-2.5">
           {rows.map((r, i) => {
@@ -710,7 +728,7 @@ export function FoodEntryForm({ userId }) {
                   className="shrink-0 self-stretch overflow-hidden rounded-l-xl"
                   aria-hidden
                 >
-                  <div className="h-full w-1 bg-gradient-to-b from-primary/55 via-primary/35 to-primary/15 motion-safe:transition-opacity motion-safe:group-hover:opacity-100 sm:w-1.5" />
+                  <div className="h-full w-1 bg-linear-to-b from-primary/55 via-primary/35 to-primary/15 motion-safe:transition-opacity motion-safe:group-hover:opacity-100 sm:w-1.5" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 border-b border-border/50 bg-muted/25 px-3 py-2">
@@ -761,7 +779,7 @@ export function FoodEntryForm({ userId }) {
                       aria-labelledby={`food-row-label-${r.id}`}
                       className="p-3 sm:p-3.5"
                     >
-                      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
+                      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_8.5rem_minmax(0,1fr)] sm:items-end">
                         <div className="grid gap-1.5">
                           <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-name-${r.id}`}>
                             Makanan
@@ -787,70 +805,65 @@ export function FoodEntryForm({ userId }) {
                             onChangeNama={(nama) => setRow(i, { nama })}
                           />
                         </div>
-                        <div className="flex min-w-0 flex-wrap items-end gap-2">
-                          <div className="grid shrink-0 gap-1.5">
-                            <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-qty-${r.id}`}>
-                              Jumlah
-                            </Label>
-                            <div className={foodQtyStepperShellClass}>
-                              <button
-                                type="button"
-                                className={foodQtyStepperBtnClass}
-                                onClick={() => adjustRowJumlah(i, -1)}
-                                aria-label="Kurangi jumlah"
-                              >
-                                -
-                              </button>
-                              <Input
-                                id={`food-qty-${r.id}`}
-                                type="number"
-                                inputMode="decimal"
-                                step="any"
-                                min={0}
-                                placeholder="0"
-                                className={foodQtyStepperInnerInputClass}
-                                value={r.jumlah}
-                                onChange={(e) => setRow(i, { jumlah: e.target.value })}
-                                onFocus={(e) => e.target.select()}
-                              />
-                              <button
-                                type="button"
-                                className={foodQtyStepperBtnClass}
-                                onClick={() => adjustRowJumlah(i, 1)}
-                                aria-label="Tambah jumlah"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                          <div className="grid min-w-0 flex-1 basis-[10rem] gap-1.5">
-                            <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-unit-${r.id}`}>
-                              Satuan
-                            </Label>
-                            <Select
-                              value={r.unitId || undefined}
-                              onValueChange={(v) => setRow(i, { unitId: v })}
+                        <div className="grid gap-1.5">
+                          <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-qty-${r.id}`}>
+                            Jumlah
+                          </Label>
+                          <div className={foodQtyStepperShellClass}>
+                            <button
+                              type="button"
+                              className={foodQtyStepperBtnClass}
+                              onClick={() => adjustRowJumlah(i, -1)}
+                              aria-label="Kurangi jumlah"
                             >
-                              <SelectTrigger
-                                id={`food-unit-${r.id}`}
-                                className={cn(
-                                  foodRowControlShell,
-                                  foodRowSelectFocus,
-                                  foodRowSelectMobileType,
-                                  'min-w-0 w-full',
-                                )}
-                              >
-                                <SelectValue placeholder="Satuan" />
-                              </SelectTrigger>
-                              <SelectContent align="end" className="text-xs">
-                                {units.map((u) => (
-                                  <SelectItem key={u.id} value={u.id} className="text-xs">
-                                    {u.nama}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              -
+                            </button>
+                            <Input
+                              id={`food-qty-${r.id}`}
+                              type="number"
+                              inputMode="decimal"
+                              step="any"
+                              min={0}
+                              placeholder="0"
+                              className={foodQtyStepperInnerInputClass}
+                              value={r.jumlah}
+                              onChange={(e) => setRow(i, { jumlah: e.target.value })}
+                              onFocus={(e) => e.target.select()}
+                            />
+                            <button
+                              type="button"
+                              className={foodQtyStepperBtnClass}
+                              onClick={() => adjustRowJumlah(i, 1)}
+                              aria-label="Tambah jumlah"
+                            >
+                              +
+                            </button>
                           </div>
+                        </div>
+                        <div className="grid min-w-0 gap-1.5">
+                          <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-unit-${r.id}`}>
+                            Satuan
+                          </Label>
+                          <Select value={r.unitId || undefined} onValueChange={(v) => setRow(i, { unitId: v })}>
+                            <SelectTrigger
+                              id={`food-unit-${r.id}`}
+                              className={cn(
+                                foodRowControlShell,
+                                foodRowSelectFocus,
+                                foodRowSelectMobileType,
+                                'min-w-0 w-full',
+                              )}
+                            >
+                              <SelectValue placeholder="Satuan" />
+                            </SelectTrigger>
+                            <SelectContent align="end" className="text-xs">
+                              {units.map((u) => (
+                                <SelectItem key={u.id} value={u.id} className="text-xs">
+                                  {u.nama}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
@@ -889,7 +902,7 @@ export function FoodEntryForm({ userId }) {
         )}
         <Button
           type="button"
-          className="order-1 h-9 w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:order-2 sm:w-auto sm:min-w-[11rem]"
+          className="order-1 h-9 w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:order-2 sm:w-auto sm:min-w-44"
           disabled={loading}
           onClick={handleAnalyze}
         >

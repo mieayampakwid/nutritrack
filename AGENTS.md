@@ -122,6 +122,8 @@ npm run test:coverage  # Coverage report (HTML + lcov)
 npm run test:related   # Only tests related to changed files
 ```
 
+Dev server port is enforced by `vite.config.js` (`server.port=5174`, `strictPort=true`).
+
 ## 9. Testing
 
 ### Stack

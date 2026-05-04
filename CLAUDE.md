@@ -14,6 +14,27 @@ NutriTrack (LAPER) is a web-based nutritional tracking platform for Indonesian d
 - Vitest 4.1.5 + @testing-library/react for testing
 - TypeScript only in `supabase/functions/` (Deno edge functions)
 
+## Where to look first
+
+- `README.md` — setup, env vars, Supabase + Edge Function notes
+- `AGENTS.md` — coding conventions, architecture map, testing rules (authoritative)
+- `tasks/current.md` — current work handoff (update before ending a session)
+
+## Common commands
+
+```bash
+npm install
+npm run dev            # Vite dev server (strict port 5174)
+npm run lint           # ESLint (must be clean before commit)
+npm test               # Vitest run (CI equivalent)
+```
+
+## Gotchas (high impact)
+
+- Use `@/` alias for imports within `src/` (configured in `vite.config.js`).
+- Do not call `supabase.auth` directly in components; use the project’s `useAuth` + Query hooks (see `AGENTS.md`).
+- Never expose `OPENAI_API_KEY` in frontend env (`VITE_*`).
+
 ## Task Handoff
 
 Read `tasks/current.md` at session start to resume where the previous agent left off. Before ending any task or when context is running low, update `tasks/current.md` with:

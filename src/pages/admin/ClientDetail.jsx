@@ -29,7 +29,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { formatDateId, formatNumberId } from '@/lib/format'
+import { differenceInYears } from 'date-fns'
+import { formatDateId, formatNumberId, parseIsoDateLocal } from '@/lib/format'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 import { ClientNutritionSummaryCard } from '@/components/clients/ClientNutritionSummaryCard'
@@ -62,6 +63,20 @@ export function ClientDetail() {
     return [...measurements].sort((a, b) => b.tanggal.localeCompare(a.tanggal))[0]
   }, [measurements])
 
+  const ageYears = useMemo(() => {
+    if (!client?.tgl_lahir) return null
+    const birth = parseIsoDateLocal(String(client.tgl_lahir).slice(0, 10))
+    if (!birth) return null
+    return differenceInYears(new Date(), birth)
+  }, [client])
+
+  const sexLabel =
+    client?.jenis_kelamin === 'male'
+      ? 'Laki-laki'
+      : client?.jenis_kelamin === 'female'
+        ? 'Perempuan'
+        : '—'
+
   const [metric, setMetric] = useState('berat_badan')
 
   if (loadingClient || !id) {
@@ -85,19 +100,48 @@ export function ClientDetail() {
 
   return (
     <AppShell>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" asChild className="gap-2">
+      <div className="mb-4 flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <Button variant="ghost" size="sm" asChild className="w-full justify-start gap-2 sm:w-auto sm:justify-center">
           <Link to={listPath}>
             <ArrowLeft className="h-4 w-4" />
             Kembali ke daftar
           </Link>
         </Button>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" asChild className="w-full justify-start sm:w-auto sm:justify-center">
           <Link to={`${listPath}/${id}/data-entry`}>Entri data (BMI &amp; asesmen)</Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild className="w-full justify-start sm:w-auto sm:justify-center">
+          <Link to={`${listPath}/${id}/change-log`}>Riwayat perubahan antropometri</Link>
         </Button>
       </div>
 
       <ClientNutritionSummaryCard profile={client} className="mb-6" />
+
+      <Card className={cn('mb-6 md:rounded-xl', MOBILE_DASHBOARD_CARD_SHELL)}>
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-medium">Ringkasan profil</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <dl className="grid gap-2 text-sm sm:grid-cols-2">
+            <div className="flex justify-between gap-2">
+              <dt className="text-muted-foreground">Umur</dt>
+              <dd className="font-medium tabular-nums">{ageYears != null ? `${ageYears} tahun` : '—'}</dd>
+            </div>
+            <div className="flex justify-between gap-2">
+              <dt className="text-muted-foreground">Jenis kelamin</dt>
+              <dd className="font-medium">{sexLabel}</dd>
+            </div>
+            <div className="flex justify-between gap-2 sm:col-span-2">
+              <dt className="text-muted-foreground">Lingkar pinggang (pengukuran terakhir)</dt>
+              <dd className="font-medium tabular-nums">
+                {lastMeasurement?.lingkar_pinggang != null
+                  ? `${formatNumberId(lastMeasurement.lingkar_pinggang)} cm`
+                  : '—'}
+              </dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="antro">
         <TabsList>
@@ -124,6 +168,7 @@ export function ClientDetail() {
                     <SelectItem value="bmi">BMI</SelectItem>
                     <SelectItem value="massa_otot">Massa otot</SelectItem>
                     <SelectItem value="massa_lemak">Massa lemak</SelectItem>
+                    <SelectItem value="lingkar_pinggang">Lingkar pinggang</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -157,6 +202,7 @@ export function ClientDetail() {
                   <TableHead className="text-right">BMI</TableHead>
                   <TableHead className="text-right">Otot</TableHead>
                   <TableHead className="text-right">Lemak %</TableHead>
+                  <TableHead className="text-right">LP (cm)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -170,11 +216,12 @@ export function ClientDetail() {
                       <TableCell className="text-right">{formatNumberId(m.bmi)}</TableCell>
                       <TableCell className="text-right">{formatNumberId(m.massa_otot)}</TableCell>
                       <TableCell className="text-right">{formatNumberId(m.massa_lemak)}</TableCell>
+                      <TableCell className="text-right">{formatNumberId(m.lingkar_pinggang)}</TableCell>
                     </TableRow>
                   ))}
                 {measurements.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       Belum ada data
                     </TableCell>
                   </TableRow>

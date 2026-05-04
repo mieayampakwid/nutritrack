@@ -97,6 +97,7 @@ export function UserManagement() {
 
   const [openAdd, setOpenAdd] = useState(false)
   const [openPw, setOpenPw] = useState('')
+  const [confirmRejectId, setConfirmRejectId] = useState('')
   const [form, setForm] = useState({
     nama: '',
     email: '',
@@ -183,13 +184,32 @@ export function UserManagement() {
 
   const rejectMutation = useMutation({
     mutationFn: async (userId) => {
-      const { error: authErr } = await supabase.auth.admin.deleteUser(userId)
-      if (authErr) throw authErr
-      const { error: profileErr } = await supabase.from('profiles').delete().eq('id', userId)
-      if (profileErr) throw profileErr
+      // Refresh so access_token is valid; use that token explicitly. This matches the
+      // pattern used by `src/lib/openai.js` to avoid transient "invalid jwt" errors.
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession()
+      const accessToken = refreshData?.session?.access_token
+      if (refreshError || !accessToken) {
+        throw new Error('Sesi tidak valid atau sudah habis. Silakan keluar lalu login kembali.')
+      }
+
+      const { error: userError } = await supabase.auth.getUser()
+      if (userError) {
+        throw new Error('Sesi tidak valid. Silakan keluar lalu login kembali.')
+      }
+
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { user_id: userId },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+
+      if (error) throw error
+      if (data && typeof data === 'object' && data.error) {
+        throw new Error(String(data.error))
+      }
     },
     onSuccess: () => {
       toast.success('Pengguna ditolak.')
+      setConfirmRejectId('')
       qc.invalidateQueries({ queryKey: ['profiles_admin'] })
       qc.invalidateQueries({ queryKey: ['client_directory'] })
     },
@@ -201,7 +221,7 @@ export function UserManagement() {
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl">
-        <Card className="overflow-hidden rounded-2xl border border-border/80 bg-card text-card-foreground shadow-sm ring-1 ring-black/[0.04]">
+        <Card className="overflow-hidden rounded-2xl border border-border/80 bg-card text-card-foreground shadow-sm ring-1 ring-black/4">
           <CardContent className="p-0">
             <div className="p-4 md:p-5">
               <div>
@@ -340,7 +360,7 @@ export function UserManagement() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700"
-                                onClick={() => rejectMutation.mutate(u.id)}
+                                onClick={() => setConfirmRejectId(u.id)}
                                 disabled={rejectMutation.isPending}
                               >
                                 {rejectMutation.isPending ? (
@@ -369,24 +389,24 @@ export function UserManagement() {
                   <div className="hidden border-t border-border/60 md:block">
                     <div className="max-h-[min(70vh,720px)] overflow-auto bg-card">
                       <Table className="text-xs">
-                        <TableHeader className="sticky top-0 z-[1] bg-table-header shadow-[0_1px_0_0_var(--color-table-line)]">
+                        <TableHeader className="sticky top-0 z-1 bg-table-header shadow-[0_1px_0_0_var(--color-table-line)]">
                           <TableRow className="border-table-line hover:bg-transparent">
-                            <TableHead className="h-8 w-[26%] min-w-[8rem] py-1.5 pl-3 pr-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-[26%] min-w-32 py-1.5 pl-3 pr-1 font-semibold text-table-header-foreground">
                               Nama
                             </TableHead>
-                            <TableHead className="h-8 min-w-[10rem] py-1.5 px-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 min-w-40 py-1.5 px-1 font-semibold text-table-header-foreground">
                               Email
                             </TableHead>
-                            <TableHead className="h-8 w-[6.5rem] py-1.5 px-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-26 py-1.5 px-1 font-semibold text-table-header-foreground">
                               Peran
                             </TableHead>
-                            <TableHead className="h-8 w-[6rem] py-1.5 px-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-24 py-1.5 px-1 font-semibold text-table-header-foreground">
                               Status
                             </TableHead>
-                            <TableHead className="h-8 w-[6rem] py-1.5 px-1 font-semibold text-table-header-foreground">
+                            <TableHead className="h-8 w-24 py-1.5 px-1 font-semibold text-table-header-foreground">
                               Terdaftar
                             </TableHead>
-                            <TableHead className="h-8 w-[10rem] py-1.5 px-1 font-semibold text-table-header-foreground text-right">
+                            <TableHead className="h-8 w-40 py-1.5 px-1 font-semibold text-table-header-foreground text-right">
                               Aksi
                             </TableHead>
                           </TableRow>
@@ -454,7 +474,7 @@ export function UserManagement() {
                                         className="h-6 w-6 text-red-600 hover:bg-red-50 hover:text-red-700"
                                         onClick={(e) => {
                                           e.stopPropagation()
-                                          rejectMutation.mutate(u.id)
+                                          setConfirmRejectId(u.id)
                                         }}
                                         disabled={rejectMutation.isPending}
                                       >
@@ -631,6 +651,38 @@ export function UserManagement() {
             Kata sandi ini hanya ditampilkan sekali. Salin dan bagikan dengan pengguna.
           </p>
           <Input readOnly value={openPw} className="font-mono" />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(confirmRejectId)}
+        onOpenChange={(o) => {
+          if (!o && !rejectMutation.isPending) setConfirmRejectId('')
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Hapus pengguna pending?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Tindakan ini akan menghapus akun dan profil pengguna. Ini tidak bisa dibatalkan.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmRejectId('')}
+              disabled={rejectMutation.isPending}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={rejectMutation.isPending || !confirmRejectId}
+              onClick={() => rejectMutation.mutate(confirmRejectId)}
+            >
+              {rejectMutation.isPending ? 'Menghapus…' : 'Hapus'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AppShell>

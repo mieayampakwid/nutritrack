@@ -2,14 +2,18 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { formatDateId, formatDisplayName, formatNumberId } from '@/lib/format'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { getInitials } from '@/lib/profileDisplay'
 import { supabase } from '@/lib/supabase'
+import { getBMICategoryAsiaPacific } from '@/lib/bmiCalculator'
+import { latestActivityDate } from '@/lib/latestActivity'
 import { cn } from '@/lib/utils'
 import { ClientQuickSummaryModal } from '@/components/clients/ClientQuickSummaryModal'
+import { useNavigate } from 'react-router-dom'
 
 function subDays(isoDate, n) {
   const d = new Date(isoDate + 'T12:00:00')
@@ -18,6 +22,7 @@ function subDays(isoDate, n) {
 }
 
 export function ClientDirectory({ linkPrefix, title }) {
+  const navigate = useNavigate()
   const [summaryId, setSummaryId] = useState(null)
 
   const { data, isLoading } = useQuery({
@@ -59,6 +64,12 @@ export function ClientDirectory({ linkPrefix, title }) {
     if (!latestByUser[m.user_id]) latestByUser[m.user_id] = m
   }
 
+  const latestLogByUser = {}
+  for (const l of data?.logs ?? []) {
+    const cur = latestLogByUser[l.user_id]
+    if (!cur || String(l.tanggal) > String(cur.tanggal)) latestLogByUser[l.user_id] = l
+  }
+
   const avgKal7 = {}
   for (const u of data?.profiles ?? []) avgKal7[u.id] = { sum: 0, n: 0 }
   for (const l of data?.logs ?? []) {
@@ -71,10 +82,10 @@ export function ClientDirectory({ linkPrefix, title }) {
     <div className="mx-auto max-w-7xl space-y-6 md:space-y-7">
       {title ? (
         <div className="max-md:px-0.5 max-md:pb-1">
-          <h1 className="text-xl font-semibold tracking-tight text-white max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)] sm:text-2xl md:text-foreground md:drop-shadow-none">
+          <h1 className="text-xl font-semibold tracking-tight text-white max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)] sm:text-2xl md:text-white md:drop-shadow-none">
             {title}
           </h1>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/90 max-md:drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] sm:text-[0.9375rem] md:mt-2 md:text-muted-foreground md:drop-shadow-none">
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/90 max-md:drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] sm:text-[0.9375rem] md:mt-2 md:text-white/85 md:drop-shadow-none">
             Ringkasan antropometri dan asupan kalori terbaru. Ketuk kartu untuk detail.
           </p>
         </div>
@@ -85,14 +96,18 @@ export function ClientDirectory({ linkPrefix, title }) {
           const ak = avgKal7[p.id]
           const avg =
             ak && ak.n > 0 ? ak.sum / ak.n : null
+          const ll = latestLogByUser[p.id]
+          const lastActivityDate = latestActivityDate(lm?.tanggal, ll?.tanggal)
+          const lastActivityLabel = lastActivityDate ? formatDateId(lastActivityDate) : '—'
+          const bmiCat = getBMICategoryAsiaPacific(lm?.bmi)
           const displayName = formatDisplayName(p.nama) || p.nama?.trim() || 'Klien'
           return (
             <button
               key={p.id}
               type="button"
-              aria-label={`Buka ringkasan ${displayName}`}
+              aria-label={`Buka profil ${displayName}`}
               className="block h-full w-full cursor-pointer rounded-[inherit] text-left outline-none transition-transform active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              onClick={() => setSummaryId(p.id)}
+              onClick={() => navigate(`${linkPrefix}/${p.id}`)}
             >
               <Card
                 className={cn(
@@ -119,6 +134,23 @@ export function ClientDirectory({ linkPrefix, title }) {
                   />
                 </CardHeader>
                 <CardContent className="space-y-2 pb-4 text-sm leading-relaxed sm:pb-6">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="flex flex-wrap items-center gap-2">
+                      <span className="text-muted-foreground">Aktivitas terakhir: </span>
+                      <span className="font-semibold tabular-nums text-foreground">{lastActivityLabel}</span>
+                    </p>
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-primary underline-offset-4 hover:underline"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setSummaryId(p.id)
+                      }}
+                    >
+                      Ringkasan
+                    </button>
+                  </div>
                   <p>
                     <span className="text-muted-foreground">BMI terakhir: </span>
                     {lm?.bmi != null ? (
@@ -129,6 +161,12 @@ export function ClientDirectory({ linkPrefix, title }) {
                     ) : (
                       <span className="font-medium text-muted-foreground">—</span>
                     )}
+                  </p>
+                  <p className="flex flex-wrap items-center gap-2">
+                    <span className="text-muted-foreground">Status BMI: </span>
+                    <Badge variant="secondary" className="px-2 py-0.5 text-[11px] font-medium">
+                      {bmiCat.label}
+                    </Badge>
                   </p>
                   <p>
                     <span className="text-muted-foreground">Rata kalori 7 hari: </span>
