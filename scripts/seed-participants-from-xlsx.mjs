@@ -45,6 +45,28 @@ function parseEmail(raw) {
   return email;
 }
 
+function normalizePhone(raw) {
+  const s = String(raw ?? "").trim();
+  if (!s) return null;
+
+  // Keep digits only (remove spaces, dashes, parentheses, etc).
+  let digits = s.replace(/\D+/g, "");
+  if (!digits) return null;
+
+  // Coerce Indonesian numbers to "62..." (digits only).
+  // Examples:
+  // - 0812xxxx -> 62812xxxx
+  // - +62812xxxx -> 62812xxxx
+  // - 812xxxx -> 62812xxxx
+  if (digits.startsWith("0")) digits = `62${digits.slice(1)}`;
+  if (digits.startsWith("8")) digits = `62${digits}`;
+
+  if (!digits.startsWith("62")) return null;
+  if (digits.length < 9) return null;
+
+  return digits;
+}
+
 function parseNumber(raw) {
   if (raw === null || raw === undefined) return null;
   if (typeof raw === "number" && Number.isFinite(raw)) return raw;
@@ -166,6 +188,7 @@ const todayIso = new Date().toISOString().slice(0, 10);
 
 let created = 0;
 let skippedDuplicates = 0;
+let updatedPhones = 0;
 let failed = 0;
 const failures = [];
 
@@ -181,6 +204,10 @@ for (let i = 0; i < rows.length; i += 1) {
     continue;
   }
 
+  const phone = normalizePhone(
+    pickColumn(row, headerMap, ["No. HP", "No HP", "No. Hp", "HP", "Phone", "Nomor HP", "Nomor Telepon"]),
+  );
+
   const nama =
     String(pickColumn(row, headerMap, ["Username", "Nama", "Name"]) ?? "")
       .trim() || email.split("@")[0];
@@ -193,6 +220,7 @@ for (let i = 0; i < rows.length; i += 1) {
   const tinggiBadan = parseNumber(pickColumn(row, headerMap, ["TB (cm)", "TB cm", "Tinggi badan", "Tinggi Badan", "Tinggi (cm)"]));
   const lingkarPerut = parseNumber(pickColumn(row, headerMap, ["Lingkar Perut", "Lingkar perut", "Lingkar Pinggang", "Lingkar pinggang"]));
 
+  let existingUserId = null;
   try {
     const { data, error } = await supabase
       .from("profiles")
@@ -202,8 +230,7 @@ for (let i = 0; i < rows.length; i += 1) {
 
     if (error) throw error;
     if (data?.length) {
-      skippedDuplicates += 1;
-      continue;
+      existingUserId = data[0]?.id ?? null;
     }
   } catch (e) {
     failed += 1;
@@ -212,7 +239,35 @@ for (let i = 0; i < rows.length; i += 1) {
   }
 
   if (dryRun) {
-    created += 1;
+    if (existingUserId) {
+      skippedDuplicates += 1;
+      if (phone) updatedPhones += 1;
+    } else {
+      created += 1;
+    }
+    continue;
+  }
+
+  if (existingUserId) {
+    skippedDuplicates += 1;
+
+    if (phone) {
+      try {
+        const { error } = await supabase.auth.admin.updateUserById(existingUserId, {
+          phone,
+        });
+        if (error) throw error;
+        updatedPhones += 1;
+      } catch (e) {
+        failed += 1;
+        failures.push({
+          row: excelRowNumber,
+          email,
+          reason: `Update existing phone failed: ${e?.message ?? String(e)}`,
+        });
+      }
+    }
+
     continue;
   }
 
@@ -222,6 +277,7 @@ for (let i = 0; i < rows.length; i += 1) {
       email,
       password: defaultPassword,
       email_confirm: true,
+      phone: phone ?? undefined,
       user_metadata: {
         role: "klien",
         nama,
@@ -300,6 +356,7 @@ console.log(
       totalRows: rows.length,
       created,
       skippedDuplicates,
+      updatedPhones,
       failed,
       failures,
     },

@@ -28,7 +28,17 @@ function isUuidLike(s: string) {
 function normalizePhone(s: string) {
   const trimmed = s.trim()
   if (!trimmed) return ''
-  return trimmed.replace(/\s+/g, '')
+
+  let digits = trimmed.replace(/\D+/g, '')
+  if (!digits) return ''
+
+  if (digits.startsWith('0')) digits = `62${digits.slice(1)}`
+  if (digits.startsWith('8')) digits = `62${digits}`
+
+  if (!digits.startsWith('62')) return ''
+  if (digits.length < 9) return ''
+
+  return digits
 }
 
 Deno.serve(async (req) => {
