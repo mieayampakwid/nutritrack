@@ -40,6 +40,9 @@ Bersikap tegas tetapi adil. Makanan daerah/tradisional tetap valid.
 Jika diberikan beberapa input sekaligus, tetap balas HANYA SATU JSON object:
 - valid=true bila SEMUA input adalah makanan/minuman manusia yang valid
 - valid=false bila ADA minimal satu input yang tidak valid, dan "message" harus menyebutkan input mana yang tidak valid
+- jika valid=false dan ada beberapa input, sertakan juga:
+  - "invalid_inputs": array string dari input yang tidak valid (gunakan persis input yang kamu anggap tidak valid)
+  - "invalid_indices": array number (0-based) posisi input yang tidak valid dalam daftar yang diberikan
 
 Balas hanya dalam JSON. Jangan berikan penjelasan di luar JSON.`
 
@@ -108,7 +111,49 @@ function tryExtractJson(text: string): unknown | null {
   return null
 }
 
-function foldValidateResult(parsed: unknown, items: string[]): ValidateResult | null {
+type ValidateResultV2 = {
+  valid: boolean
+  message?: string
+  invalid_inputs?: string[]
+  invalid_indices?: number[]
+}
+
+function isValidateResultV2(x: unknown): x is ValidateResultV2 {
+  if (!isValidateResult(x)) return false
+  const obj = x as Record<string, unknown>
+  if ('invalid_inputs' in obj) {
+    if (
+      obj.invalid_inputs != null &&
+      (!Array.isArray(obj.invalid_inputs) || !obj.invalid_inputs.every((v) => typeof v === 'string'))
+    )
+      return false
+  }
+  if ('invalid_indices' in obj) {
+    if (
+      obj.invalid_indices != null &&
+      (!Array.isArray(obj.invalid_indices) ||
+        !obj.invalid_indices.every((v) => typeof v === 'number' && Number.isFinite(v)))
+    )
+      return false
+  }
+  return true
+}
+
+function uniqueCompact(list: string[]) {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const raw of list) {
+    const s = String(raw ?? '').trim()
+    if (!s) continue
+    const key = s.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(s)
+  }
+  return out
+}
+
+function foldValidateResult(parsed: unknown, items: string[]): ValidateResultV2 | null {
   if (isValidateResult(parsed)) return parsed
 
   // Some models respond with per-item array. Fold it into a single verdict.
@@ -132,13 +177,20 @@ function foldValidateResult(parsed: unknown, items: string[]): ValidateResult | 
         ? `"${listed}" sepertinya bukan makanan/minuman yang bisa kami nilai. Silakan masukkan makanan atau hidangan yang nyata agar kami dapat menghitung nilai gizinya.`
         : 'Ada input yang bukan makanan/minuman yang bisa kami nilai. Silakan periksa kembali.')
 
-    return { valid: false, message }
+    const invalid_inputs = uniqueCompact(
+      invalids
+        .map(({ r, idx }) => r.input?.trim() || items[idx] || '')
+        .filter(Boolean),
+    ).slice(0, 12)
+    const invalid_indices = invalids.map(({ idx }) => idx).slice(0, 40)
+
+    return { valid: false, message, invalid_inputs, invalid_indices }
   }
 
   // Some models wrap results: { result: {...} } or { results: [...] }
   if (parsed != null && typeof parsed === 'object') {
     const maybe = parsed as Record<string, unknown>
-    if (isValidateResult(maybe.result)) return maybe.result
+    if (isValidateResultV2(maybe.result)) return maybe.result
     if (Array.isArray(maybe.results)) return foldValidateResult(maybe.results, items)
     if (Array.isArray(maybe.data)) return foldValidateResult(maybe.data, items)
   }
@@ -298,6 +350,8 @@ Deno.serve(async (req) => {
       })
     }
 
+    // NOTE: Keep compatibility: callers may only read { valid, message }.
+    // New callers can use invalid_inputs / invalid_indices for per-item highlighting.
     return new Response(JSON.stringify(folded), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

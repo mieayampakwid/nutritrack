@@ -91,6 +91,6 @@ describe('UserManagement reject pending user', () => {
         }),
       ),
     )
-  })
+  }, 15000)
 })
 

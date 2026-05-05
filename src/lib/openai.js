@@ -200,5 +200,20 @@ export async function validateFoodInput(items) {
     throw new Error('Format respons tidak valid')
   }
 
+  if (data.invalid_inputs != null) {
+    if (!Array.isArray(data.invalid_inputs) || !data.invalid_inputs.every((x) => typeof x === 'string')) {
+      throw new Error('Format respons tidak valid')
+    }
+  }
+
+  if (data.invalid_indices != null) {
+    if (
+      !Array.isArray(data.invalid_indices) ||
+      !data.invalid_indices.every((x) => typeof x === 'number' && Number.isFinite(x))
+    ) {
+      throw new Error('Format respons tidak valid')
+    }
+  }
+
   return data
 }
