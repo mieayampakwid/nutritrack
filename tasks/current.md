@@ -141,7 +141,7 @@ Order: **#3 → #4**. **#4** depends on extended profile/anthropometric data fro
 - [x] #3 — Extended profile fields, BMI, Harris-Benedict, change log + dedicated log page
 - [x] #4 — Evaluation page (≥2 week range, food log + latest anthropometrics, saved recommendations)
 
-**Sprint Day 2 — Revisions (PENDING)**
+**Sprint Day 2 — Revisions**
 
-- [ ] **Rev 1 — Navigation cleanup (Nutritionist & Admin role)**: remove evaluation + client log pages from nav; replace with unified client list page (#2). (Routes still exist; nav still shows Evaluation + Log makan.)
+- [x] **Rev 1 — Navigation cleanup (Nutritionist & Admin role)**: remove evaluation + client log pages from nav; replace with unified client list page (#2). (Routes still exist; nav no longer shows Evaluation/Log makan/Entri data.)
 - [ ] **Rev 2 — UI recheck & polish**: fix layout issues, typography consistency, unreadable text, and ensure hierarchy across all views.
