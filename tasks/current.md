@@ -145,3 +145,23 @@ Order: **#3 → #4**. **#4** depends on extended profile/anthropometric data fro
 
 - [x] **Rev 1 — Navigation cleanup (Nutritionist & Admin role)**: remove evaluation + client log pages from nav; replace with unified client list page (#2). (Routes still exist; nav no longer shows Evaluation/Log makan/Entri data.)
 - [ ] **Rev 2 — UI recheck & polish**: fix layout issues, typography consistency, unreadable text, and ensure hierarchy across all views.
+
+---
+
+## Seed participants/users into DB (Backlog #6)
+
+**Which sprint/day?**
+- **Backlog #6 is planned as “Day 1”** and can run independently **once DB schema from #3 is confirmed** (your Sprint 2 / #3 is already implemented in repo).
+
+**Scope (only seeding)**
+- [x] **Create one-time seed script** that reads the provided `.xlsx` and inserts participants into DB.
+- [x] **Map spreadsheet → DB fields**:
+  - Username → `nama`
+  - Email → `email` (unique; login identifier)
+  - Unit / Instalasi → `instalasi`
+  - Tanggal Lahir → `tgl_lahir`
+  - Jenis kelamin → `jenis_kelamin`
+  - TB (cm) → `tinggi_badan`
+  - Lingkar Perut → `lingkar_pinggang` (stored as a first row in `body_measurements`)
+- [x] **Default password**: use a single default password for all seeded accounts **stored hashed**, and **skip duplicates by email**.
+- [x] **Logging**: print summary of successes + failed rows (row identifier + reason).

@@ -5,11 +5,8 @@ import { renderWithProviders } from '@/test/renderWithProviders'
 
 // Radix Select relies on Pointer Events APIs that jsdom lacks.
 if (typeof Element !== 'undefined') {
-  // eslint-disable-next-line no-undef
   Element.prototype.hasPointerCapture ??= () => false
-  // eslint-disable-next-line no-undef
   Element.prototype.setPointerCapture ??= () => {}
-  // eslint-disable-next-line no-undef
   Element.prototype.releasePointerCapture ??= () => {}
 }
 
