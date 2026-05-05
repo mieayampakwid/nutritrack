@@ -3,15 +3,11 @@ import { Link, useLocation } from 'react-router-dom'
 import { DashboardHero } from '@/components/dashboard/DashboardHero'
 import {
   Apple,
-  CalendarRange,
-  ClipboardList,
-  ClipboardPen,
   EllipsisVertical,
   LayoutDashboard,
   LogOut,
   Ruler,
   Settings2,
-  TrendingUp,
   Upload,
   Users,
 } from 'lucide-react'
@@ -42,13 +38,10 @@ const ROLE_NAV = {
   admin: {
     primary: [
       { to: '/admin/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-      { to: '/admin/evaluation', label: 'Evaluasi', icon: CalendarRange },
-      { to: '/admin/food-logs', label: 'Log makan', icon: ClipboardList },
+      { to: '/admin/all-clients', label: 'Klien', icon: Users },
       { to: '/admin/users', label: 'User', icon: Users },
     ],
     more: [
-      { to: '/admin/clients', label: 'Klien', icon: TrendingUp },
-      { to: '/admin/data-entry', label: 'Entri data', icon: ClipboardPen },
       { to: '/admin/import', label: 'Impor', icon: Upload },
       { to: '/admin/food-units', label: 'Master ukuran', icon: Settings2 },
     ],
@@ -56,10 +49,7 @@ const ROLE_NAV = {
   ahli_gizi: {
     primary: [
       { to: '/gizi/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-      { to: '/gizi/evaluation', label: 'Evaluasi', icon: CalendarRange },
-      { to: '/gizi/food-logs', label: 'Log makan', icon: ClipboardList },
       { to: '/gizi/clients', label: 'Klien', icon: Users },
-      { to: '/gizi/data-entry', label: 'Entri data', icon: ClipboardPen },
     ],
     more: [],
   },
