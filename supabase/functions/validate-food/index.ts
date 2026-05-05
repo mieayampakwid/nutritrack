@@ -11,6 +11,18 @@ const corsHeaders: Record<string, string> = {
 
 const MAX_ITEMS = 40
 const MAX_NAME_LEN = 120
+const MAX_UNIT_LEN = 40
+
+const KNOWN_UNITS = new Set([
+  'centong',
+  'sendok teh',
+  'sendok makan',
+  'potong',
+  'gelas',
+  'buah',
+  'lembar',
+  'bungkus',
+])
 
 function sanitize(s: string, maxLen = MAX_NAME_LEN): string {
   return s
@@ -22,13 +34,20 @@ function sanitize(s: string, maxLen = MAX_NAME_LEN): string {
 
 const SYSTEM_MESSAGE = `Anda adalah asisten validasi makanan untuk aplikasi pemantauan nutrisi.
 Tugas Anda adalah menentukan apakah input pengguna merupakan makanan/minuman manusia yang valid
-dan dapat dinilai nilai gizinya.
+dan dapat dinilai nilai gizinya. Selain itu, periksa apakah satuan porsi yang dipilih masuk akal
+untuk makanan tersebut.
 
 Jika input BUKAN makanan/minuman manusia yang valid (mis. benda non-makanan, konsep abstrak,
 gibberish, atau input bercanda), balas dengan:
 {
   "valid": false,
   "message": "\\"[input]\\" sepertinya bukan makanan/minuman yang bisa kami nilai. Silakan masukkan makanan atau hidangan yang nyata agar kami dapat menghitung nilai gizinya."
+}
+
+Jika makanannya valid tetapi satuannya TIDAK cocok/masuk akal (contoh: makanan padat utuh seperti bakso disetarakan dengan "sendok makan"), balas dengan:
+{
+  "valid": false,
+  "message": "Satuan untuk \\"[input]\\" tidak cocok. Pilih satuan yang lebih sesuai (mis. bungkus/potong/buah/lembar/gelas/centong) agar perhitungan lebih akurat."
 }
 
 Jika input ADALAH makanan/minuman manusia yang valid, balas dengan:
@@ -39,13 +58,27 @@ Jika input ADALAH makanan/minuman manusia yang valid, balas dengan:
 Bersikap tegas tetapi adil. Makanan daerah/tradisional tetap valid.
 Jika diberikan beberapa input sekaligus, tetap balas HANYA SATU JSON object:
 - valid=true bila SEMUA input adalah makanan/minuman manusia yang valid
-- valid=false bila ADA minimal satu input yang tidak valid, dan "message" harus menyebutkan input mana yang tidak valid
+- valid=false bila ADA minimal satu input yang tidak valid atau satuan yang tidak cocok, dan "message" harus menyebutkan input mana yang bermasalah
+- jika valid=false dan ada beberapa input, sertakan juga:
+  - "invalid_inputs": array string dari input yang tidak valid (gunakan persis input yang kamu anggap tidak valid)
+  - "invalid_indices": array number (0-based) posisi input yang tidak valid dalam daftar yang diberikan
+
+Catatan:
+- Satuan yang mungkin: centong, sendok teh, sendok makan, potong, gelas, buah, lembar, bungkus.
+- Jika satuan tidak tercantum atau tidak jelas, anggap tidak valid.
 
 Balas hanya dalam JSON. Jangan berikan penjelasan di luar JSON.`
 
-function buildUserMessage(items: string[]) {
-  if (items.length === 1) return `Input: ${items[0]}`
-  return `Inputs:\n${items.map((x, i) => `${i + 1}. ${x}`).join('\n')}`
+type ValidateInputItem = { nama_makanan: string; unit_nama?: string | null }
+
+function buildUserMessage(items: ValidateInputItem[]) {
+  const lines = items.map((x, i) => {
+    const name = x.nama_makanan
+    const unit = x.unit_nama ? ` | unit: ${x.unit_nama}` : ''
+    return `${i + 1}. ${name}${unit}`
+  })
+  if (items.length === 1) return `Input:\n${lines[0]}`
+  return `Inputs:\n${lines.join('\n')}`
 }
 
 type ValidateResult = { valid: boolean; message?: string }
@@ -108,7 +141,49 @@ function tryExtractJson(text: string): unknown | null {
   return null
 }
 
-function foldValidateResult(parsed: unknown, items: string[]): ValidateResult | null {
+type ValidateResultV2 = {
+  valid: boolean
+  message?: string
+  invalid_inputs?: string[]
+  invalid_indices?: number[]
+}
+
+function isValidateResultV2(x: unknown): x is ValidateResultV2 {
+  if (!isValidateResult(x)) return false
+  const obj = x as Record<string, unknown>
+  if ('invalid_inputs' in obj) {
+    if (
+      obj.invalid_inputs != null &&
+      (!Array.isArray(obj.invalid_inputs) || !obj.invalid_inputs.every((v) => typeof v === 'string'))
+    )
+      return false
+  }
+  if ('invalid_indices' in obj) {
+    if (
+      obj.invalid_indices != null &&
+      (!Array.isArray(obj.invalid_indices) ||
+        !obj.invalid_indices.every((v) => typeof v === 'number' && Number.isFinite(v)))
+    )
+      return false
+  }
+  return true
+}
+
+function uniqueCompact(list: string[]) {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const raw of list) {
+    const s = String(raw ?? '').trim()
+    if (!s) continue
+    const key = s.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(s)
+  }
+  return out
+}
+
+function foldValidateResult(parsed: unknown, displayItems: string[]): ValidateResultV2 | null {
   if (isValidateResult(parsed)) return parsed
 
   // Some models respond with per-item array. Fold it into a single verdict.
@@ -120,7 +195,7 @@ function foldValidateResult(parsed: unknown, items: string[]): ValidateResult | 
     if (invalids.length === 0) return { valid: true }
 
     const listed = invalids
-      .map(({ r, idx }) => r.input?.trim() || items[idx] || `Item #${idx + 1}`)
+      .map(({ r, idx }) => r.input?.trim() || displayItems[idx] || `Item #${idx + 1}`)
       .filter(Boolean)
       .slice(0, 6)
       .join(', ')
@@ -132,15 +207,22 @@ function foldValidateResult(parsed: unknown, items: string[]): ValidateResult | 
         ? `"${listed}" sepertinya bukan makanan/minuman yang bisa kami nilai. Silakan masukkan makanan atau hidangan yang nyata agar kami dapat menghitung nilai gizinya.`
         : 'Ada input yang bukan makanan/minuman yang bisa kami nilai. Silakan periksa kembali.')
 
-    return { valid: false, message }
+    const invalid_inputs = uniqueCompact(
+      invalids
+        .map(({ r, idx }) => r.input?.trim() || displayItems[idx] || '')
+        .filter(Boolean),
+    ).slice(0, 12)
+    const invalid_indices = invalids.map(({ idx }) => idx).slice(0, 40)
+
+    return { valid: false, message, invalid_inputs, invalid_indices }
   }
 
   // Some models wrap results: { result: {...} } or { results: [...] }
   if (parsed != null && typeof parsed === 'object') {
     const maybe = parsed as Record<string, unknown>
-    if (isValidateResult(maybe.result)) return maybe.result
-    if (Array.isArray(maybe.results)) return foldValidateResult(maybe.results, items)
-    if (Array.isArray(maybe.data)) return foldValidateResult(maybe.data, items)
+    if (isValidateResultV2(maybe.result)) return maybe.result
+    if (Array.isArray(maybe.results)) return foldValidateResult(maybe.results, displayItems)
+    if (Array.isArray(maybe.data)) return foldValidateResult(maybe.data, displayItems)
   }
 
   return null
@@ -222,16 +304,59 @@ Deno.serve(async (req) => {
       })
     }
 
-    const items = rawItems
-      .map((x) => sanitize(String(x ?? '')))
-      .filter(Boolean)
+    const parsedItems: ValidateInputItem[] = rawItems
+      .map((x) => {
+        if (typeof x === 'string') {
+          const nama_makanan = sanitize(x)
+          return nama_makanan ? { nama_makanan } : null
+        }
+        if (x != null && typeof x === 'object') {
+          const obj = x as Record<string, unknown>
+          const rawName = obj.nama_makanan ?? obj.nama ?? obj.name
+          const rawUnit = obj.unit_nama ?? obj.unit ?? obj.unitName
+          const nama_makanan = sanitize(String(rawName ?? ''))
+          const unit_nama = sanitize(String(rawUnit ?? ''), MAX_UNIT_LEN)
+          if (!nama_makanan) return null
+          if (unit_nama) return { nama_makanan, unit_nama }
+          return { nama_makanan }
+        }
+        return null
+      })
+      .filter((x): x is ValidateInputItem => Boolean(x))
       .slice(0, MAX_ITEMS)
 
-    if (!items.length) {
+    if (!parsedItems.length) {
       return new Response(JSON.stringify({ error: 'Data tidak valid.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
+    }
+
+    // If any item includes a unit, require all units to be present and known.
+    const anyHasUnit = parsedItems.some((x) => Boolean(x.unit_nama))
+    if (anyHasUnit) {
+      const badIdx: number[] = []
+      const badInputs: string[] = []
+      for (let i = 0; i < parsedItems.length; i++) {
+        const it = parsedItems[i]
+        const unit = it.unit_nama ? it.unit_nama.trim().toLowerCase() : ''
+        if (!unit || !KNOWN_UNITS.has(unit)) {
+          badIdx.push(i)
+          badInputs.push(`${it.nama_makanan}${it.unit_nama ? ` | unit: ${it.unit_nama}` : ''}`)
+        }
+      }
+      if (badIdx.length > 0) {
+        return new Response(
+          JSON.stringify({
+            valid: false,
+            message:
+              'Satuan tidak valid atau belum didukung. Pilih salah satu: centong, sendok teh, sendok makan, potong, gelas, buah, lembar, bungkus.',
+            invalid_indices: badIdx,
+            invalid_inputs: badInputs.slice(0, 12),
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
     }
 
     const openaiKey = Deno.env.get('OPENAI_API_KEY')
@@ -242,7 +367,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    const userMessage = buildUserMessage(items)
+    const userMessage = buildUserMessage(parsedItems)
     const model = Deno.env.get('OPENAI_MODEL') ?? 'gpt-4o-mini'
 
     const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -283,7 +408,10 @@ Deno.serve(async (req) => {
     }
 
     const parsed = tryExtractJson(raw)
-    const folded = parsed == null ? null : foldValidateResult(parsed, items)
+    const displayItems = parsedItems.map((x) =>
+      x.unit_nama ? `${x.nama_makanan} | unit: ${x.unit_nama}` : x.nama_makanan,
+    )
+    const folded = parsed == null ? null : foldValidateResult(parsed, displayItems)
     if (!folded) {
       return new Response(JSON.stringify({ error: 'Format AI tidak dikenali' }), {
         status: 502,
@@ -298,6 +426,8 @@ Deno.serve(async (req) => {
       })
     }
 
+    // NOTE: Keep compatibility: callers may only read { valid, message }.
+    // New callers can use invalid_inputs / invalid_indices for per-item highlighting.
     return new Response(JSON.stringify(folded), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

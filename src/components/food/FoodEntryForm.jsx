@@ -298,9 +298,11 @@ export function FoodEntryForm({ userId }) {
   const [suggestionsOpenRowId, setSuggestionsOpenRowId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [rowErrorsById, setRowErrorsById] = useState(() => ({}))
   const [result, setResult] = useState(null)
   const resultRef = useRef(null)
   const analyzingAnchorRef = useRef(null)
+  const rowErrorAnchorRef = useRef(null)
 
   const suggestionNames = useMemo(
     () => suggestions.map((s) => s.nama_makanan).filter(Boolean),
@@ -308,6 +310,7 @@ export function FoodEntryForm({ userId }) {
   )
 
   const unitMap = useMemo(() => Object.fromEntries(units.map((u) => [u.id, u])), [units])
+  const hasRowErrors = Object.keys(rowErrorsById).length > 0
 
   const filledCount = useMemo(() => {
     return rows.reduce((acc, r) => {
@@ -348,13 +351,36 @@ export function FoodEntryForm({ userId }) {
   }, [loading, reduceMotion])
 
   function setRow(i, patch) {
-    setRows((prev) => prev.map((r, j) => (j === i ? { ...r, ...patch } : r)))
+    setRows((prev) =>
+      prev.map((r, j) => {
+        if (j !== i) return r
+        if (rowErrorsById[r.id]) {
+          if (error) setError('')
+          setRowErrorsById((cur) => {
+            if (!cur[r.id]) return cur
+            const next = { ...cur }
+            delete next[r.id]
+            return next
+          })
+        }
+        return { ...r, ...patch }
+      }),
+    )
   }
 
   function adjustRowJumlah(rowIndex, delta) {
     setRows((prev) =>
       prev.map((r, j) => {
         if (j !== rowIndex) return r
+        if (rowErrorsById[r.id]) {
+          if (error) setError('')
+          setRowErrorsById((cur) => {
+            if (!cur[r.id]) return cur
+            const next = { ...cur }
+            delete next[r.id]
+            return next
+          })
+        }
         const base = r.jumlah === '' ? 0 : Number(r.jumlah)
         const n = Number.isFinite(base) ? base : 0
         const next = n + delta
@@ -377,6 +403,7 @@ export function FoodEntryForm({ userId }) {
 
   async function handleAnalyze() {
     setError('')
+    setRowErrorsById({})
     setResult(null)
 
     if (!mealKey) {
@@ -420,9 +447,48 @@ export function FoodEntryForm({ userId }) {
 
     setLoading(true)
     try {
-      const validation = await validateFoodInput(filled.map((x) => x.nama_makanan))
+      const validation = await validateFoodInput(
+        filled.map((x) => ({ nama_makanan: x.nama_makanan, unit_nama: x.unit_nama })),
+      )
       if (validation.valid === false) {
         setError(validation.message)
+        const invalidRowIds = new Set()
+        const message = validation.message?.trim() || 'Input makanan tidak valid.'
+
+        if (Array.isArray(validation.invalid_indices) && validation.invalid_indices.length > 0) {
+          for (const idx of validation.invalid_indices) {
+            const rowId = filled[idx]?.row?.id
+            if (rowId) invalidRowIds.add(rowId)
+          }
+        } else if (Array.isArray(validation.invalid_inputs) && validation.invalid_inputs.length > 0) {
+          const normalizedBad = new Set(
+            validation.invalid_inputs
+              .map((s) => String(s ?? '').trim().toLowerCase())
+              .filter(Boolean),
+          )
+          for (const x of filled) {
+            const key = x.nama_makanan.trim().toLowerCase()
+            if (normalizedBad.has(key)) invalidRowIds.add(x.row.id)
+          }
+        }
+
+        // If there's only one submitted row, map the error to that row even if the
+        // backend didn't return structured invalid indices/inputs.
+        if (invalidRowIds.size === 0 && filled.length === 1 && filled[0]?.row?.id) {
+          invalidRowIds.add(filled[0].row.id)
+        }
+
+        if (invalidRowIds.size > 0) {
+          setRowErrorsById(Object.fromEntries(Array.from(invalidRowIds).map((id) => [id, message])))
+          const firstBad = Array.from(invalidRowIds)[0]
+          setExpandedRowId(firstBad)
+          requestAnimationFrame(() => {
+            rowErrorAnchorRef.current?.scrollIntoView({
+              behavior: reduceMotion ? 'auto' : 'smooth',
+              block: 'center',
+            })
+          })
+        }
         return
       }
 
@@ -710,16 +776,21 @@ export function FoodEntryForm({ userId }) {
           {rows.map((r, i) => {
             const isExpanded = r.id === expandedRowId
             const summary = foodRowSummaryLine(r, unitMap)
+            const rowError = rowErrorsById[r.id]
             return (
               <div
                 key={r.id}
                 role="group"
                 aria-label={`Entri makanan ke-${i + 1}`}
+                data-invalid={rowError ? 'true' : 'false'}
+                ref={rowError ? rowErrorAnchorRef : null}
                 className={cn(
                   'group flex overflow-visible rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm',
                   'ring-1 ring-border/30',
                   'transition-[border-color,box-shadow,ring-color] duration-200',
                   'motion-safe:hover:border-primary/30 motion-safe:hover:shadow-md motion-safe:hover:ring-primary/20',
+                  rowError &&
+                    'border-destructive/55 ring-destructive/25 bg-destructive/3 motion-safe:hover:border-destructive/55 motion-safe:hover:ring-destructive/25',
                   isExpanded &&
                     'focus-within:border-primary/35 focus-within:shadow-md focus-within:ring-2 focus-within:ring-ring/35',
                 )}
@@ -752,6 +823,11 @@ export function FoodEntryForm({ userId }) {
                       <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                         {summary}
                       </span>
+                      {rowError ? (
+                        <span className="shrink-0 rounded-md bg-destructive/10 px-2 py-1 text-[11px] font-semibold text-destructive">
+                          Periksa
+                        </span>
+                      ) : null}
                       <ChevronDown
                         className={cn(
                           'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
@@ -779,6 +855,11 @@ export function FoodEntryForm({ userId }) {
                       aria-labelledby={`food-row-label-${r.id}`}
                       className="p-3 sm:p-3.5"
                     >
+                      {rowError ? (
+                        <p className="mb-2 text-xs leading-relaxed text-destructive" role="alert">
+                          {rowError}
+                        </p>
+                      ) : null}
                       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_8.5rem_minmax(0,1fr)] sm:items-end">
                         <div className="grid gap-1.5">
                           <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-name-${r.id}`}>
@@ -890,7 +971,7 @@ export function FoodEntryForm({ userId }) {
       </div>
 
       <div className="flex flex-col gap-1.5 border-t border-border/60 pt-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-        {error ? (
+        {error && !hasRowErrors ? (
           <p
             className="text-sm leading-normal text-destructive order-2 sm:order-1 sm:mr-2 sm:flex-1 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200"
             role="alert"
@@ -903,7 +984,7 @@ export function FoodEntryForm({ userId }) {
         <Button
           type="button"
           className="order-1 h-9 w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:order-2 sm:w-auto sm:min-w-44"
-          disabled={loading}
+          disabled={loading || !mealKey || filledCount !== rows.length}
           onClick={handleAnalyze}
         >
           {loading ? (
