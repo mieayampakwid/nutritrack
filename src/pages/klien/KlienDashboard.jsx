@@ -6,9 +6,7 @@ import { FoodLogTable } from '@/components/food/FoodLogTable'
 import { KLIEN_DASHBOARD_LOG_CARD_SHELL } from '@/lib/pageCard'
 import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Apple, Ruler } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 
@@ -69,14 +67,6 @@ export function KlienDashboard() {
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                     Mulai dari 1 entri dulu. Semakin konsisten, grafik dan ringkasanmu makin akurat.
                   </p>
-                  <div className="mt-3 flex flex-col items-stretch justify-center gap-2 sm:flex-row sm:items-center">
-                    <Button asChild size="sm" className="h-9">
-                      <Link to="/klien/food-entry">Tambah entri</Link>
-                    </Button>
-                    <Button asChild size="sm" variant="outline" className="h-9">
-                      <Link to="/klien/progress">Lihat progres</Link>
-                    </Button>
-                  </div>
                 </div>
               ) : (
                 <FoodLogTable logs={logs} pageSize={3} embedded />
