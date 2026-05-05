@@ -72,7 +72,7 @@ function SidebarBrand() {
       to={to}
       className="mb-4 block rounded-lg px-1 py-1 transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
     >
-      <span className="block text-lg font-bold tracking-tight text-foreground md:text-xl">{APP_ACRONYM}</span>
+      <span className="block text-lg font-bold tracking-tight text-foreground md:text-xl">LAPER</span>
     </Link>
   )
 }
