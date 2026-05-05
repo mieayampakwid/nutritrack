@@ -903,7 +903,7 @@ export function FoodEntryForm({ userId }) {
         <Button
           type="button"
           className="order-1 h-9 w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:order-2 sm:w-auto sm:min-w-44"
-          disabled={loading}
+          disabled={loading || !mealKey || filledCount !== rows.length}
           onClick={handleAnalyze}
         >
           {loading ? (
