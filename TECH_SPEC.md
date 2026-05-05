@@ -144,7 +144,8 @@ Primary schema source: `supabase/schema.sql`
 1. `profiles`
 
 - PK: `id` (UUID, references `auth.users`)
-- fields: `nama`, `email`, `nomor_wa`, `instalasi`, `role`, `is_active`, `created_at`
+- fields: `nama`, `email`, `instalasi`, `role`, `is_active`, `created_at`
+- phone: `auth.users.phone` (source of truth for WhatsApp/phone)
 - role constraint: `admin | ahli_gizi | klien`
 
 2. `body_measurements`

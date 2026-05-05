@@ -151,7 +151,17 @@ function ClientQuickSummaryBody({ clientId, linkPrefix }) {
     })
   }
 
-  const waDigits = normalizeIndonesiaWhatsAppDigits(client?.phone_whatsapp) ?? normalizeIndonesiaWhatsAppDigits(client?.nomor_wa)
+  const { data: phone } = useQuery({
+    queryKey: ['admin_user_phone', clientId],
+    enabled: Boolean(clientId),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_get_user_phone', { p_user_id: clientId })
+      if (error) throw error
+      return data ?? ''
+    },
+  })
+
+  const waDigits = normalizeIndonesiaWhatsAppDigits(phone)
 
   const messageBody = useMemo(() => {
     if (!client) return ''
@@ -225,7 +235,7 @@ function ClientQuickSummaryBody({ clientId, linkPrefix }) {
       </Button>
 
       {resumeOpen ? (
-        <div className="rounded-xl border border-dashed border-primary/35 bg-primary/[0.04] p-3 text-xs leading-relaxed whitespace-pre-wrap">
+        <div className="rounded-xl border border-dashed border-primary/35 bg-primary/4 p-3 text-xs leading-relaxed whitespace-pre-wrap">
           {messageBody}
         </div>
       ) : null}
@@ -347,7 +357,7 @@ function ClientQuickSummaryBody({ clientId, linkPrefix }) {
       </Button>
       {!waDigits ? (
         <p className="text-xs text-muted-foreground">
-          Tambahkan nomor WhatsApp (profil: phone_whatsapp atau nomor_wa) untuk mengaktifkan tombol ini.
+          Tambahkan nomor telepon di akun untuk mengaktifkan tombol ini.
         </p>
       ) : null}
 

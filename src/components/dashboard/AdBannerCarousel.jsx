@@ -45,7 +45,7 @@ export function AdBannerCarousel({
 
   return (
     <div
-      className={cn('relative mt-3 w-full max-w-3xl px-0 sm:px-1', className)}
+      className={cn('relative mx-auto mt-3 w-full max-w-3xl px-0 sm:px-1', className)}
       role="region"
       aria-roledescription="carousel"
       aria-label="Iklan"

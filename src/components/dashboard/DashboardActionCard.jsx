@@ -9,8 +9,8 @@ export function DashboardActionCard({ to, title, desc, icon, className }) {
     <Link to={to} className={cn('group block h-full outline-none', className)}>
       <Card
         className={cn(
-          'relative h-full border-border/60 bg-card/80 transition-all duration-200',
-          'hover:border-primary/30 hover:shadow-md hover:shadow-primary/[0.06]',
+          'relative h-full border-border/60 bg-card/95 transition-all duration-200',
+          'hover:border-primary/30 hover:shadow-md hover:shadow-primary/6',
           'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         )}
       >

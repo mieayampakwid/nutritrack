@@ -50,7 +50,7 @@ export function ImportData() {
           nama: String(r.nama ?? r.Nama ?? '').trim(),
           email: String(r.email ?? r.Email ?? '').trim(),
           instalasi: String(r.instalasi ?? r.Instalasi ?? '').trim(),
-          nomor_wa: String(r.nomor_wa ?? r.nomor_WA ?? r['nomor wa'] ?? '').trim(),
+          phone: String(r.phone ?? r.Phone ?? r.wa ?? r.WA ?? '').trim(),
         }))
         setRows(mapped)
         toast.success(`${mapped.length} baris di-parse.`)
@@ -78,14 +78,13 @@ export function ImportData() {
     for (let i = 0; i < n; i++) {
       const r = validRows[i]
       const pw = randomPassword()
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: r.email,
         password: pw,
         options: {
           data: {
             nama: r.nama,
             instalasi: r.instalasi || undefined,
-            nomor_wa: r.nomor_wa || undefined,
             role: 'klien',
           },
         },
@@ -96,6 +95,19 @@ export function ImportData() {
       } else {
         ok += 1
         lines.push(`OK,${r.email},${pw}`)
+
+        const uid = data.user?.id
+        if (uid && r.phone) {
+          const { data: fnData, error: fnErr } = await supabase.functions.invoke(
+            'admin-update-user-phone',
+            { body: { user_id: uid, phone: r.phone } },
+          )
+          if (fnErr) {
+            lines.push(`WARN,${r.email},${fnErr.message ?? 'Gagal set phone'}`)
+          } else if (fnData && typeof fnData === 'object' && fnData.error) {
+            lines.push(`WARN,${r.email},${String(fnData.error)}`)
+          }
+        }
       }
       setProgress(Math.round(((i + 1) / n) * 100))
       setStats({ ok, fail })
@@ -140,7 +152,7 @@ export function ImportData() {
             }}
           />
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Kolom wajib: nama, email, instalasi, nomor_wa (header huruf kecil).
+            Kolom wajib: nama, email, instalasi, phone (atau wa).
           </p>
         </div>
 
@@ -154,7 +166,7 @@ export function ImportData() {
                     <TableHead>Nama</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Instalasi</TableHead>
-                    <TableHead>WA</TableHead>
+                    <TableHead>Phone</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -166,7 +178,7 @@ export function ImportData() {
                       <TableCell>{r.nama || '—'}</TableCell>
                       <TableCell>{r.email || '—'}</TableCell>
                       <TableCell>{r.instalasi || '—'}</TableCell>
-                      <TableCell>{r.nomor_wa || '—'}</TableCell>
+                      <TableCell>{r.phone || '—'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

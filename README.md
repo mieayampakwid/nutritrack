@@ -83,6 +83,7 @@ Never expose `OPENAI_API_KEY` via a `VITE_*` variable. See `.env.example` for de
 | `npm run build`         | Production bundle                            |
 | `npm run preview`       | Preview production build                     |
 | `npm run lint`          | ESLint                                       |
+| `npm run seed:participants -- --file "<path.xlsx>" --default-password "<password>"` | One-time import participants from Excel (requires service role key) |
 | `npm test`              | Run Vitest suite once                        |
 | `npm run test:watch`    | Vitest watch mode                            |
 | `npm run test:coverage` | Coverage report (HTML + lcov in `coverage/`) |

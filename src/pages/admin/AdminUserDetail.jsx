@@ -36,6 +36,7 @@ export function AdminUserDetail() {
   const qc = useQueryClient()
   const [editOpen, setEditOpen] = useState(false)
   const [editRow, setEditRow] = useState(null)
+  const [phone, setPhone] = useState('')
 
   const {
     data: profile,
@@ -54,27 +55,46 @@ export function AdminUserDetail() {
     },
   })
 
+  const { isLoading: phoneLoading } = useQuery({
+    queryKey: ['admin_user_phone', id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_get_user_phone', { p_user_id: id })
+      if (error) throw error
+      setPhone(data ?? '')
+      return data ?? ''
+    },
+  })
+
   const updateMutation = useMutation({
     mutationFn: async () => {
       const tgl = (editRow.tgl_lahir ?? '').trim()
-      const ph = (editRow.phone_whatsapp ?? '').trim()
       const { error: e } = await supabase
         .from('profiles')
         .update({
           nama: editRow.nama,
-          nomor_wa: editRow.nomor_wa || null,
-          phone_whatsapp: ph || null,
           tgl_lahir: tgl && /^\d{4}-\d{2}-\d{2}$/.test(tgl) ? tgl : null,
           instalasi: editRow.instalasi || null,
           role: editRow.role,
         })
         .eq('id', editRow.id)
       if (e) throw e
+
+      const nextPhone = String(editRow.phone ?? '').trim()
+      const { data: fnData, error: fnErr } = await supabase.functions.invoke(
+        'admin-update-user-phone',
+        { body: { user_id: editRow.id, phone: nextPhone } },
+      )
+      if (fnErr) throw fnErr
+      if (fnData && typeof fnData === 'object' && fnData.error) {
+        throw new Error(String(fnData.error))
+      }
     },
     onSuccess: () => {
       toast.success('Perubahan disimpan.')
       setEditOpen(false)
       setEditRow(null)
+      setPhone(String(editRow?.phone ?? '').trim())
       qc.invalidateQueries({ queryKey: ['profile_admin_detail', id] })
       qc.invalidateQueries({ queryKey: ['profiles_admin'] })
       qc.invalidateQueries({ queryKey: ['client_directory'] })
@@ -127,7 +147,7 @@ export function AdminUserDetail() {
   }
 
   function openEdit() {
-    setEditRow({ ...profile })
+    setEditRow({ ...profile, phone })
     setEditOpen(true)
   }
 
@@ -143,7 +163,7 @@ export function AdminUserDetail() {
           </Button>
         </div>
 
-        <Card className={cn('border-border/80 bg-card shadow-sm ring-1 ring-black/[0.04]', MOBILE_DASHBOARD_CARD_SHELL)}>
+        <Card className={cn('border-border/80 bg-card shadow-sm ring-1 ring-black/4', MOBILE_DASHBOARD_CARD_SHELL)}>
           <CardHeader className="space-y-1 pb-2">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <CardTitle className="text-xl leading-snug">{profile.nama}</CardTitle>
@@ -165,12 +185,10 @@ export function AdminUserDetail() {
                 <dd className="mt-0.5 text-foreground">{profile.instalasi ?? '—'}</dd>
               </div>
               <div>
-                <dt className="font-medium text-muted-foreground">WhatsApp</dt>
-                <dd className="mt-0.5 text-foreground">{profile.nomor_wa ?? '—'}</dd>
-              </div>
-              <div>
-                <dt className="font-medium text-muted-foreground">WhatsApp (resume)</dt>
-                <dd className="mt-0.5 text-foreground">{profile.phone_whatsapp ?? '—'}</dd>
+                <dt className="font-medium text-muted-foreground">Telepon / WhatsApp</dt>
+                <dd className="mt-0.5 text-foreground">
+                  {phoneLoading ? 'Memuat…' : phone || '—'}
+                </dd>
               </div>
               <div>
                 <dt className="font-medium text-muted-foreground">Tanggal lahir</dt>
@@ -246,18 +264,11 @@ export function AdminUserDetail() {
                 />
               </div>
               <div className="space-y-1">
-                <Label>WA</Label>
+                <Label>Telepon / WhatsApp</Label>
                 <Input
-                  value={editRow.nomor_wa ?? ''}
-                  onChange={(e) => setEditRow((r) => ({ ...r, nomor_wa: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>WA resume (wa.me)</Label>
-                <Input
-                  value={editRow.phone_whatsapp ?? ''}
-                  onChange={(e) => setEditRow((r) => ({ ...r, phone_whatsapp: e.target.value }))}
-                  placeholder="Opsional"
+                  value={editRow.phone ?? ''}
+                  onChange={(e) => setEditRow((r) => ({ ...r, phone: e.target.value }))}
+                  placeholder="+6281234567890"
                 />
               </div>
               <div className="space-y-1">

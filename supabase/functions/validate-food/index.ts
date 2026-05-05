@@ -13,16 +13,12 @@ const MAX_ITEMS = 40
 const MAX_NAME_LEN = 120
 const MAX_UNIT_LEN = 40
 
-const KNOWN_UNITS = new Set([
-  'centong',
-  'sendok teh',
-  'sendok makan',
-  'potong',
-  'gelas',
-  'buah',
-  'lembar',
-  'bungkus',
-])
+function normalizeUnit(unit: string) {
+  return unit
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+}
 
 function sanitize(s: string, maxLen = MAX_NAME_LEN): string {
   return s
@@ -32,10 +28,14 @@ function sanitize(s: string, maxLen = MAX_NAME_LEN): string {
     .slice(0, maxLen)
 }
 
-const SYSTEM_MESSAGE = `Anda adalah asisten validasi makanan untuk aplikasi pemantauan nutrisi.
+function buildSystemMessage(allowedUnitsText: string) {
+  return `Anda adalah asisten validasi makanan untuk aplikasi pemantauan nutrisi.
 Tugas Anda adalah menentukan apakah input pengguna merupakan makanan/minuman manusia yang valid
 dan dapat dinilai nilai gizinya. Selain itu, periksa apakah satuan porsi yang dipilih masuk akal
 untuk makanan tersebut.
+
+Satuan yang diizinkan untuk dipilih pengguna (gunakan hanya daftar ini):
+- ${allowedUnitsText || '(tidak tersedia)'}
 
 Jika input BUKAN makanan/minuman manusia yang valid (mis. benda non-makanan, konsep abstrak,
 gibberish, atau input bercanda), balas dengan:
@@ -56,6 +56,10 @@ Jika input ADALAH makanan/minuman manusia yang valid, balas dengan:
 }
 
 Bersikap tegas tetapi adil. Makanan daerah/tradisional tetap valid.
+Untuk hidangan berkuah/berporsi seperti soto, sup, bakso kuah, mie, bubur:
+- Satuan seperti porsi/mangkuk/gelas/bungkus bisa masuk akal tergantung konteks.
+- Jangan menolak hanya karena tidak yakin; tolak hanya bila satuannya jelas tidak masuk akal.
+
 Jika diberikan beberapa input sekaligus, tetap balas HANYA SATU JSON object:
 - valid=true bila SEMUA input adalah makanan/minuman manusia yang valid
 - valid=false bila ADA minimal satu input yang tidak valid atau satuan yang tidak cocok, dan "message" harus menyebutkan input mana yang bermasalah
@@ -64,10 +68,11 @@ Jika diberikan beberapa input sekaligus, tetap balas HANYA SATU JSON object:
   - "invalid_indices": array number (0-based) posisi input yang tidak valid dalam daftar yang diberikan
 
 Catatan:
-- Satuan yang mungkin: centong, sendok teh, sendok makan, potong, gelas, buah, lembar, bungkus.
-- Jika satuan tidak tercantum atau tidak jelas, anggap tidak valid.
+- Satuan yang mungkin hanyalah yang ada di daftar satuan yang diizinkan di atas.
+- Jika satuan tidak tercantum dalam daftar itu atau tidak jelas, anggap tidak valid.
 
 Balas hanya dalam JSON. Jangan berikan penjelasan di luar JSON.`
+}
 
 type ValidateInputItem = { nama_makanan: string; unit_nama?: string | null }
 
@@ -332,25 +337,49 @@ Deno.serve(async (req) => {
       })
     }
 
-    // If any item includes a unit, require all units to be present and known.
+    // Load allowed units from DB so it stays in sync with FoodUnitMaster.
+    const { data: unitRows, error: unitErr } = await supabase
+      .from('food_units')
+      .select('nama')
+      .order('nama')
+      .limit(500)
+    if (unitErr) {
+      return new Response(JSON.stringify({ error: 'Gagal memuat daftar satuan.' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const allowedUnits = new Set(
+      (unitRows ?? [])
+        .map((u) => normalizeUnit(String(u?.nama ?? '')))
+        .filter(Boolean),
+    )
+    const allowedUnitsText = (unitRows ?? [])
+      .map((u) => String(u?.nama ?? '').trim())
+      .filter(Boolean)
+      .slice(0, 60)
+      .join(', ')
+
+    // If any item includes a unit, require all units to be present and in the allowed list.
     const anyHasUnit = parsedItems.some((x) => Boolean(x.unit_nama))
     if (anyHasUnit) {
       const badIdx: number[] = []
       const badInputs: string[] = []
       for (let i = 0; i < parsedItems.length; i++) {
         const it = parsedItems[i]
-        const unit = it.unit_nama ? it.unit_nama.trim().toLowerCase() : ''
-        if (!unit || !KNOWN_UNITS.has(unit)) {
+        const unit = it.unit_nama ? normalizeUnit(it.unit_nama) : ''
+        if (!unit || !allowedUnits.has(unit)) {
           badIdx.push(i)
           badInputs.push(`${it.nama_makanan}${it.unit_nama ? ` | unit: ${it.unit_nama}` : ''}`)
         }
       }
       if (badIdx.length > 0) {
+        const messageBase = 'Satuan tidak valid atau belum didukung.'
+        const listHint = allowedUnitsText ? ` Pilih salah satu: ${allowedUnitsText}.` : ''
         return new Response(
           JSON.stringify({
             valid: false,
-            message:
-              'Satuan tidak valid atau belum didukung. Pilih salah satu: centong, sendok teh, sendok makan, potong, gelas, buah, lembar, bungkus.',
+            message: `${messageBase}${listHint}`.slice(0, 420),
             invalid_indices: badIdx,
             invalid_inputs: badInputs.slice(0, 12),
           }),
@@ -369,6 +398,7 @@ Deno.serve(async (req) => {
 
     const userMessage = buildUserMessage(parsedItems)
     const model = Deno.env.get('OPENAI_MODEL') ?? 'gpt-4o-mini'
+    const systemMessage = buildSystemMessage(allowedUnitsText)
 
     const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -379,7 +409,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model,
         messages: [
-          { role: 'system', content: SYSTEM_MESSAGE },
+          { role: 'system', content: systemMessage },
           { role: 'user', content: userMessage },
         ],
         temperature: 0.0,

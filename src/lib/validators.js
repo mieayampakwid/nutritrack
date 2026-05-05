@@ -9,8 +9,7 @@ export const userCreateSchema = z.object({
   nama: z.string().min(1, 'Nama wajib diisi').max(200),
   email: z.string().email('Format email tidak valid'),
   role: z.enum(['admin', 'ahli_gizi', 'klien']),
-  nomor_wa: z.string().max(50).optional(),
-  phone_whatsapp: z.string().max(50).optional(),
+  phone: z.string().max(50).optional(),
   tgl_lahir: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format: YYYY-MM-DD').optional().or(z.literal('')),
   instalasi: z.string().max(200).optional(),
 })
@@ -25,7 +24,6 @@ export const registerSchema = z
     jenisKelamin: z.enum(['male', 'female'], { required_error: 'Pilih jenis kelamin' }),
     beratBadan: z.coerce.number().min(10, 'Minimal 10 kg').max(300, 'Maksimal 300 kg'),
     tinggiBadan: z.coerce.number().min(50, 'Minimal 50 cm').max(250, 'Maksimal 250 cm'),
-    nomorWa: z.string().regex(/^\+62\d+$/, 'Nomor WhatsApp harus diawali +62'),
     role: z.enum(['klien', 'ahli_gizi'], { required_error: 'Pilih peran' }),
   })
   .refine((d) => d.password === d.konfirmasiPassword, {

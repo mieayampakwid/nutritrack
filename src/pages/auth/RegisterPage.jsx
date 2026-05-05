@@ -45,7 +45,6 @@ export function RegisterPage() {
     jenisKelamin: '',
     beratBadan: '',
     tinggiBadan: '',
-    nomorWa: '',
     role: '',
   })
   const [errors, setErrors] = useState({})
@@ -161,8 +160,6 @@ export function RegisterPage() {
           jenis_kelamin: form.jenisKelamin,
           berat_badan: String(form.beratBadan),
           tinggi_badan: String(form.tinggiBadan),
-          nomor_wa: form.nomorWa.trim(),
-          phone_whatsapp: form.nomorWa.trim(),
         },
       },
     })
@@ -303,23 +300,6 @@ export function RegisterPage() {
                     <p className="text-xs text-destructive">{errors.tinggiBadan}</p>
                   )}
                 </div>
-              </div>
-
-              {/* Nomor WhatsApp */}
-              <div className="space-y-1.5">
-                <Label htmlFor="nomorWa" className="text-xs font-medium text-muted-foreground">
-                  Nomor WhatsApp
-                </Label>
-                <Input
-                  id="nomorWa"
-                  type="tel"
-                  autoComplete="tel"
-                  value={form.nomorWa}
-                  onChange={setField('nomorWa')}
-                  placeholder="+6281234567890"
-                  className={cn(inputClass, errors.nomorWa && 'border-destructive')}
-                />
-                {errors.nomorWa && <p className="text-xs text-destructive">{errors.nomorWa}</p>}
               </div>
 
               {/* Email */}

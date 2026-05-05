@@ -4,14 +4,6 @@ import { XIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { Dialog, DialogHeader, DialogOverlay, DialogPortal, DialogTitle } from '@/components/ui/dialog'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
 import { formatDateId, formatNumberId } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -49,15 +41,15 @@ export function FoodLogDetailModal({ open, onOpenChange, tanggal, logsForDay, it
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
-        <DialogOverlay className="data-[state=open]:duration-[420ms] data-[state=closed]:duration-[240ms]" />
+        <DialogOverlay className="data-[state=open]:duration-420 data-[state=closed]:duration-240" />
         <MotionDialogContent
           layout
           transition={{ layout: DIALOG_LAYOUT }}
           className={cn(
-            'fixed top-[50%] left-[50%] z-50 flex w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] flex-col gap-3 overflow-x-hidden overflow-y-auto p-4 text-popover-foreground shadow-2xl sm:max-w-lg sm:p-5',
-            'max-h-[90dvh] rounded-2xl border border-border bg-popover',
-            'duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
-            'data-[state=closed]:duration-[240ms]',
+            'fixed left-[50%] top-4 bottom-4 z-50 flex w-full max-w-[calc(100%-2rem)] translate-x-[-50%] flex-col gap-3 overflow-hidden p-4 text-popover-foreground shadow-2xl sm:top-6 sm:bottom-6 sm:max-w-lg sm:p-5',
+            'rounded-2xl border border-border bg-popover',
+            'duration-420 ease-[cubic-bezier(0.22,1,0.36,1)]',
+            'data-[state=closed]:duration-240',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
             'data-[state=open]:zoom-in-[0.98] data-[state=closed]:zoom-out-[0.98]',
@@ -78,9 +70,9 @@ export function FoodLogDetailModal({ open, onOpenChange, tanggal, logsForDay, it
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex max-h-[min(62dvh,480px)] flex-col gap-3 overflow-y-auto pr-0.5">
+          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-0.5">
             {!logsForDay?.length ? (
-              <div className="flex min-h-[5.5rem] items-center justify-center rounded-xl border border-border/80 bg-card px-4 py-8 shadow-sm">
+              <div className="flex min-h-22 items-center justify-center rounded-xl border border-border/80 bg-card px-4 py-8 shadow-sm">
                 <p className="text-center text-sm text-muted-foreground">Tidak ada entri.</p>
               </div>
             ) : (
@@ -89,7 +81,7 @@ export function FoodLogDetailModal({ open, onOpenChange, tanggal, logsForDay, it
                 return (
                   <section
                     key={log.id}
-                    className="overflow-hidden rounded-xl border border-amber-200/50 bg-amber-50/40 shadow-sm ring-1 ring-amber-200/25"
+                    className="rounded-xl border border-amber-200/50 bg-amber-50/40 shadow-sm ring-1 ring-amber-200/25"
                   >
                     <header className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/40 bg-amber-50/70 px-3 py-2 text-sm">
                       <span className="font-semibold tabular-nums text-foreground">
@@ -104,47 +96,68 @@ export function FoodLogDetailModal({ open, onOpenChange, tanggal, logsForDay, it
                     {items.length === 0 ? (
                       <p className="px-3 py-4 text-center text-xs text-muted-foreground">Tidak ada item.</p>
                     ) : (
-                      <div className="max-h-56 overflow-y-auto overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="border-amber-200/50 bg-amber-50/70 hover:bg-amber-50/80">
-                              <TableHead>Jam</TableHead>
-                              <TableHead>Makanan</TableHead>
-                              <TableHead className="text-center">Jml</TableHead>
-                              <TableHead className="text-center">Satuan</TableHead>
-                              <TableHead className="text-center">Kkal</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {items.map((it) => (
-                              <TableRow
-                                key={it.id}
-                                className="border-amber-100/60 bg-amber-50/85 hover:bg-amber-50 data-[state=selected]:bg-amber-100/50"
-                              >
-                                <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
+                      <div className="px-3 pb-3 pt-2">
+                        <div className="hidden grid-cols-12 gap-x-3 gap-y-1 text-[0.8125rem] font-semibold text-muted-foreground sm:grid">
+                          <div className="col-span-2">Jam</div>
+                          <div className="col-span-6">Makanan</div>
+                          <div className="col-span-1 text-right">Jml</div>
+                          <div className="col-span-2 text-right">Satuan</div>
+                          <div className="col-span-1 text-right">Kkal</div>
+                        </div>
+                        <div className="mt-2 space-y-1.5">
+                          {items.map((it) => (
+                            <div key={it.id} className="rounded-lg bg-amber-50/85 ring-1 ring-amber-100/60">
+                              {/* Mobile: stacked, no column overlap */}
+                              <div className="px-2.5 py-2 sm:hidden">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <div className="line-clamp-2 wrap-break-word font-medium text-foreground">
+                                      {it.nama_makanan}
+                                    </div>
+                                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                                      <span className="whitespace-nowrap tabular-nums">
+                                        {formatLogTime(it.created_at ?? log.created_at)}
+                                      </span>
+                                      <span className="text-muted-foreground/60">•</span>
+                                      <span className="whitespace-nowrap tabular-nums">{formatNumberId(it.jumlah)}</span>
+                                      <span className="truncate">{it.unit_nama}</span>
+                                    </div>
+                                  </div>
+                                  <div className="shrink-0 text-right">
+                                    <div className="text-sm font-semibold tabular-nums text-foreground">
+                                      {formatNumberId(it.kalori_estimasi)}
+                                    </div>
+                                    <div className="text-[0.75rem] font-semibold text-muted-foreground">kkal</div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Desktop: stable grid columns */}
+                              <div className="hidden grid-cols-12 items-start gap-x-3 px-2.5 py-2 text-sm sm:grid">
+                                <div className="col-span-2 whitespace-nowrap tabular-nums text-muted-foreground">
                                   {formatLogTime(it.created_at ?? log.created_at)}
-                                </TableCell>
-                                <TableCell className="max-w-[36%]">{it.nama_makanan}</TableCell>
-                                <TableCell className="text-center tabular-nums">
-                                  {formatNumberId(it.jumlah)}
-                                </TableCell>
-                                <TableCell className="text-center text-sm">{it.unit_nama}</TableCell>
-                                <TableCell className="text-center tabular-nums font-medium">
+                                </div>
+                                <div className="col-span-6 font-medium text-foreground">
+                                  <div className="line-clamp-2 wrap-break-word">{it.nama_makanan}</div>
+                                </div>
+                                <div className="col-span-1 text-right tabular-nums">{formatNumberId(it.jumlah)}</div>
+                                <div className="col-span-2 text-right text-sm text-muted-foreground">{it.unit_nama}</div>
+                                <div className="col-span-1 text-right tabular-nums font-semibold text-foreground">
                                   {formatNumberId(it.kalori_estimasi)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </section>
                 )
               })
             )}
-          </div>
 
-          <CalorieDisclaimer className="shrink-0 border-t border-border/50 pt-3" />
+            <CalorieDisclaimer className="mt-1 rounded-xl border border-border/50 bg-card/40 p-4" />
+          </div>
 
           <DialogPrimitive.Close
             className="absolute top-3 right-3 rounded-full opacity-70 ring-offset-background transition-all duration-200 hover:scale-110 hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"

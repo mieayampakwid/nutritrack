@@ -2,7 +2,7 @@
 -- Also reflected in supabase/schema.sql for fresh installs.
 --
 -- After this file, run migration_handle_new_user_tgl_phone.sql so signUp metadata
--- maps tgl_lahir and phone_whatsapp into profiles (optional but recommended).
+-- maps tgl_lahir into profiles (optional but recommended).
 
 -- 1) Allow multiple food log entries per day per meal slot (timestamp-based categorization).
 alter table public.food_logs drop constraint if exists food_logs_user_id_tanggal_waktu_makan_key;
@@ -10,12 +10,11 @@ alter table public.food_logs drop constraint if exists food_logs_user_id_tanggal
 create index if not exists food_logs_user_tanggal_created_idx
   on public.food_logs (user_id, tanggal desc, created_at desc);
 
--- 2) Profile fields for staff data entry, demographics, WhatsApp delivery.
+-- 2) Profile fields for staff data entry, demographics.
 alter table public.profiles add column if not exists berat_badan numeric(6,2);
 alter table public.profiles add column if not exists tinggi_badan numeric(6,2);
 alter table public.profiles add column if not exists tgl_lahir date;
 alter table public.profiles add column if not exists jenis_kelamin text;
-alter table public.profiles add column if not exists phone_whatsapp text;
 
 do $$
 begin

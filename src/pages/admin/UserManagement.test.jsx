@@ -15,26 +15,11 @@ const { mockSupabase } = vi.hoisted(() => {
   const invoke = vi.fn()
   const refreshSession = vi.fn()
   const getUser = vi.fn()
+  const rpc = vi.fn()
 
   function from(table) {
     if (table !== 'profiles') throw new Error(`Unexpected table: ${table}`)
     return {
-      select: () => ({
-        order: vi.fn().mockResolvedValue({
-          data: [
-            {
-              id: '11111111-1111-4111-8111-111111111111',
-              nama: 'Pending User',
-              email: 'pending@example.com',
-              role: 'klien',
-              is_active: false,
-              created_at: '2026-01-01T00:00:00.000Z',
-            },
-          ],
-          error: null,
-        }),
-        eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-      }),
       update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       delete: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
     }
@@ -43,6 +28,7 @@ const { mockSupabase } = vi.hoisted(() => {
   return {
     mockSupabase: {
       from,
+      rpc,
       auth: { refreshSession, getUser },
       functions: { invoke },
     },
@@ -59,6 +45,25 @@ import { UserManagement } from './UserManagement'
 describe('UserManagement reject pending user', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockSupabase.rpc.mockImplementation((fn) => {
+      if (fn === 'admin_list_profiles') {
+        return Promise.resolve({
+          data: [
+            {
+              id: '11111111-1111-4111-8111-111111111111',
+              nama: 'Pending User',
+              email: 'pending@example.com',
+              role: 'klien',
+              is_active: false,
+              created_at: '2026-01-01T00:00:00.000Z',
+              phone: '+6281234567890',
+            },
+          ],
+          error: null,
+        })
+      }
+      throw new Error(`Unexpected rpc: ${fn}`)
+    })
     mockSupabase.auth.refreshSession.mockResolvedValue({
       data: { session: { access_token: 'tok' } },
       error: null,
