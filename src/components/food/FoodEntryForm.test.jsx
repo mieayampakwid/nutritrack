@@ -233,4 +233,26 @@ describe('FoodEntryForm', () => {
     const onlyGroup = screen.getByRole('group', { name: /entri makanan ke-1/i })
     expect(onlyGroup).toHaveAttribute('data-invalid', 'true')
   })
+
+  it('sends food name + selected unit to the AI validator (unit compatibility hardening)', async () => {
+    const user = userEvent.setup()
+    openaiMock.validateFoodInput.mockResolvedValueOnce({
+      valid: false,
+      message: '"Bakso 1 gram" sepertinya tidak cocok. Periksa satuan porsinya.',
+      invalid_indices: [0],
+    })
+    renderWithProviders(<FoodEntryForm userId="u1" />)
+
+    await user.selectOptions(screen.getByLabelText(/waktu makan/i), 'pagi')
+    await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Bakso')
+    await user.type(screen.getByPlaceholderText('0'), '1')
+    await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
+
+    await user.click(screen.getByRole('button', { name: /analisa & simpan/i }))
+
+    await waitFor(() => expect(openaiMock.validateFoodInput).toHaveBeenCalledTimes(1))
+    expect(openaiMock.validateFoodInput).toHaveBeenCalledWith([
+      { nama_makanan: 'Bakso', unit_nama: 'gram' },
+    ])
+  })
 })

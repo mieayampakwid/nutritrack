@@ -447,7 +447,9 @@ export function FoodEntryForm({ userId }) {
 
     setLoading(true)
     try {
-      const validation = await validateFoodInput(filled.map((x) => x.nama_makanan))
+      const validation = await validateFoodInput(
+        filled.map((x) => ({ nama_makanan: x.nama_makanan, unit_nama: x.unit_nama })),
+      )
       if (validation.valid === false) {
         setError(validation.message)
         const invalidRowIds = new Set()
