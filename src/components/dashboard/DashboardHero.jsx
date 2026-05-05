@@ -72,7 +72,7 @@ export function DashboardHero({
   const shellClass = bareLogoShell
     ? 'relative mb-0 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none'
     : bareOnMobile
-      ? 'relative mb-0 max-md:overflow-visible max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none md:mb-0 md:overflow-hidden md:rounded-2xl md:border md:border-border/70 md:bg-gradient-to-br md:from-primary/[0.07] md:via-background md:to-secondary/[0.12] md:p-7 md:shadow-sm lg:p-8'
+      ? 'relative mb-0 max-md:overflow-visible max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none md:mb-0 md:overflow-hidden md:rounded-2xl md:border md:border-border/70 md:bg-gradient-to-br md:from-primary/[0.18] md:via-primary/[0.06] md:to-secondary/[0.16] md:p-7 md:shadow-sm lg:p-8'
       : 'relative mb-0 overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-primary/[0.07] via-background to-secondary/[0.12] p-5 shadow-sm sm:p-6 md:p-7 lg:p-8'
 
   const glowClass = bareLogoShell ? 'hidden' : bareOnMobile ? 'max-md:hidden' : ''
