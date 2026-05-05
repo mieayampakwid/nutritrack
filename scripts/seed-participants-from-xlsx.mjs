@@ -268,6 +268,20 @@ for (let i = 0; i < rows.length; i += 1) {
       }
     }
 
+    if (tglLahir) {
+      try {
+        const { error } = await supabase.from("profiles").update({ tgl_lahir: tglLahir }).eq("id", existingUserId);
+        if (error) throw error;
+      } catch (e) {
+        failed += 1;
+        failures.push({
+          row: excelRowNumber,
+          email,
+          reason: `Update existing tgl_lahir failed: ${e?.message ?? String(e)}`,
+        });
+      }
+    }
+
     continue;
   }
 
@@ -305,7 +319,10 @@ for (let i = 0; i < rows.length; i += 1) {
 
   // Seeded accounts should be active immediately (normal self-registration remains inactive by default).
   try {
-    const { error } = await supabase.from("profiles").update({ is_active: true }).eq("id", userId);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_active: true, ...(tglLahir ? { tgl_lahir: tglLahir } : {}) })
+      .eq("id", userId);
     if (error) throw error;
   } catch (e) {
     failed += 1;
