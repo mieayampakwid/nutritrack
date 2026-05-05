@@ -8,10 +8,10 @@ Optional reference: `LAPER_Backlog_Sprint_Prototype_Perfection_.md` (original do
 
 | Field | Value |
 | --- | --- |
-| **Status** | Sprint 2 complete |
-| **Last touched** | Sprint 2: #3 waist + change log (DB triggers + `/…/change-log`); #4 evaluation page (`/gizi/evaluation`, `/admin/evaluation`); Vitest passing |
+| **Status** | Backlog #1–#5 implemented; Day 2 revisions pending |
+| **Last touched** | Sprint 2 present in repo: #3 measurements + anthropometric change log + `/.../change-log`; #4 evaluation page (`/gizi/evaluation`, `/admin/evaluation`) |
 | **Blockers** | none |
-| **Resume here** | Apply `supabase/migration_sprint2_anthropometric_log.sql` on Supabase if not yet run; then continue next backlog / Sprint 3. |
+| **Resume here** | Implement Day 2 Revisions: Rev 1 navigation cleanup; Rev 2 UI recheck & polish. |
 
 ---
 
@@ -130,13 +130,18 @@ Order: **#3 → #4**. **#4** depends on extended profile/anthropometric data fro
 
 ## Next steps (rolling)
 
-**Sprint 1**
+**Sprint Day 1 (DONE per rev050526)**
 
 - [x] #5 — Add required meal-type dropdown; remove time-based auto meal type
 - [x] #1 — AI validate-before-save + inline invalid warning + block save until valid
 - [x] #2 — All clients table/page; nutritionist + admin only; row → profile
 
-**Sprint 2** (deferred until Sprint 1 complete unless explicitly parallelized)
+**Sprint Day 2 (IMPLEMENTED in repo)**
 
 - [x] #3 — Extended profile fields, BMI, Harris-Benedict, change log + dedicated log page
 - [x] #4 — Evaluation page (≥2 week range, food log + latest anthropometrics, saved recommendations)
+
+**Sprint Day 2 — Revisions (PENDING)**
+
+- [ ] **Rev 1 — Navigation cleanup (Nutritionist & Admin role)**: remove evaluation + client log pages from nav; replace with unified client list page (#2). (Routes still exist; nav still shows Evaluation + Log makan.)
+- [ ] **Rev 2 — UI recheck & polish**: fix layout issues, typography consistency, unreadable text, and ensure hierarchy across all views.
