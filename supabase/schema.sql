@@ -6,7 +6,6 @@ create table if not exists public.profiles (
   id uuid references auth.users on delete cascade primary key,
   nama text not null,
   email text not null,
-  nomor_wa text,
   instalasi text,
   role text check (role in ('admin', 'ahli_gizi', 'klien')) not null default 'klien',
   is_active boolean not null default true,
@@ -15,7 +14,7 @@ create table if not exists public.profiles (
   tinggi_badan numeric(6,2),
   tgl_lahir date,
   jenis_kelamin text check (jenis_kelamin is null or jenis_kelamin in ('male', 'female')),
-  phone_whatsapp text
+  -- WhatsApp/phone is stored in auth.users.phone (not in profiles).
 );
 
 create table if not exists public.body_measurements (
@@ -152,12 +151,11 @@ begin
   v_berat := nullif(trim(coalesce(new.raw_user_meta_data->>'berat_badan', '')), '')::numeric;
   v_tinggi := nullif(trim(coalesce(new.raw_user_meta_data->>'tinggi_badan', '')), '')::numeric;
 
-  insert into public.profiles (id, nama, email, nomor_wa, instalasi, role, is_active, tgl_lahir, jenis_kelamin, berat_badan, tinggi_badan, phone_whatsapp)
+  insert into public.profiles (id, nama, email, instalasi, role, is_active, tgl_lahir, jenis_kelamin, berat_badan, tinggi_badan)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'nama', split_part(new.email, '@', 1)),
     new.email,
-    nullif(trim(new.raw_user_meta_data->>'nomor_wa'), ''),
     nullif(trim(new.raw_user_meta_data->>'instalasi'), ''),
     r,
     v_is_active,
@@ -168,21 +166,18 @@ begin
     end,
     nullif(trim(coalesce(new.raw_user_meta_data->>'jenis_kelamin', '')), ''),
     v_berat,
-    v_tinggi,
-    nullif(trim(coalesce(new.raw_user_meta_data->>'phone_whatsapp', '')), '')
+    v_tinggi
   )
   on conflict (id) do update set
     nama = excluded.nama,
     email = excluded.email,
-    nomor_wa = coalesce(excluded.nomor_wa, public.profiles.nomor_wa),
     instalasi = coalesce(excluded.instalasi, public.profiles.instalasi),
     role = excluded.role,
     is_active = coalesce(excluded.is_active, public.profiles.is_active),
     tgl_lahir = coalesce(excluded.tgl_lahir, public.profiles.tgl_lahir),
     jenis_kelamin = coalesce(excluded.jenis_kelamin, public.profiles.jenis_kelamin),
     berat_badan = coalesce(excluded.berat_badan, public.profiles.berat_badan),
-    tinggi_badan = coalesce(excluded.tinggi_badan, public.profiles.tinggi_badan),
-    phone_whatsapp = coalesce(excluded.phone_whatsapp, public.profiles.phone_whatsapp);
+    tinggi_badan = coalesce(excluded.tinggi_badan, public.profiles.tinggi_badan);
 
   -- Insert first anthropometric measurement on registration
   if (v_berat is not null or v_tinggi is not null) then

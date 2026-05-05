@@ -51,10 +51,7 @@ export function UserManagement() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['profiles_admin'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const { data, error } = await supabase.rpc('admin_list_profiles')
       if (error) throw error
       return data ?? []
     },
@@ -78,8 +75,7 @@ export function UserManagement() {
         (u.nama || '').toLowerCase().includes(q) ||
         (u.email || '').toLowerCase().includes(q) ||
         (u.instalasi || '').toLowerCase().includes(q) ||
-        (u.nomor_wa || '').toLowerCase().includes(q) ||
-        (u.phone_whatsapp || '').toLowerCase().includes(q),
+        (u.phone || '').toLowerCase().includes(q),
     )
   }, [users, search, filter])
 
@@ -101,8 +97,7 @@ export function UserManagement() {
   const [form, setForm] = useState({
     nama: '',
     email: '',
-    nomor_wa: '',
-    phone_whatsapp: '',
+    phone: '',
     tgl_lahir: '',
     instalasi: '',
     role: 'klien',
@@ -122,8 +117,6 @@ export function UserManagement() {
         options: {
           data: {
             nama: form.nama.trim(),
-            nomor_wa: form.nomor_wa.trim(),
-            phone_whatsapp: form.phone_whatsapp.trim(),
             tgl_lahir: form.tgl_lahir.trim(),
             instalasi: form.instalasi.trim(),
             role: form.role,
@@ -133,13 +126,22 @@ export function UserManagement() {
       if (error) throw error
       const uid = data.user?.id
       if (uid) {
+        const phone = form.phone.trim()
+        if (phone) {
+          const { data: fnData, error: fnErr } = await supabase.functions.invoke(
+            'admin-update-user-phone',
+            { body: { user_id: uid, phone } },
+          )
+          if (fnErr) throw fnErr
+          if (fnData && typeof fnData === 'object' && fnData.error) {
+            throw new Error(String(fnData.error))
+          }
+        }
         const tgl = form.tgl_lahir.trim()
-        const ph = form.phone_whatsapp.trim()
         const { error: upErr } = await supabase
           .from('profiles')
           .update({
             tgl_lahir: tgl && /^\d{4}-\d{2}-\d{2}$/.test(tgl) ? tgl : null,
-            phone_whatsapp: ph || null,
           })
           .eq('id', uid)
         if (upErr) throw upErr
@@ -154,8 +156,7 @@ export function UserManagement() {
       setForm({
         nama: '',
         email: '',
-        nomor_wa: '',
-        phone_whatsapp: '',
+        phone: '',
         tgl_lahir: '',
         instalasi: '',
         role: 'klien',
@@ -575,18 +576,11 @@ export function UserManagement() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Nomor WhatsApp</Label>
+              <Label>Nomor telepon / WhatsApp</Label>
               <Input
-                value={form.nomor_wa}
-                onChange={(e) => setForm((f) => ({ ...f, nomor_wa: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Nomor WhatsApp (resume / wa.me)</Label>
-              <Input
-                value={form.phone_whatsapp}
-                onChange={(e) => setForm((f) => ({ ...f, phone_whatsapp: e.target.value }))}
-                placeholder="Opsional; untuk tombol Kirim resume"
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                placeholder="+6281234567890"
               />
             </div>
             <div className="space-y-1">

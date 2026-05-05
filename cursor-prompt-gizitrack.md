@@ -27,7 +27,7 @@ create table profiles (
   id uuid references auth.users primary key,
   nama text not null,
   email text not null,
-  nomor_wa text,
+  -- phone stored in auth.users.phone (not in profiles)
   instalasi text,
   role text check (role in ('admin', 'ahli_gizi', 'klien')) not null default 'klien',
   created_at timestamptz default now()
@@ -201,7 +201,7 @@ src/
   - Role (admin / ahli_gizi / klien)
   - Password sementara (auto-generate, tampilkan sekali)
 - Tombol edit & nonaktifkan user
-- Import dari Excel: tombol upload .xlsx → parsing kolom (nama, email, instalasi, nomor_wa) → preview tabel → konfirmasi → bulk insert ke Supabase + buat Supabase Auth user
+- Import dari Excel: tombol upload .xlsx → parsing kolom (nama, email, instalasi, phone) → preview tabel → konfirmasi → bulk insert ke Supabase + buat Supabase Auth user
 
 ---
 
@@ -405,7 +405,7 @@ Gunakan threshold WHO Asia-Pacific (bukan threshold global):
 
 Buat halaman `/admin/import` dengan fitur:
 1. Upload file .xlsx
-2. Parse kolom: `nama`, `email`, `instalasi`, `nomor_wa`
+2. Parse kolom: `nama`, `email`, `instalasi`, `phone`
 3. Preview tabel hasil parsing (dengan validasi: highlight baris yang email-nya invalid)
 4. Tombol "Import Semua" → loop: buat Supabase Auth user + insert ke tabel profiles
 5. Tampilkan progress bar + log hasil (berhasil X, gagal Y)

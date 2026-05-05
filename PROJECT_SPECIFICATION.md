@@ -197,8 +197,9 @@ Authoritative SQL: **`supabase/schema.sql`**. Highlights:
 ### 8.1 `profiles`
 
 - **PK:** `id` → `auth.users.id`
-- **Core:** `nama`, `email`, `nomor_wa`, `instalasi`, `role` (`admin` \| `ahli_gizi` \| `klien`), `is_active`, `created_at`
-- **Extended demographics / anthropometry on profile:** `berat_badan`, `tinggi_badan`, `tgl_lahir`, `jenis_kelamin`, `phone_whatsapp` (used for summaries and Harris–Benedict-style flows)
+- **Core:** `nama`, `email`, `instalasi`, `role` (`admin` \| `ahli_gizi` \| `klien`), `is_active`, `created_at`
+- **Extended demographics / anthropometry on profile:** `berat_badan`, `tinggi_badan`, `tgl_lahir`, `jenis_kelamin`
+- **Phone / WhatsApp**: stored in `auth.users.phone` (not in `public.profiles`)
 
 ### 8.2 `body_measurements`
 
