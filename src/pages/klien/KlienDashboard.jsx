@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Apple, Ruler } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
+import { ExerciseLogHistoryCard } from '@/components/exercise/ExerciseLogHistoryCard'
 
 export function KlienDashboard() {
   const { profile } = useAuth()
@@ -27,7 +28,7 @@ export function KlienDashboard() {
           <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
             <DashboardActionCard
               to="/klien/food-entry"
-              title="Tambah entri makanan"
+              title="Tambah diary makanan"
               desc="Catat sarapan, makan siang, snack, atau makan malam."
               icon={Apple}
             />
@@ -65,7 +66,7 @@ export function KlienDashboard() {
                 <div className="rounded-xl border border-border/70 bg-background/60 p-4 text-center shadow-sm">
                   <p className="text-sm font-medium text-foreground">Belum ada catatan makanan.</p>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    Mulai dari 1 entri dulu. Semakin konsisten, grafik dan ringkasanmu makin akurat.
+                    Mulai dari 1 diary dulu. Semakin konsisten, grafik dan ringkasanmu makin akurat.
                   </p>
                 </div>
               ) : (
@@ -74,6 +75,9 @@ export function KlienDashboard() {
               <CalorieDisclaimer />
             </CardContent>
           </Card>
+        </section>
+        <section aria-label="Log olahraga">
+          <ExerciseLogHistoryCard userId={profile?.id} />
         </section>
       </div>
     </AppShell>

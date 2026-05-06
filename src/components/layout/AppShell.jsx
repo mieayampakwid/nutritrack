@@ -56,7 +56,7 @@ const ROLE_NAV = {
   klien: {
     primary: [
       { to: '/klien/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-      { to: '/klien/food-entry', label: 'Entri', icon: Apple },
+      { to: '/klien/food-entry', label: 'Diary', icon: Apple },
       { to: '/klien/progress', label: 'Progres', icon: Ruler },
     ],
     more: [],

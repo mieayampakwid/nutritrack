@@ -131,7 +131,7 @@ describe('FoodEntryForm', () => {
   it('renders the food list header and a single initial food row', () => {
     renderWithProviders(<FoodEntryForm userId="u1" />)
     expect(screen.getByText('Daftar makanan')).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: /entri makanan ke-1/i })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: /diary makanan ke-1/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /analisa & simpan/i })).toBeInTheDocument()
   })
 
@@ -141,7 +141,7 @@ describe('FoodEntryForm', () => {
 
     await user.click(screen.getByRole('button', { name: /tambah makanan/i }))
 
-    expect(screen.getAllByRole('group', { name: /entri makanan/i })).toHaveLength(2)
+    expect(screen.getAllByRole('group', { name: /diary makanan/i })).toHaveLength(2)
   })
 
   it('shows an error message when submitting with an empty food name', async () => {
@@ -185,7 +185,7 @@ describe('FoodEntryForm', () => {
 
     // add row 2 (invalid food)
     await user.click(screen.getByRole('button', { name: /tambah makanan/i }))
-    const groups = screen.getAllByRole('group', { name: /entri makanan/i })
+    const groups = screen.getAllByRole('group', { name: /diary makanan/i })
     expect(groups).toHaveLength(2)
 
     // open second row and fill it
@@ -202,7 +202,7 @@ describe('FoodEntryForm', () => {
     expect(openaiMock.estimateCalories).not.toHaveBeenCalled()
     expect(supabaseMock.from).not.toHaveBeenCalled()
 
-    const groupsAfter = screen.getAllByRole('group', { name: /entri makanan/i })
+    const groupsAfter = screen.getAllByRole('group', { name: /diary makanan/i })
     expect(groupsAfter[1]).toHaveAttribute('data-invalid', 'true')
   }, 15000)
 
@@ -227,7 +227,7 @@ describe('FoodEntryForm', () => {
     expect(openaiMock.estimateCalories).not.toHaveBeenCalled()
     expect(supabaseMock.from).not.toHaveBeenCalled()
 
-    const onlyGroup = screen.getByRole('group', { name: /entri makanan ke-1/i })
+    const onlyGroup = screen.getByRole('group', { name: /diary makanan ke-1/i })
     expect(onlyGroup).toHaveAttribute('data-invalid', 'true')
   })
 

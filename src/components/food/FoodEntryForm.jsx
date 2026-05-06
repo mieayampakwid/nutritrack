@@ -713,7 +713,7 @@ export function FoodEntryForm({ userId }) {
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
           <div className="min-w-0 space-y-0.5">
             <h2 className="text-sm font-semibold leading-tight tracking-tight">
-              Daftar makanan
+              Log makanan
             </h2>
             <p className={typeMuted}>
               Satu baris = satu jenis makanan beserta porsi dan satuan. Misalnya Anda makan nasi ayam
@@ -781,7 +781,7 @@ export function FoodEntryForm({ userId }) {
               <div
                 key={r.id}
                 role="group"
-                aria-label={`Entri makanan ke-${i + 1}`}
+                aria-label={`Diary makanan ke-${i + 1}`}
                 data-invalid={rowError ? 'true' : 'false'}
                 ref={rowError ? rowErrorAnchorRef : null}
                 className={cn(
