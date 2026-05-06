@@ -781,7 +781,7 @@ export function FoodEntryForm({ userId }) {
               <div
                 key={r.id}
                 role="group"
-                aria-label={`Entri makanan ke-${i + 1}`}
+                aria-label={`Diary makanan ke-${i + 1}`}
                 data-invalid={rowError ? 'true' : 'false'}
                 ref={rowError ? rowErrorAnchorRef : null}
                 className={cn(

@@ -181,7 +181,7 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
-                  <TableHead>Entri</TableHead>
+                  <TableHead>Diary</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead />
                 </TableRow>
