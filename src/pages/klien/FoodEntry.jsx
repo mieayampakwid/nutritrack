@@ -1,7 +1,6 @@
 import { AppShell } from '@/components/layout/AppShell'
 import { FoodEntryForm } from '@/components/food/FoodEntryForm'
 import { ExerciseLogEntryCard } from '@/components/exercise/ExerciseLogEntryCard'
-import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
@@ -20,32 +19,6 @@ export function FoodEntry() {
             Catat makanan dan olahraga hari ini. Untuk makanan, isi menu & porsi lalu biarkan AI mengestimasi
             kalori sebelum disimpan.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
-            <Badge
-              variant="secondary"
-              className="border-white/18 bg-white/12 text-[11px] font-semibold tracking-wide text-white shadow-sm backdrop-blur"
-            >
-              1) Pilih waktu makan
-            </Badge>
-            <span className="text-white/55" aria-hidden>
-              →
-            </span>
-            <Badge
-              variant="secondary"
-              className="border-white/18 bg-white/12 text-[11px] font-semibold tracking-wide text-white shadow-sm backdrop-blur"
-            >
-              2) Menu & porsi
-            </Badge>
-            <span className="text-white/55" aria-hidden>
-              →
-            </span>
-            <Badge
-              variant="secondary"
-              className="border-white/18 bg-white/12 text-[11px] font-semibold tracking-wide text-white shadow-sm backdrop-blur"
-            >
-              3) Estimasi & simpan
-            </Badge>
-          </div>
         </header>
         {profile?.id ? (
           <>
