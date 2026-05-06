@@ -14,6 +14,7 @@ import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { useMeasurements } from '@/hooks/useMeasurement'
 import { supabase } from '@/lib/supabase'
 import { useMemo, useState } from 'react'
+import { ExerciseLogHistoryCard } from '@/components/exercise/ExerciseLogHistoryCard'
 import {
   Select,
   SelectContent,
@@ -147,6 +148,7 @@ export function ClientDetail() {
         <TabsList>
           <TabsTrigger value="antro">Antropometri</TabsTrigger>
           <TabsTrigger value="makan">Log makan</TabsTrigger>
+          <TabsTrigger value="olahraga">Log olahraga</TabsTrigger>
         </TabsList>
         <TabsContent value="antro" className="space-y-6 mt-4">
           <MeasurementForm
@@ -184,6 +186,9 @@ export function ClientDetail() {
         </TabsContent>
         <TabsContent value="makan" className="mt-4">
           {loadingL ? <LoadingSpinner /> : <FoodLogTable logs={logs} />}
+        </TabsContent>
+        <TabsContent value="olahraga" className="mt-4">
+          <ExerciseLogHistoryCard userId={id} />
         </TabsContent>
       </Tabs>
 

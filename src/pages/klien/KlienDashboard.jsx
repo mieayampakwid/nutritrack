@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Apple, Ruler } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
+import { ExerciseLogHistoryCard } from '@/components/exercise/ExerciseLogHistoryCard'
 
 export function KlienDashboard() {
   const { profile } = useAuth()
@@ -74,6 +75,9 @@ export function KlienDashboard() {
               <CalorieDisclaimer />
             </CardContent>
           </Card>
+        </section>
+        <section aria-label="Log olahraga">
+          <ExerciseLogHistoryCard userId={profile?.id} />
         </section>
       </div>
     </AppShell>
