@@ -130,7 +130,7 @@ describe('FoodEntryForm', () => {
 
   it('renders the food list header and a single initial food row', () => {
     renderWithProviders(<FoodEntryForm userId="u1" />)
-    expect(screen.getByText('Daftar makanan')).toBeInTheDocument()
+    expect(screen.getByText('Log makanan')).toBeInTheDocument()
     expect(screen.getByRole('group', { name: /diary makanan ke-1/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /analisa & simpan/i })).toBeInTheDocument()
   })

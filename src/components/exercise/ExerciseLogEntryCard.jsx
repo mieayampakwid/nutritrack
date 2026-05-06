@@ -60,7 +60,7 @@ export function ExerciseLogEntryCard({ userId }) {
 
   return (
     <Card className={KLIEN_DASHBOARD_LOG_CARD_SHELL}>
-      <CardHeader className="space-y-0 p-0 px-3 pb-2 pt-2 sm:px-4 sm:pt-3">
+      <CardHeader className="space-y-0 p-0 px-4 pb-3 pt-4 sm:px-5 sm:pb-3 sm:pt-5 lg:px-5 lg:pb-3 lg:pt-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <CardTitle className="text-sm font-semibold tracking-tight text-neutral-900">
@@ -70,7 +70,7 @@ export function ExerciseLogEntryCard({ userId }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
+      <CardContent className="space-y-3 px-4 pb-4 pt-0 sm:px-5 sm:pb-5 lg:px-5 lg:pb-5 lg:pt-0">
         <form
           onSubmit={handleSubmit}
           className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"

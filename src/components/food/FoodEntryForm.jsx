@@ -716,9 +716,8 @@ export function FoodEntryForm({ userId }) {
               Log makanan
             </h2>
             <p className={typeMuted}>
-              Satu baris = satu jenis makanan beserta porsi dan satuan. Misalnya Anda makan nasi ayam
-              geprek, tuliskan nasi kisaran berapa porsi, lalu tambah lagi baris dibawahnya untuk ayam
-              gepreknya, lalu klik Analisa
+              Satu baris untuk satu jenis makanan, lengkap dengan porsi dan satuan. Kalau hidangannya
+              campuran, pecah per bahan supaya estimasi lebih tepat—lalu ketuk Analisa & simpan.
             </p>
           </div>
           <Badge
