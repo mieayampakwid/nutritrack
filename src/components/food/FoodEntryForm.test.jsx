@@ -160,7 +160,7 @@ describe('FoodEntryForm', () => {
 
     expect(screen.getByRole('button', { name: /analisa & simpan/i })).toBeDisabled()
 
-    await user.selectOptions(screen.getByLabelText(/waktu makan/i), 'pagi')
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
 
     expect(screen.getByRole('button', { name: /analisa & simpan/i })).toBeEnabled()
   })
@@ -176,7 +176,7 @@ describe('FoodEntryForm', () => {
     renderWithProviders(<FoodEntryForm userId="u1" />)
 
     // pick meal type
-    await user.selectOptions(screen.getByLabelText(/waktu makan/i), 'pagi')
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
 
     // row 1 (valid)
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Nasi Goreng')
@@ -189,7 +189,7 @@ describe('FoodEntryForm', () => {
     expect(groups).toHaveLength(2)
 
     // open second row and fill it
-    await user.click(within(groups[1]).getByRole('button', { name: /item baru/i }))
+    await user.click(within(groups[1]).getByRole('button', { name: /ketuk untuk mengisi makanan/i }))
     await user.type(within(groups[1]).getByPlaceholderText(/nama makanan/i), 'asdfqwer')
     await user.type(within(groups[1]).getByPlaceholderText('0'), '1')
     await user.selectOptions(within(groups[1]).getByLabelText(/satuan/i), 'g')
@@ -216,7 +216,7 @@ describe('FoodEntryForm', () => {
 
     renderWithProviders(<FoodEntryForm userId="u1" />)
 
-    await user.selectOptions(screen.getByLabelText(/waktu makan/i), 'pagi')
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'bak')
     await user.type(screen.getByPlaceholderText('0'), '1')
     await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
@@ -240,7 +240,7 @@ describe('FoodEntryForm', () => {
     })
     renderWithProviders(<FoodEntryForm userId="u1" />)
 
-    await user.selectOptions(screen.getByLabelText(/waktu makan/i), 'pagi')
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Bakso')
     await user.type(screen.getByPlaceholderText('0'), '1')
     await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')

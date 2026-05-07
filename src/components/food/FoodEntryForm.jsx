@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { AnimatePresence, motion as Motion, useReducedMotion } from 'framer-motion'
-import { ChevronDown, Cookie, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { ChevronDown, Cookie, Loader2, Moon, Plus, Sparkles, Sunrise, Sun, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -30,10 +30,34 @@ import { foodEntrySchema } from '@/lib/validators'
 import { logError } from '@/lib/logger'
 
 const WAKTU = [
-  { key: 'pagi', label: 'Sarapan' },
-  { key: 'siang', label: 'Makan siang' },
-  { key: 'malam', label: 'Makan malam' },
-  { key: 'snack', label: 'Snack' },
+  {
+    key: 'pagi',
+    label: 'Sarapan',
+    icon: Sunrise,
+    pill: 'border-emerald-500/40 bg-emerald-50/80 text-emerald-800 hover:bg-emerald-100/90',
+    active: 'border-emerald-600/60 bg-emerald-100/95 text-emerald-950 shadow-sm shadow-emerald-500/15 ring-2 ring-emerald-500/25',
+  },
+  {
+    key: 'siang',
+    label: 'Makan siang',
+    icon: Sun,
+    pill: 'border-orange-400/40 bg-orange-50/80 text-orange-800 hover:bg-orange-100/90',
+    active: 'border-orange-500/60 bg-orange-100/95 text-orange-950 shadow-sm shadow-orange-500/15 ring-2 ring-orange-500/25',
+  },
+  {
+    key: 'malam',
+    label: 'Makan malam',
+    icon: Moon,
+    pill: 'border-blue-500/40 bg-blue-50/80 text-blue-800 hover:bg-blue-100/90',
+    active: 'border-blue-600/60 bg-blue-100/95 text-blue-950 shadow-sm shadow-blue-500/15 ring-2 ring-blue-500/25',
+  },
+  {
+    key: 'snack',
+    label: 'Snack',
+    icon: Cookie,
+    pill: 'border-rose-400/40 bg-rose-50/80 text-rose-800 hover:bg-rose-100/90',
+    active: 'border-[#7a1e2c]/60 bg-rose-100/95 text-rose-950 shadow-sm shadow-rose-500/15 ring-2 ring-rose-500/25',
+  },
 ]
 
 function mealLabelFromKey(key) {
@@ -729,56 +753,53 @@ export function FoodEntryForm({ userId }) {
         </div>
 
         <section className="space-y-2">
+          <Label className={cn(typeLabel, 'text-xs uppercase tracking-wider text-muted-foreground')}>
+            Waktu makan
+          </Label>
           <div
-            className={cn(
-              'group flex overflow-visible rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm',
-              'ring-1 ring-border/30',
-              'transition-[border-color,box-shadow,ring-color] duration-200',
-              'motion-safe:hover:border-primary/30 motion-safe:hover:shadow-md motion-safe:hover:ring-primary/20',
-              'focus-within:border-primary/35 focus-within:shadow-md focus-within:ring-2 focus-within:ring-ring/35',
-            )}
+            className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+            role="radiogroup"
+            aria-label="Waktu makan"
           >
-            <div className="shrink-0 self-stretch overflow-hidden rounded-l-xl" aria-hidden>
-              <div className="h-full w-1 bg-linear-to-b from-primary/55 via-primary/35 to-primary/15 sm:w-1.5" />
-            </div>
-            <div className="min-w-0 flex-1 p-3 sm:p-3.5">
-              <div className="flex items-start gap-3">
-                <Cookie className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
-                <div className="min-w-0 flex-1 space-y-1">
-                  <Label htmlFor="food-entry-meal" className={typeLabel}>
-                    Waktu makan
-                  </Label>
-                  <p className={cn(typeMuted, 'text-xs leading-snug')}>
-                    Pilih kategori waktu makan sebelum menyimpan.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-2">
-                <Select value={mealKey} onValueChange={setMealKey}>
-                  <SelectTrigger id="food-entry-meal" className="w-full bg-background/80">
-                    <SelectValue placeholder="Pilih waktu makan" />
-                  </SelectTrigger>
-                  <SelectContent align="start">
-                    {WAKTU.map((w) => (
-                      <SelectItem key={w.key} value={w.key}>
-                        {w.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            {WAKTU.map((w) => {
+              const Icon = w.icon
+              const isActive = mealKey === w.key
+              return (
+                <button
+                  key={w.key}
+                  type="button"
+                  role="radio"
+                  aria-checked={isActive}
+                  onClick={() => setMealKey(w.key)}
+                  className={cn(
+                    'group relative flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-center transition-all duration-200',
+                    'min-h-[56px] sm:min-h-[52px] sm:flex-row sm:gap-2 sm:py-2',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                    'motion-safe:active:scale-[0.97]',
+                    isActive ? w.active : w.pill,
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                  <span className="text-xs font-semibold leading-tight sm:text-[11px]">{w.label}</span>
+                </button>
+              )
+            })}
           </div>
         </section>
 
-        <div className="space-y-2.5">
-          {rows.map((r, i) => {
+        <AnimatePresence initial={false}>
+          <div className="space-y-2.5">
+            {rows.map((r, i) => {
             const isExpanded = r.id === expandedRowId
             const summary = foodRowSummaryLine(r, unitMap)
             const rowError = rowErrorsById[r.id]
             return (
-              <div
+              <Motion.div
                 key={r.id}
+                initial={reduceMotion ? false : { opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -12, scale: 0.97 }}
+                transition={{ duration: reduceMotion ? 0.1 : 0.25, ease: [0.22, 1, 0.36, 1] }}
                 role="group"
                 aria-label={`Diary makanan ke-${i + 1}`}
                 data-invalid={rowError ? 'true' : 'false'}
@@ -801,7 +822,7 @@ export function FoodEntryForm({ userId }) {
                   <div className="h-full w-1 bg-linear-to-b from-primary/55 via-primary/35 to-primary/15 motion-safe:transition-opacity motion-safe:group-hover:opacity-100 sm:w-1.5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 border-b border-border/50 bg-muted/25 px-3 py-2">
+                  <div className="flex items-center gap-2 border-b border-border/50 bg-muted/25 px-4 py-3 sm:px-5 sm:py-3.5">
                     <Badge
                       variant="outline"
                       className="h-7 min-w-7 shrink-0 justify-center rounded-lg border-primary/25 bg-background/80 px-0 font-mono text-xs font-semibold tabular-nums text-primary"
@@ -819,8 +840,13 @@ export function FoodEntryForm({ userId }) {
                       aria-expanded={isExpanded}
                       aria-controls={`food-row-panel-${r.id}`}
                     >
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-                        {summary}
+                      <span
+                        className={cn(
+                          'min-w-0 flex-1 truncate text-sm font-medium',
+                          summary === 'Item baru' ? 'text-muted-foreground italic' : 'text-foreground',
+                        )}
+                      >
+                        {summary === 'Item baru' ? 'Ketuk untuk mengisi makanan...' : summary}
                       </span>
                       {rowError ? (
                         <span className="shrink-0 rounded-md bg-destructive/10 px-2 py-1 text-[11px] font-semibold text-destructive">
@@ -847,13 +873,14 @@ export function FoodEntryForm({ userId }) {
                     </Button>
                   </div>
 
-                  {isExpanded ? (
-                    <div
-                      id={`food-row-panel-${r.id}`}
-                      role="region"
-                      aria-labelledby={`food-row-label-${r.id}`}
-                      className="p-3 sm:p-3.5"
-                    >
+                  <div
+                    id={`food-row-panel-${r.id}`}
+                    role="region"
+                    aria-labelledby={`food-row-label-${r.id}`}
+                    className="collapsible-content"
+                    data-open={isExpanded ? 'true' : undefined}
+                  >
+                    <div className="px-4 py-3 sm:px-5 sm:py-4">
                       {rowError ? (
                         <p className="mb-2 text-xs leading-relaxed text-destructive" role="alert">
                           {rowError}
@@ -947,12 +974,13 @@ export function FoodEntryForm({ userId }) {
                         </div>
                       </div>
                     </div>
-                  ) : null}
+                  </div>
                 </div>
-              </div>
+              </Motion.div>
             )
           })}
-        </div>
+          </div>
+        </AnimatePresence>
 
         <Button
           type="button"
@@ -982,7 +1010,11 @@ export function FoodEntryForm({ userId }) {
         )}
         <Button
           type="button"
-          className="order-1 h-9 w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:order-2 sm:w-auto sm:min-w-44"
+          className={cn(
+            'order-1 h-9 w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:order-2 sm:w-auto sm:min-w-44',
+            'bg-gradient-to-r from-primary to-primary/90',
+            'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
+          )}
           disabled={loading || !mealKey || filledCount !== rows.length}
           onClick={handleAnalyze}
         >
@@ -992,7 +1024,17 @@ export function FoodEntryForm({ userId }) {
               aria-hidden
             />
           ) : (
-            <Sparkles className="h-4 w-4" aria-hidden />
+            <Sparkles
+              className={cn(
+                'h-4 w-4',
+                !reduceMotion &&
+                  !loading &&
+                  filledCount === rows.length &&
+                  mealKey &&
+                  'motion-safe:animate-pulse',
+              )}
+              aria-hidden
+            />
           )}
           {loading ? 'Menganalisa & menyimpan…' : 'Analisa & simpan'}
         </Button>
