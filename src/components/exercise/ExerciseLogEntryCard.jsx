@@ -61,9 +61,9 @@ export function ExerciseLogEntryCard({ userId }) {
   return (
     <Card className={KLIEN_DASHBOARD_LOG_CARD_SHELL}>
       <CardHeader className="space-y-0 p-0 px-4 pb-3 pt-4 sm:px-5 sm:pb-3 sm:pt-5 lg:px-5 lg:pb-3 lg:pt-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <CardTitle className="text-sm font-semibold tracking-tight text-neutral-900">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-sm font-semibold leading-tight tracking-tight text-neutral-900 sm:text-sm md:text-sm">
               Log olahraga
             </CardTitle>
             <p className="mt-0.5 text-xs text-muted-foreground">Catat untuk hari ini (tanpa pilih tanggal).</p>

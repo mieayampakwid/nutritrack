@@ -321,8 +321,10 @@ export function FoodEntryForm({ userId }) {
   const [expandedRowId, setExpandedRowId] = useState(() => rows[0].id)
   const [suggestionsOpenRowId, setSuggestionsOpenRowId] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [rowErrorsById, setRowErrorsById] = useState(() => ({}))
+  const [pendingResult, setPendingResult] = useState(null)
   const [result, setResult] = useState(null)
   const resultRef = useRef(null)
   const analyzingAnchorRef = useRef(null)
@@ -543,12 +545,28 @@ export function FoodEntryForm({ userId }) {
 
       const total = itemsWithKal.reduce((a, x) => a + x.kalori_estimasi, 0)
 
+      setPendingResult({ items: itemsWithKal, total, waktuMakan: waktu, tanggal })
+    } catch (e) {
+      logError('FoodEntryForm.handleAnalyze', e)
+      setError(e.message ?? 'Terjadi kesalahan.')
+      toast.error('Gagal menganalisa.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleConfirmSave() {
+    if (!pendingResult) return
+    setSaving(true)
+    try {
+      const { items, total, waktuMakan, tanggal } = pendingResult
+
       const { data: logRow, error: logErr } = await supabase
         .from('food_logs')
         .insert({
           user_id: userId,
           tanggal,
-          waktu_makan: waktu,
+          waktu_makan: waktuMakan,
           total_kalori: total,
           status: 'saved',
         })
@@ -557,7 +575,7 @@ export function FoodEntryForm({ userId }) {
 
       if (logErr) throw logErr
 
-      const inserts = itemsWithKal.map((x) => ({
+      const inserts = items.map((x) => ({
         food_log_id: logRow.id,
         nama_makanan: x.nama_makanan,
         jumlah: x.jumlah,
@@ -569,7 +587,8 @@ export function FoodEntryForm({ userId }) {
       const { error: itemErr } = await supabase.from('food_log_items').insert(inserts)
       if (itemErr) throw itemErr
 
-      setResult({ items: itemsWithKal, total, waktuMakan: waktu })
+      setResult(pendingResult)
+      setPendingResult(null)
       qc.invalidateQueries({ queryKey: ['food_logs', userId] })
       qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
       const nextRow = emptyRow()
@@ -578,17 +597,23 @@ export function FoodEntryForm({ userId }) {
       setMealKey('')
       toast.success('Data tersimpan.')
     } catch (e) {
-      logError('FoodEntryForm.handleAnalyze', e)
-      setError(e.message ?? 'Terjadi kesalahan.')
-      toast.error('Gagal menganalisa atau menyimpan.')
+      logError('FoodEntryForm.handleConfirmSave', e)
+      toast.error('Gagal menyimpan data.')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
+  function handleDiscard() {
+    setPendingResult(null)
+  }
+
+  const displayResult = result || pendingResult
+  const isPending = Boolean(pendingResult)
+
   return (
     <div className="space-y-2 sm:space-y-3">
-      {result ? (
+      {displayResult ? (
         <div
           ref={resultRef}
           id="food-entry-result"
@@ -620,10 +645,12 @@ export function FoodEntryForm({ userId }) {
                   Struk estimasi
                 </p>
                 <p className="mt-2 font-greeting text-[1.35rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-2xl">
-                  Tersimpan
+                  {isPending ? 'Estimasi kalori' : 'Tersimpan'}
                 </p>
                 <p className="mx-auto mt-2 max-w-[18rem] text-xs leading-relaxed text-neutral-600">
-                  Ringkasan asupan yang baru dicatat — nilai berikut bersifat estimasi.
+                  {isPending
+                    ? 'Periksa hasil estimasi berikut sebelum menyimpan.'
+                    : 'Ringkasan asupan yang baru dicatat — nilai berikut bersifat estimasi.'}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] text-neutral-500">
                   <span className="font-medium tracking-wide text-neutral-700">
@@ -644,10 +671,10 @@ export function FoodEntryForm({ userId }) {
                   <span
                     className={cn(
                       'inline-flex rounded-full border px-3.5 py-1 text-[11px] font-semibold tracking-wide',
-                      MEAL_RECEIPT_BADGE[result.waktuMakan] ?? MEAL_RECEIPT_BADGE.pagi,
+                      MEAL_RECEIPT_BADGE[displayResult.waktuMakan] ?? MEAL_RECEIPT_BADGE.pagi,
                     )}
                   >
-                    {mealLabelFromKey(result.waktuMakan)}
+                    {mealLabelFromKey(displayResult.waktuMakan)}
                   </span>
                 </div>
               </header>
@@ -663,11 +690,11 @@ export function FoodEntryForm({ userId }) {
                     Rincian
                   </span>
                   <span className="text-[10px] font-medium tabular-nums text-neutral-400">
-                    {result.items.length} baris
+                    {displayResult.items.length} baris
                   </span>
                 </div>
                 <ul className="mt-1 divide-y divide-dotted divide-stone-300/80">
-                  {result.items.map((x, idx) => (
+                  {displayResult.items.map((x, idx) => (
                     <li key={idx} className="py-3.5 first:pt-2">
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -712,7 +739,7 @@ export function FoodEntryForm({ userId }) {
                     </p>
                   </div>
                   <KaloriValue
-                    value={result.total}
+                    value={displayResult.total}
                     className="text-2xl font-bold tracking-tight text-teal-800 sm:text-[1.65rem]"
                     unitClassName="text-sm font-semibold text-teal-700/75"
                   />
@@ -725,15 +752,55 @@ export function FoodEntryForm({ userId }) {
                 aria-hidden
               />
 
-              <div className="px-5 pb-5 pt-1 sm:px-7 sm:pb-6">
-                <CalorieDisclaimer className="border-amber-200/70 bg-amber-50/70 shadow-none" />
-              </div>
+              {isPending ? (
+                <div className="px-5 pb-5 pt-1 sm:px-7 sm:pb-6">
+                  <div className="flex flex-col gap-2.5 sm:flex-row sm:justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                      onClick={handleDiscard}
+                      disabled={saving}
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      type="button"
+                      className={cn(
+                        'w-full sm:w-auto',
+                        'bg-gradient-to-r from-primary to-primary/90',
+                        'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
+                      )}
+                      onClick={handleConfirmSave}
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2
+                            className={cn('mr-2 h-4 w-4', !reduceMotion && 'motion-safe:animate-spin')}
+                            aria-hidden
+                          />
+                          Menyimpan…
+                        </>
+                      ) : (
+                        'Simpan'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-5 pb-5 pt-1 sm:px-7 sm:pb-6">
+                  <CalorieDisclaimer className="border-amber-200/70 bg-amber-50/70 shadow-none" />
+                </div>
+              )}
             </div>
           </Card>
         </div>
       ) : null}
 
-      <section className="space-y-2 border-t border-border/60 pt-3 sm:pt-4">
+      {!pendingResult && (
+        <>
+        <section className="space-y-2 border-t border-border/60 pt-3 sm:pt-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
           <div className="min-w-0 space-y-0.5">
             <h2 className="text-sm font-semibold leading-tight tracking-tight">
@@ -741,7 +808,7 @@ export function FoodEntryForm({ userId }) {
             </h2>
             <p className={typeMuted}>
               Satu baris untuk satu jenis makanan, lengkap dengan porsi dan satuan. Kalau hidangannya
-              campuran, pecah per bahan supaya estimasi lebih tepat—lalu ketuk Analisa & simpan.
+              campuran, pecah per bahan supaya estimasi lebih tepat—lalu ketuk Analisa.
             </p>
           </div>
           <Badge
@@ -1015,7 +1082,7 @@ export function FoodEntryForm({ userId }) {
             'bg-gradient-to-r from-primary to-primary/90',
             'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
           )}
-          disabled={loading || !mealKey || filledCount !== rows.length}
+          disabled={loading || saving || !mealKey || filledCount !== rows.length}
           onClick={handleAnalyze}
         >
           {loading ? (
@@ -1029,6 +1096,7 @@ export function FoodEntryForm({ userId }) {
                 'h-4 w-4',
                 !reduceMotion &&
                   !loading &&
+                  !saving &&
                   filledCount === rows.length &&
                   mealKey &&
                   'motion-safe:animate-pulse',
@@ -1036,9 +1104,11 @@ export function FoodEntryForm({ userId }) {
               aria-hidden
             />
           )}
-          {loading ? 'Menganalisa & menyimpan…' : 'Analisa & simpan'}
+          {loading ? 'Menganalisa…' : 'Analisa'}
         </Button>
       </div>
+      </>
+      )}
     </div>
   )
 }
