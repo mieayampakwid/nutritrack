@@ -71,6 +71,12 @@ const GiziClientDetail = lazy(() =>
 const GiziMyGroup = lazy(() =>
   import('@/pages/ahli-gizi/GiziMyGroup').then((m) => ({ default: m.GiziMyGroup })),
 )
+const ParticipantDetail = lazy(() =>
+  import('@/pages/ahli-gizi/ParticipantDetail').then((m) => ({ default: m.ParticipantDetail })),
+)
+const ParticipantAssessment = lazy(() =>
+  import('@/pages/ahli-gizi/ParticipantAssessment').then((m) => ({ default: m.ParticipantAssessment })),
+)
 const KlienDashboard = lazy(() =>
   import('@/pages/klien/KlienDashboard').then((m) => ({ default: m.KlienDashboard })),
 )
@@ -313,6 +319,22 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['ahli_gizi']}>
               <GiziMyGroup />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/gizi/participants/:id"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <ParticipantDetail />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/gizi/participants/:id/assessment"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <ParticipantAssessment />
             </RequireAuth>
           }
         />
