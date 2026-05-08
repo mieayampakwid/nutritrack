@@ -30,7 +30,7 @@ export function GiziMyGroup() {
                 <div>
                   <h3 className="font-semibold text-foreground">Terjadi kesalahan</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {error.message ?? 'Gagal memuat data grup.'}
+                    {error.message ?? 'Gagal memuat data kelompok.'}
                   </p>
                 </div>
               </div>
@@ -48,9 +48,9 @@ export function GiziMyGroup() {
           <Card>
             <CardContent className="p-6 text-center">
               <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="font-semibold text-foreground">Belum ada grup</h3>
+              <h3 className="font-semibold text-foreground">Belum ada kelompok</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Anda belum ditugaskan ke grup mana pun. Silakan hubungi admin untuk penugasan.
+                Anda belum ditugaskan ke kelompok mana pun. Silakan hubungi admin untuk penugasan.
               </p>
             </CardContent>
           </Card>
@@ -75,7 +75,7 @@ export function GiziMyGroup() {
           <CardContent className="p-0">
             {members.length === 0 ? (
               <div className="px-6 py-10 text-center text-sm text-muted-foreground">
-                Belum ada klien di grup ini.
+                Belum ada klien di kelompok ini.
               </div>
             ) : (
               <div className="divide-y divide-border/60">

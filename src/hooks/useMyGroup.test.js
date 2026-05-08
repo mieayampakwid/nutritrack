@@ -29,7 +29,7 @@ describe('useMyGroup', () => {
   it('returns group data from get_my_group RPC', async () => {
     const mockGroup = {
       id: 'g1',
-      nama: 'Grup A',
+      nama: 'Kelompok A',
       members: [
         { id: 'm1', klien_nama: 'Client 1', klien_email: 'client1@test.com' },
         { id: 'm2', klien_nama: 'Client 2', klien_email: 'client2@test.com' },

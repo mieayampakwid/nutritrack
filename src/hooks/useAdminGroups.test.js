@@ -28,8 +28,8 @@ describe('useAdminGroups', () => {
 
   it('returns data from admin_list_groups RPC', async () => {
     const mockGroups = [
-      { id: 'g1', nama: 'Grup A', ahli_gizi_nama: 'Dr. Budi', member_count: 5 },
-      { id: 'g2', nama: 'Grup B', ahli_gizi_nama: 'Dr. Siti', member_count: 3 },
+      { id: 'g1', nama: 'Kelompok A', ahli_gizi_nama: 'Dr. Budi', member_count: 5 },
+      { id: 'g2', nama: 'Kelompok B', ahli_gizi_nama: 'Dr. Siti', member_count: 3 },
     ]
     resultRef.current = { data: mockGroups, error: null }
 

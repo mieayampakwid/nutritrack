@@ -52,6 +52,6 @@ export const bodyMeasurementSchema = z.object({
 })
 
 export const groupCreateSchema = z.object({
-  nama: z.string().min(1, 'Nama grup wajib diisi').max(100),
+  nama: z.string().min(1, 'Nama kelompok wajib diisi').max(100),
   ahli_gizi_id: z.string().uuid('Pilih ahli gizi'),
 })

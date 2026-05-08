@@ -138,7 +138,7 @@ export function AdminGroups() {
       setSelectedMembers([])
     },
     onError: (e) => {
-      toast.error(e.message ?? 'Gagal membuat grup.')
+      toast.error(e.message ?? 'Gagal membuat kelompok.')
     },
   })
 
@@ -153,7 +153,7 @@ export function AdminGroups() {
       qc.invalidateQueries({ queryKey: ['admin_groups'] })
     },
     onError: (e) => {
-      toast.error(e.message ?? 'Gagal menghapus grup.')
+      toast.error(e.message ?? 'Gagal menghapus kelompok.')
     },
   })
 
@@ -166,14 +166,14 @@ export function AdminGroups() {
               <div>
                 <h1 className="text-lg font-semibold tracking-tight sm:text-xl">Kelola Kelompok</h1>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5">
-                  Satu ahli gizi per grup, satu grup per klien.
+                  Satu ahli gizi per kelompok, satu kelompok per klien.
                 </p>
               </div>
 
               <div className="mt-4 flex justify-end">
                 <Button onClick={() => setOpenCreate(true)}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Tambah grup
+                  Tambah kelompok
                 </Button>
               </div>
             </div>
@@ -182,14 +182,14 @@ export function AdminGroups() {
               <div className="flex items-center px-4 py-3 md:px-5">
                 <Input
                   type="search"
-                  placeholder="Cari nama grup atau ahli gizi…"
+                  placeholder="Cari nama kelompok atau ahli gizi…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="max-w-md"
                   autoComplete="off"
                 />
                 <p className="ml-4 text-sm text-muted-foreground">
-                  {filtered.length} grup
+                  {filtered.length} kelompok
                 </p>
               </div>
 
@@ -199,7 +199,7 @@ export function AdminGroups() {
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="border-t border-border/60 px-4 py-10 text-center text-sm text-muted-foreground md:px-5">
-                  {groups.length === 0 ? 'Belum ada grup.' : 'Tidak ada yang cocok dengan pencarian.'}
+                  {groups.length === 0 ? 'Belum ada kelompok.' : 'Tidak ada yang cocok dengan pencarian.'}
                 </div>
               ) : (
                 <>
@@ -238,7 +238,7 @@ export function AdminGroups() {
                       <TableHeader className="sticky top-0 z-1 bg-table-header shadow-[0_1px_0_0_var(--color-table-line)]">
                         <TableRow className="border-table-line hover:bg-transparent">
                           <TableHead className="h-8 py-1.5 pl-3 pr-1 font-semibold text-table-header-foreground">
-                            Nama grup
+                            Nama kelompok
                           </TableHead>
                           <TableHead className="h-8 py-1.5 px-1 font-semibold text-table-header-foreground">
                             Ahli gizi
@@ -293,11 +293,11 @@ export function AdminGroups() {
       <Dialog open={openCreate} onOpenChange={setOpenCreate}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Tambah grup</DialogTitle>
+            <DialogTitle>Tambah kelompok</DialogTitle>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="space-y-1">
-              <Label>Nama grup</Label>
+              <Label>Nama kelompok</Label>
               <Input
                 value={form.nama}
                 onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))}
@@ -378,10 +378,10 @@ export function AdminGroups() {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Hapus grup?</DialogTitle>
+            <DialogTitle>Hapus kelompok?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Tindakan ini akan menghapus grup dan semua klien di dalamnya. Ini tidak bisa dibatalkan.
+            Tindakan ini akan menghapus kelompok dan semua klien di dalamnya. Ini tidak bisa dibatalkan.
           </p>
           <DialogFooter>
             <Button
