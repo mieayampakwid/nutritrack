@@ -43,8 +43,9 @@ begin
   end if;
 
   -- Create auth user
-  insert into auth.users (email, encrypted_password, email_confirmed_at, phone, raw_user_meta_data)
+  insert into auth.users (id, email, encrypted_password, email_confirmed_at, phone, raw_user_meta_data)
   values (
+    gen_random_uuid(),
     p_email,
     crypt(p_password, gen_salt('bf')),
     now(),
