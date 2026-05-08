@@ -104,7 +104,7 @@ export function ParticipantDetail() {
             </p>
           </div>
           <Button asChild className="shrink-0">
-            <Link to={`/gizi/participants/${id}/data-entry`}>
+            <Link to={`/gizi/participants/${id}/assessment`}>
               <Plus className="mr-2 h-4 w-4" />
               Tambah Data
             </Link>
