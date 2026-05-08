@@ -42,6 +42,7 @@ const ROLE_NAV = {
       { to: '/admin/users', label: 'User', icon: Users },
     ],
     more: [
+      { to: '/admin/groups', label: 'Kelompok', icon: Users },
       { to: '/admin/import', label: 'Impor', icon: Upload },
       { to: '/admin/food-units', label: 'Master ukuran', icon: Settings2 },
     ],
@@ -51,7 +52,9 @@ const ROLE_NAV = {
       { to: '/gizi/dashboard', label: 'Dasbor', icon: LayoutDashboard },
       { to: '/gizi/clients', label: 'Klien', icon: Users },
     ],
-    more: [],
+    more: [
+      { to: '/gizi/my-group', label: 'Kelompok Saya', icon: Users },
+    ],
   },
   klien: {
     primary: [
