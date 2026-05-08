@@ -1,21 +1,12 @@
 import { useState } from 'react'
-import { Activity, Utensils, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react'
+import { Utensils, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { MeasurementChart } from '@/components/measurement/MeasurementChart'
 import { FoodLogTable } from '@/components/food/FoodLogTable'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ExerciseLogHistoryCard } from '@/components/exercise/ExerciseLogHistoryCard'
 import { cn } from '@/lib/utils'
 
 const SECTIONS = [
-  {
-    id: 'antro',
-    title: 'Antropometri',
-    description: 'Grafik perkembangan berat, tinggi, dan komposisi tubuh',
-    icon: Activity,
-    color: 'bg-emerald-500/10 text-emerald-600',
-  },
   {
     id: 'makan',
     title: 'Log Makan',
@@ -34,14 +25,12 @@ const SECTIONS = [
 
 export function SectionAccordion({
   participantId,
-  measurements,
   foodLogs,
-  loadingMeasurements,
   loadingFoodLogs,
 }) {
   return (
     <div>
-      <h2 className="mb-4 text-xl font-semibold tracking-tight text-foreground">Detail Lengkap</h2>
+      <h2 className="mb-4 text-xl font-semibold tracking-tight text-foreground">Log Harian</h2>
 
       <div className="space-y-4">
         {SECTIONS.map((section) => (
@@ -49,9 +38,7 @@ export function SectionAccordion({
             key={section.id}
             section={section}
             participantId={participantId}
-            measurements={measurements}
             foodLogs={foodLogs}
-            loadingMeasurements={loadingMeasurements}
             loadingFoodLogs={loadingFoodLogs}
           />
         ))}
@@ -63,9 +50,7 @@ export function SectionAccordion({
 function SectionCard({
   section,
   participantId,
-  measurements,
   foodLogs,
-  loadingMeasurements,
   loadingFoodLogs,
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -104,16 +89,6 @@ function SectionCard({
       {/* Content - shown when expanded */}
       {isExpanded && (
         <div className="border-t border-border/60 px-5 py-4">
-          {section.id === 'antro' && (
-            <>
-              {loadingMeasurements ? (
-                <LoadingSpinner />
-              ) : (
-                <MeasurementChart measurements={measurements} metric="berat_badan" />
-              )}
-            </>
-          )}
-
           {section.id === 'makan' && (
             <>
               {loadingFoodLogs ? (

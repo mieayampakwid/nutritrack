@@ -32,7 +32,7 @@ export function ParticipantDetail() {
     },
   })
 
-  const { data: measurements = [], isLoading: loadingM } = useMeasurements(id, Boolean(id))
+  const { data: measurements = [] } = useMeasurements(id, Boolean(id))
   const { data: logs = [], isLoading: loadingL } = useFoodLogsForUser(id, Boolean(id))
 
   const lastMeasurement = useMemo(() => {
@@ -169,9 +169,7 @@ export function ParticipantDetail() {
       {/* Section Cards */}
       <SectionAccordion
         participantId={id}
-        measurements={measurements}
         foodLogs={logs}
-        loadingMeasurements={loadingM}
         loadingFoodLogs={loadingL}
       />
     </AppShell>
