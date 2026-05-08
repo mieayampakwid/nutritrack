@@ -3,11 +3,11 @@ import { supabase } from '@/lib/supabase'
 
 export function useMeasurements(userId, enabled = true) {
   return useQuery({
-    queryKey: ['measurements', userId],
+    queryKey: ['assessments', userId],
     enabled: Boolean(userId) && enabled,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('body_measurements')
+        .from('assessments')
         .select('*')
         .eq('user_id', userId)
         .order('tanggal', { ascending: true })
