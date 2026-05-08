@@ -2,6 +2,9 @@
 -- This function allows admins to create users with is_active=true
 -- Replaces the multi-step signup + edge function + profile update flow
 
+-- Enable pgcrypto extension for password hashing
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 create function admin_create_user(
   p_email text,
   p_password text,
