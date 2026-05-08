@@ -13,13 +13,6 @@ const MAX_ITEMS = 40
 const MAX_NAME_LEN = 120
 const MAX_UNIT_LEN = 40
 
-function normalizeUnit(unit: string) {
-  return unit
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-}
-
 function sanitize(s: string, maxLen = MAX_NAME_LEN): string {
   return s
     .replace(/[\n\r\t\x00-\x1f]/g, ' ')
@@ -31,11 +24,25 @@ function sanitize(s: string, maxLen = MAX_NAME_LEN): string {
 function buildSystemMessage(allowedUnitsText: string) {
   return `Anda adalah asisten validasi makanan untuk aplikasi pemantauan nutrisi.
 Tugas Anda adalah menentukan apakah input pengguna merupakan makanan/minuman manusia yang valid
-dan dapat dinilai nilai gizinya. Selain itu, periksa apakah satuan porsi yang dipilih masuk akal
-untuk makanan tersebut.
+dan apakah satuan porsi yang dipilih masuk akal untuk makanan tersebut.
 
-Satuan yang diizinkan untuk dipilih pengguna (gunakan hanya daftar ini):
-- ${allowedUnitsText || '(tidak tersedia)'}
+Satuan umum yang sering digunakan (sebagai referensi, bukan batasan ketat):
+- ${allowedUnitsText || 'centong, bungkus, gelas, sendok makan, sendok teh, potong, buah, lembar, porsi, mangkuk, dll'}
+
+Aturan validasi (FLEKSIBEL - gunakan penilaian Anda):
+- Tolak bila satuan JELAS TIDAK COCOK dengan bentuk fisik makanan atau cara sajinya.
+- Terima bila satuan masuk akal, meskipun tidak umum. Beri keleluasaan pada user.
+- Jangan menolak makanan valid hanya karena makanan daerah/rumahan.
+- Boleh terima satuan yang tidak ada di daftar referensi bila masuk akal.
+
+Contoh penilaian:
+- "nasi | unit: centong" → valid (cocok)
+- "bakso | unit: bungkus" → valid (cocok untuk frozen/takeaway)
+- "teh manis | unit: gelas" → valid (minuman)
+- "gula | unit: sendok makan" → valid (bahan/condiment)
+- "bakso | unit: sendok makan" → TIDAK valid (makanan utuh tidak seharusnya pakai sendok)
+- "apel | unit: buah" → valid (buah utuh)
+- "roti tawar | unit: lembar" → valid (item tipis)
 
 Jika input BUKAN makanan/minuman manusia yang valid (mis. benda non-makanan, konsep abstrak,
 gibberish, atau input bercanda), balas dengan:
@@ -47,7 +54,7 @@ gibberish, atau input bercanda), balas dengan:
 Jika makanannya valid tetapi satuannya TIDAK cocok/masuk akal (contoh: makanan padat utuh seperti bakso disetarakan dengan "sendok makan"), balas dengan:
 {
   "valid": false,
-  "message": "Satuan untuk \\"[input]\\" tidak cocok. Pilih satuan yang lebih sesuai (mis. bungkus/potong/buah/lembar/gelas/centong) agar perhitungan lebih akurat."
+  "message": "Satuan untuk \\"[input]\\" tidak cocok. Coba satuan lain yang lebih sesuai dengan bentuk makanan tersebut."
 }
 
 Jika input ADALAH makanan/minuman manusia yang valid, balas dengan:
@@ -58,7 +65,7 @@ Jika input ADALAH makanan/minuman manusia yang valid, balas dengan:
 Bersikap tegas tetapi adil. Makanan daerah/tradisional tetap valid.
 Untuk hidangan berkuah/berporsi seperti soto, sup, bakso kuah, mie, bubur:
 - Satuan seperti porsi/mangkuk/gelas/bungkus bisa masuk akal tergantung konteks.
-- Jangan menolak hanya karena tidak yakin; tolak hanya bila satuannya jelas tidak masuk akal.
+- Tetap tolak bila unit jelas tidak cocok (mis. "sendok teh" untuk hidangan utuh).
 
 Jika diberikan beberapa input sekaligus, tetap balas HANYA SATU JSON object:
 - valid=true bila SEMUA input adalah makanan/minuman manusia yang valid
@@ -68,8 +75,8 @@ Jika diberikan beberapa input sekaligus, tetap balas HANYA SATU JSON object:
   - "invalid_indices": array number (0-based) posisi input yang tidak valid dalam daftar yang diberikan
 
 Catatan:
-- Satuan yang mungkin hanyalah yang ada di daftar satuan yang diizinkan di atas.
-- Jika satuan tidak tercantum dalam daftar itu atau tidak jelas, anggap tidak valid.
+- Daftar satuan di atas hanya referensi. Anda boleh terima satuan lain bila masuk akal.
+- Fokus pada kecocokan satuan dengan bentuk fisik makanan, bukan pada keberadaan satuan di daftar.
 
 Balas hanya dalam JSON. Jangan berikan penjelasan di luar JSON.`
 }
@@ -337,56 +344,17 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Load allowed units from DB so it stays in sync with FoodUnitMaster.
-    const { data: unitRows, error: unitErr } = await supabase
+    // Load units from DB only as reference for AI context.
+    const { data: unitRows } = await supabase
       .from('food_units')
       .select('nama')
       .order('nama')
-      .limit(500)
-    if (unitErr) {
-      return new Response(JSON.stringify({ error: 'Gagal memuat daftar satuan.' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-    const allowedUnits = new Set(
-      (unitRows ?? [])
-        .map((u) => normalizeUnit(String(u?.nama ?? '')))
-        .filter(Boolean),
-    )
+      .limit(100)
     const allowedUnitsText = (unitRows ?? [])
       .map((u) => String(u?.nama ?? '').trim())
       .filter(Boolean)
-      .slice(0, 60)
+      .slice(0, 30)
       .join(', ')
-
-    // If any item includes a unit, require all units to be present and in the allowed list.
-    const anyHasUnit = parsedItems.some((x) => Boolean(x.unit_nama))
-    if (anyHasUnit) {
-      const badIdx: number[] = []
-      const badInputs: string[] = []
-      for (let i = 0; i < parsedItems.length; i++) {
-        const it = parsedItems[i]
-        const unit = it.unit_nama ? normalizeUnit(it.unit_nama) : ''
-        if (!unit || !allowedUnits.has(unit)) {
-          badIdx.push(i)
-          badInputs.push(`${it.nama_makanan}${it.unit_nama ? ` | unit: ${it.unit_nama}` : ''}`)
-        }
-      }
-      if (badIdx.length > 0) {
-        const messageBase = 'Satuan tidak valid atau belum didukung.'
-        const listHint = allowedUnitsText ? ` Pilih salah satu: ${allowedUnitsText}.` : ''
-        return new Response(
-          JSON.stringify({
-            valid: false,
-            message: `${messageBase}${listHint}`.slice(0, 420),
-            invalid_indices: badIdx,
-            invalid_inputs: badInputs.slice(0, 12),
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-        )
-      }
-    }
 
     const openaiKey = Deno.env.get('OPENAI_API_KEY')
     if (!openaiKey) {
@@ -408,12 +376,13 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model,
+        response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: userMessage },
         ],
         temperature: 0.0,
-        max_tokens: 220,
+        max_tokens: 260,
       }),
     })
 
