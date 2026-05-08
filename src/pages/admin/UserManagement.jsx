@@ -111,42 +111,23 @@ export function UserManagement() {
         throw new Error(result.error.issues[0].message)
       }
       const pw = form.password || randomPassword()
-      const { data, error } = await supabase.auth.signUp({
-        email: form.email.trim(),
-        password: pw,
-        options: {
-          data: {
-            nama: form.nama.trim(),
-            tgl_lahir: form.tgl_lahir.trim(),
-            instalasi: form.instalasi.trim(),
-            role: form.role,
-          },
-        },
+
+      const { data, error } = await supabase.rpc('admin_create_user', {
+        p_email: form.email.trim(),
+        p_password: pw,
+        p_nama: form.nama.trim(),
+        p_role: form.role,
+        p_phone: form.phone.trim() || null,
+        p_tgl_lahir: form.tgl_lahir.trim() || null,
+        p_instalasi: form.instalasi.trim() || null,
       })
+
       if (error) throw error
-      const uid = data.user?.id
-      if (uid) {
-        const phone = form.phone.trim()
-        if (phone) {
-          const { data: fnData, error: fnErr } = await supabase.functions.invoke(
-            'admin-update-user-phone',
-            { body: { user_id: uid, phone } },
-          )
-          if (fnErr) throw fnErr
-          if (fnData && typeof fnData === 'object' && fnData.error) {
-            throw new Error(String(fnData.error))
-          }
-        }
-        const tgl = form.tgl_lahir.trim()
-        const { error: upErr } = await supabase
-          .from('profiles')
-          .update({
-            tgl_lahir: tgl && /^\d{4}-\d{2}-\d{2}$/.test(tgl) ? tgl : null,
-          })
-          .eq('id', uid)
-        if (upErr) throw upErr
+      if (data && typeof data === 'object' && data.error) {
+        throw new Error(String(data.error))
       }
-      return { user: data.user, password: pw }
+
+      return { password: pw }
     },
     onSuccess: ({ password }) => {
       toast.success('Pengguna dibuat.')
