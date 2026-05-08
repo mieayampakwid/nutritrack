@@ -92,6 +92,8 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
       umur: derivedAge || null,
       faktor_aktivitas: actNum,
       faktor_stres: strNum,
+      bmi,
+      bmr,
       energi_total: totalEnergy,
       catatan_asesmen: catatan.trim() || null,
     })
