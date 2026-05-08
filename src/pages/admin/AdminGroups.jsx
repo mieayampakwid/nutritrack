@@ -90,7 +90,6 @@ export function AdminGroups() {
   const [search, setSearch] = useState('')
   const [openCreate, setOpenCreate] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState('')
-  const [selectedGroupId, setSelectedGroupId] = useState('')
   const [form, setForm] = useState({ nama: '', ahli_gizi_id: '' })
   const [selectedMembers, setSelectedMembers] = useState([])
 
@@ -226,10 +225,7 @@ export function AdminGroups() {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
-                          onClick={() => {
-                            setSelectedGroupId(g.id)
-                            setConfirmDeleteId(g.id)
-                          }}
+                          onClick={() => setConfirmDeleteId(g.id)}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
