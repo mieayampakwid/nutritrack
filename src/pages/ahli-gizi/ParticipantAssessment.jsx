@@ -4,9 +4,11 @@ import { ArrowLeft } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AssessmentForm } from '@/components/participants/AssessmentForm'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { useMeasurements } from '@/hooks/useMeasurement'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { useMemo } from 'react'
 
 export function ParticipantAssessment() {
   const { id } = useParams()
@@ -28,21 +30,16 @@ export function ParticipantAssessment() {
     },
   })
 
-  const { data: lastAssessment } = useQuery({
-    queryKey: ['assessments', id, 'last'],
-    enabled: Boolean(id),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('assessments')
-        .select('*')
-        .eq('user_id', id)
-        .order('tanggal', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      if (error) throw error
-      return data
-    },
-  })
+  const { data: measurements = [] } = useMeasurements(id, Boolean(id))
+
+  const lastAssessment = useMemo(() => {
+    if (!measurements.length) return null
+    return [...measurements].sort((a, b) => {
+      const dateCompare = b.tanggal.localeCompare(a.tanggal)
+      if (dateCompare !== 0) return dateCompare
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0)
+    })[0]
+  }, [measurements])
 
   const saveMutation = useMutation({
     mutationFn: async (assessmentData) => {
