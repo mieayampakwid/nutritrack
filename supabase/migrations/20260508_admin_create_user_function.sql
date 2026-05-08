@@ -18,7 +18,7 @@ create function admin_create_user(
   security definer
   set search_path TO 'public', 'auth'
 language plpgsql
-$$
+AS $$
 declare
   v_user_id uuid;
   v_existing_user uuid;
@@ -35,7 +35,7 @@ begin
 
   -- Check if user already exists
   select id into v_existing_user
-  from users
+  from auth.users
   where email = p_email;
 
   if v_existing_user is not null then
@@ -43,7 +43,7 @@ begin
   end if;
 
   -- Create auth user
-  insert into users (email, encrypted_password, email_confirmed_at, phone, raw_user_meta_data)
+  insert into auth.users (email, encrypted_password, email_confirmed_at, phone, raw_user_meta_data)
   values (
     p_email,
     crypt(p_password, gen_salt('bf')),
