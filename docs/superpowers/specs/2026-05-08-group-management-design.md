@@ -40,7 +40,7 @@ create table public.group_members (
 ### RLS Policies
 
 **`groups` table:**
-- `groups_admin` — admin: full CRUD (`for all using (public.jwt_is_staff())`, scoped to admin only)
+- `groups_admin` — admin: full CRUD (`for all using ((select role from public.profiles where id = auth.uid()) = 'admin')`)
 - `groups_ahli_gizi_read` — nutritionists: SELECT only
 - No client access
 
@@ -57,7 +57,7 @@ create table public.group_members (
 
 ### Data Access Impact
 
-Existing write operations by nutritionists (data entry, evaluations) on tables like `food_logs`, `body_measurements`, `assessments`, `user_evaluations` should be scoped to their own group's members. Read access to all clients remains unchanged. Enforced via RLS on the write-side tables.
+Existing write operations by nutritionists on `body_measurements`, `assessments`, and `user_evaluations` should be scoped to their own group's members. This means updating the staff RLS policies on these tables to check that the target `user_id` exists in `group_members` where the `group_id` belongs to the calling nutritionist. Read access to all clients remains unchanged.
 
 ## Frontend — Admin
 
