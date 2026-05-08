@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { Utensils, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
-import { FoodLogTable } from '@/components/food/FoodLogTable'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
-import { ExerciseLogHistoryCard } from '@/components/exercise/ExerciseLogHistoryCard'
+import { ActivityLogTable } from '@/components/shared/ActivityLogTable'
+import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
 import { cn } from '@/lib/utils'
 
 const SECTIONS = [
@@ -26,8 +25,25 @@ const SECTIONS = [
 export function SectionAccordion({
   participantId,
   foodLogs,
-  loadingFoodLogs,
+  tanggal,
 }) {
+  const { data: exerciseLogs = [] } = useExerciseLogsForUser(participantId, {
+    enabled: Boolean(participantId),
+    ...(tanggal
+      ? { dateFrom: tanggal, dateTo: tanggal }
+      : {
+          // Default: last 2 weeks
+          dateFrom: (() => {
+            const today = new Date()
+            const twoWeeksAgo = new Date(today)
+            twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
+            return twoWeeksAgo.toISOString().slice(0, 10)
+          })(),
+          dateTo: new Date().toISOString().slice(0, 10),
+        }
+    ),
+  })
+
   return (
     <div>
       <h2 className="mb-4 text-xl font-semibold tracking-tight text-foreground">Log Harian</h2>
@@ -37,9 +53,9 @@ export function SectionAccordion({
           <SectionCard
             key={section.id}
             section={section}
-            participantId={participantId}
             foodLogs={foodLogs}
-            loadingFoodLogs={loadingFoodLogs}
+            exerciseLogs={exerciseLogs}
+            tanggal={tanggal}
           />
         ))}
       </div>
@@ -49,9 +65,9 @@ export function SectionAccordion({
 
 function SectionCard({
   section,
-  participantId,
   foodLogs,
-  loadingFoodLogs,
+  exerciseLogs,
+  tanggal,
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const Icon = section.icon
@@ -90,21 +106,11 @@ function SectionCard({
       {isExpanded && (
         <div className="border-t border-border/60 px-5 py-4">
           {section.id === 'makan' && (
-            <>
-              {loadingFoodLogs ? (
-                <LoadingSpinner />
-              ) : (
-                <div className="max-h-96 overflow-y-auto">
-                  <FoodLogTable logs={foodLogs} />
-                </div>
-              )}
-            </>
+            <ActivityLogTable type="food" data={foodLogs} tanggal={tanggal} />
           )}
 
           {section.id === 'olahraga' && (
-            <>
-              <ExerciseLogHistoryCard userId={participantId} />
-            </>
+            <ActivityLogTable type="exercise" data={exerciseLogs} tanggal={tanggal} />
           )}
         </div>
       )}

@@ -33,7 +33,7 @@ export function ParticipantDetail() {
   })
 
   const { data: measurements = [] } = useMeasurements(id, Boolean(id))
-  const { data: logs = [], isLoading: loadingL } = useFoodLogsForUser(id, Boolean(id))
+  const { data: logs = [] } = useFoodLogsForUser(id, Boolean(id))
 
   const lastMeasurement = useMemo(() => {
     if (!measurements.length) return null
@@ -170,7 +170,6 @@ export function ParticipantDetail() {
       <SectionAccordion
         participantId={id}
         foodLogs={logs}
-        loadingFoodLogs={loadingL}
       />
     </AppShell>
   )
