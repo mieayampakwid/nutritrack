@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { FoodLogDetailModal } from '@/components/food/FoodLogDetailModal'
-import { formatDateId } from '@/lib/format'
+import { formatDateId, formatNumberId } from '@/lib/format'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { MEAL_LOG_DAY_CARD_RADIUS_CLASS } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
@@ -65,6 +65,33 @@ function dayTotal(logsForDay) {
   return (logsForDay ?? []).reduce((a, log) => a + (Number(log.total_kalori) || 0), 0)
 }
 
+function dayNutrients(logsForDay) {
+  return (logsForDay ?? []).reduce(
+    (a, log) => ({
+      karbohidrat: a.karbohidrat + (Number(log.total_karbohidrat) || 0),
+      protein: a.protein + (Number(log.total_protein) || 0),
+      lemak: a.lemak + (Number(log.total_lemak) || 0),
+      serat: a.serat + (Number(log.total_serat) || 0),
+      natrium: a.natrium + (Number(log.total_natrium) || 0),
+    }),
+    { karbohidrat: 0, protein: 0, lemak: 0, serat: 0, natrium: 0 },
+  )
+}
+
+function NutrientSummary({ nutrients }) {
+  const { karbohidrat, protein, lemak, serat, natrium } = nutrients
+  if (!karbohidrat && !protein && !lemak && !serat && !natrium) return null
+  return (
+    <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[9px] leading-none text-muted-foreground/60">
+      <span>K:{formatNumberId(karbohidrat, { maximumFractionDigits: 1 })}g</span>
+      <span>P:{formatNumberId(protein, { maximumFractionDigits: 1 })}g</span>
+      <span>L:{formatNumberId(lemak, { maximumFractionDigits: 1 })}g</span>
+      <span>S:{formatNumberId(serat, { maximumFractionDigits: 1 })}g</span>
+      <span>Na:{formatNumberId(natrium, { maximumFractionDigits: 0 })}mg</span>
+    </div>
+  )
+}
+
 export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
   const byDateLists = useMemo(() => groupLogsByDateLists(logs), [logs])
   const sortedDates = useMemo(
@@ -109,43 +136,45 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
           </p>
         ) : (
           slice.map((tanggal) => {
-            const logsForDay = byDateLists.get(tanggal) ?? []
-            const total = dayTotal(logsForDay)
-            const dateLabel = formatDateId(tanggal)
-            return (
-              <button
-                key={tanggal}
-                type="button"
-                onClick={() => setModal(tanggal)}
-                aria-label={`Buka detail log makan ${dateLabel}`}
-                className={cn(
-                  'group w-full cursor-pointer touch-manipulation select-none text-left outline-none transition-[transform,box-shadow,border-color] duration-200',
-                  MEAL_LOG_DAY_CARD_RADIUS_CLASS,
-                  'border p-3.5 shadow-sm',
-                  MEAL_LOG_DAY_SURFACE,
-                  'active:scale-[0.99]',
-                  'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                )}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="min-w-0 flex-1 text-sm font-semibold leading-snug tracking-tight text-foreground">
-                    {dateLabel}
-                  </span>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <div className="text-right">
-                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Total
+              const logsForDay = byDateLists.get(tanggal) ?? []
+              const total = dayTotal(logsForDay)
+              const nutrients = dayNutrients(logsForDay)
+              const dateLabel = formatDateId(tanggal)
+              return (
+                <button
+                  key={tanggal}
+                  type="button"
+                  onClick={() => setModal(tanggal)}
+                  aria-label={`Buka detail log makan ${dateLabel}`}
+                  className={cn(
+                    'group w-full cursor-pointer touch-manipulation select-none text-left outline-none transition-[transform,box-shadow,border-color] duration-200',
+                    MEAL_LOG_DAY_CARD_RADIUS_CLASS,
+                    'border p-3.5 shadow-sm',
+                    MEAL_LOG_DAY_SURFACE,
+                    'active:scale-[0.99]',
+                    'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="min-w-0 flex-1 text-sm font-semibold leading-snug tracking-tight text-foreground">
+                      {dateLabel}
+                    </span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <div className="text-right">
+                        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          Total
+                        </div>
+                        <div className="text-base font-semibold tabular-nums text-primary">
+                          {total > 0 ? <KaloriValue value={total} /> : '—'}
+                        </div>
+                        <NutrientSummary nutrients={nutrients} />
                       </div>
-                      <div className="text-base font-semibold tabular-nums text-primary">
-                        {total > 0 ? <KaloriValue value={total} /> : '—'}
-                      </div>
+                      <ChevronRight
+                        className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground"
+                        aria-hidden
+                      />
                     </div>
-                    <ChevronRight
-                      className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground"
-                      aria-hidden
-                    />
                   </div>
-                </div>
                 <ul className="mt-3 space-y-2 border-t border-amber-200/40 pt-3">
                   {logsForDay.map((log) => (
                     <li
@@ -190,6 +219,7 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
                 {slice.map((tanggal) => {
                   const logsForDay = byDateLists.get(tanggal) ?? []
                   const total = dayTotal(logsForDay)
+                  const nutrients = dayNutrients(logsForDay)
                   return (
                     <TableRow key={tanggal} className={MEAL_LOG_TABLE_ROW}>
                       <TableCell className="whitespace-nowrap align-top">
@@ -213,7 +243,12 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
                         </ul>
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums align-top">
-                        {total > 0 ? <KaloriValue value={total} /> : '—'}
+                        {total > 0 ? (
+                          <div>
+                            <KaloriValue value={total} />
+                            <NutrientSummary nutrients={nutrients} />
+                          </div>
+                        ) : '—'}
                       </TableCell>
                       <TableCell className="align-top">
                         <Button variant="outline" size="sm" onClick={() => setModal(tanggal)}>

@@ -52,6 +52,11 @@ create table if not exists public.food_logs (
   tanggal date not null,
   waktu_makan text check (waktu_makan in ('pagi', 'siang', 'malam', 'snack')) not null,
   total_kalori numeric(8,2) default 0,
+  total_karbohidrat numeric(8,2) default 0,
+  total_protein numeric(8,2) default 0,
+  total_lemak numeric(8,2) default 0,
+  total_serat numeric(8,2) default 0,
+  total_natrium numeric(8,2) default 0,
   status text check (status in ('saved')) default 'saved',
   created_at timestamptz default now()
 );
@@ -67,6 +72,11 @@ create table if not exists public.food_log_items (
   unit_id uuid references public.food_units(id),
   unit_nama text not null,
   kalori_estimasi numeric(8,2) default 0,
+  karbohidrat numeric(8,2) default 0,
+  protein numeric(8,2) default 0,
+  lemak numeric(8,2) default 0,
+  serat numeric(8,2) default 0,
+  natrium numeric(8,2) default 0,
   created_at timestamptz default now()
 );
 

@@ -77,7 +77,7 @@ const typeMuted = 'text-sm leading-normal text-muted-foreground'
 
 const ANALYZE_STATUS_LINES = [
   'Memetakan bahan dan porsi ke basis data gizi…',
-  'Menghitung estimasi energi (kkal) per item…',
+  'Menghitung estimasi energi dan zat gizi (makro) per item…',
   'Menyelaraskan hasil dengan satuan yang Anda pilih…',
   'Menyiapkan ringkasan untuk disimpan…',
 ]
@@ -395,6 +395,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
   }
 
   function adjustRowJumlah(rowIndex, delta) {
+    const STEP = 0.5
     setRows((prev) =>
       prev.map((r, j) => {
         if (j !== rowIndex) return r
@@ -409,9 +410,10 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
         }
         const base = r.jumlah === '' ? 0 : Number(r.jumlah)
         const n = Number.isFinite(base) ? base : 0
-        const next = n + delta
+        const next = n + delta * STEP
         const clamped = next < 0 ? 0 : next
-        return { ...r, jumlah: String(clamped) }
+        const rounded = Math.round(clamped * 100) / 100
+        return { ...r, jumlah: String(rounded) }
       }),
     )
   }
@@ -531,21 +533,41 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
       const byName = {}
       for (const e of est) {
         if (e?.nama_makanan != null)
-          byName[String(e.nama_makanan).trim().toLowerCase()] = Number(e.kalori)
+          byName[String(e.nama_makanan).trim().toLowerCase()] = e
       }
 
-      const itemsWithKal = filled.map((x, i) => {
-        const fromIdx = est[i]?.kalori != null ? Number(est[i].kalori) : null
-        const fromName =
-          byName[x.nama_makanan.toLowerCase()] ??
-          byName[x.nama_makanan.trim().toLowerCase()]
-        const k = fromIdx != null && !Number.isNaN(fromIdx) ? fromIdx : (fromName ?? 0)
-        return { ...x, kalori_estimasi: k }
+      const itemsWithKal = filled.map((x) => {
+        const key = x.nama_makanan.toLowerCase()
+        const e = byName[key] ?? {}
+        return {
+          ...x,
+          kalori_estimasi: Number(e.kalori) || 0,
+          karbohidrat: Number(e.karbohidrat) || 0,
+          protein: Number(e.protein) || 0,
+          lemak: Number(e.lemak) || 0,
+          serat: Number(e.serat) || 0,
+          natrium: Number(e.natrium) || 0,
+        }
       })
 
       const total = itemsWithKal.reduce((a, x) => a + x.kalori_estimasi, 0)
+      const totalKarbohidrat = itemsWithKal.reduce((a, x) => a + (x.karbohidrat || 0), 0)
+      const totalProtein = itemsWithKal.reduce((a, x) => a + (x.protein || 0), 0)
+      const totalLemak = itemsWithKal.reduce((a, x) => a + (x.lemak || 0), 0)
+      const totalSerat = itemsWithKal.reduce((a, x) => a + (x.serat || 0), 0)
+      const totalNatrium = itemsWithKal.reduce((a, x) => a + (x.natrium || 0), 0)
 
-      setPendingResult({ items: itemsWithKal, total, waktuMakan: waktu, tanggal })
+      setPendingResult({
+        items: itemsWithKal,
+        total,
+        totalKarbohidrat,
+        totalProtein,
+        totalLemak,
+        totalSerat,
+        totalNatrium,
+        waktuMakan: waktu,
+        tanggal,
+      })
     } catch (e) {
       logError('FoodEntryForm.handleAnalyze', e)
       setError(e.message ?? 'Terjadi kesalahan.')
@@ -559,7 +581,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
     if (!pendingResult) return
     setSaving(true)
     try {
-      const { items, total, waktuMakan, tanggal } = pendingResult
+      const { items, total, totalKarbohidrat, totalProtein, totalLemak, totalSerat, totalNatrium, waktuMakan, tanggal } = pendingResult
 
       const { data: logRow, error: logErr } = await supabase
         .from('food_logs')
@@ -568,6 +590,11 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
           tanggal,
           waktu_makan: waktuMakan,
           total_kalori: total,
+          total_karbohidrat: totalKarbohidrat ?? 0,
+          total_protein: totalProtein ?? 0,
+          total_lemak: totalLemak ?? 0,
+          total_serat: totalSerat ?? 0,
+          total_natrium: totalNatrium ?? 0,
           status: 'saved',
         })
         .select()
@@ -582,6 +609,11 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
         unit_id: x.unit_id,
         unit_nama: x.unit_nama,
         kalori_estimasi: x.kalori_estimasi,
+        karbohidrat: x.karbohidrat ?? 0,
+        protein: x.protein ?? 0,
+        lemak: x.lemak ?? 0,
+        serat: x.serat ?? 0,
+        natrium: x.natrium ?? 0,
       }))
 
       const { error: itemErr } = await supabase.from('food_log_items').insert(inserts)
@@ -708,6 +740,17 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
                             <span className="mx-1 text-neutral-400">×</span>
                             <span>{x.unit_nama}</span>
                           </p>
+                          <p className="mt-1.5 text-[10px] leading-none text-neutral-400">
+                            <span>P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g</span>
+                            <span className="mx-1 text-neutral-300">·</span>
+                            <span>K: {formatNumberId(x.karbohidrat, { maximumFractionDigits: 1 })}g</span>
+                            <span className="mx-1 text-neutral-300">·</span>
+                            <span>L: {formatNumberId(x.lemak, { maximumFractionDigits: 1 })}g</span>
+                            <span className="mx-1 text-neutral-300">·</span>
+                            <span>S: {formatNumberId(x.serat, { maximumFractionDigits: 1 })}g</span>
+                            <span className="mx-1 text-neutral-300">·</span>
+                            <span className="whitespace-nowrap">Na: {formatNumberId(x.natrium, { maximumFractionDigits: 0 })}mg</span>
+                          </p>
                         </div>
                         <div className="shrink-0 border-l border-dashed border-stone-300/70 pl-3">
                           <span className="block text-right font-mono text-sm font-semibold tabular-nums text-teal-800 sm:text-base">
@@ -743,6 +786,13 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
                     className="text-2xl font-bold tracking-tight text-teal-800 sm:text-[1.65rem]"
                     unitClassName="text-sm font-semibold text-teal-700/75"
                   />
+                </div>
+                <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-neutral-500">
+                  <span>Karbohidrat: <span className="font-medium tabular-nums text-neutral-700">{formatNumberId(displayResult.totalKarbohidrat ?? 0, { maximumFractionDigits: 1 })}g</span></span>
+                  <span>Protein: <span className="font-medium tabular-nums text-neutral-700">{formatNumberId(displayResult.totalProtein ?? 0, { maximumFractionDigits: 1 })}g</span></span>
+                  <span>Lemak: <span className="font-medium tabular-nums text-neutral-700">{formatNumberId(displayResult.totalLemak ?? 0, { maximumFractionDigits: 1 })}g</span></span>
+                  <span>Serat: <span className="font-medium tabular-nums text-neutral-700">{formatNumberId(displayResult.totalSerat ?? 0, { maximumFractionDigits: 1 })}g</span></span>
+                  <span className="whitespace-nowrap">Natrium: <span className="font-medium tabular-nums text-neutral-700">{formatNumberId(displayResult.totalNatrium ?? 0, { maximumFractionDigits: 0 })}mg</span></span>
                 </div>
               </div>
 
