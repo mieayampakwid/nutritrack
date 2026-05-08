@@ -4,7 +4,7 @@
 
 **Goal:** Redesign the clinical assessment data entry page with a modern "Clinical Journal" aesthetic, adding evaluation notes functionality while improving UX.
 
-**Architecture:** Single-page form with real-time calculations, two-table save pattern (body_measurements + assessments), clean typography-focused design.
+**Architecture:** Single-page form with real-time calculations, single-table save pattern (assessments table contains measurements + clinical data), clean typography-focused design.
 
 **Tech Stack:** React 19, TanStack Query, Supabase (Postgres), Tailwind CSS 4, existing form components.
 
@@ -12,11 +12,22 @@
 
 ## Database Migration
 
-Add `catatan` column to assessments table:
+Add body measurement fields and catatan_asesmen to assessments table:
 
 ```sql
 ALTER TABLE public.assessments
-ADD COLUMN catatan TEXT;
+ADD COLUMN tanggal date not null default current_date,
+ADD COLUMN berat_badan numeric(5,2),
+ADD COLUMN tinggi_badan numeric(5,2),
+ADD COLUMN massa_otot numeric(5,2),
+ADD COLUMN massa_lemak numeric(5,2),
+ADD COLUMN lingkar_pinggang numeric(6,2),
+ADD COLUMN jenis_kelamin varchar(10),
+ADD COLUMN umur integer,
+ADD COLUMN catatan_asesmen TEXT;
+
+CREATE INDEX assessments_user_date_idx 
+ON public.assessments(user_id, tanggal DESC);
 ```
 
 ---
@@ -56,7 +67,7 @@ ADD COLUMN catatan TEXT;
 5. **Save Action**
    - Full-width button at bottom
    - Validates required fields
-   - Saves to both body_measurements and assessments tables
+   - Saves to assessments table (measurements + clinical data + notes)
    - Shows success toast
    - Redirects to participant detail
 
@@ -67,15 +78,16 @@ ADD COLUMN catatan TEXT;
 | Field | Type | Required | Validation | Default |
 |-------|------|----------|------------|---------|
 | tanggal | date | Yes | Valid date | Today |
-| berat_badan | decimal | Yes | 0-300 kg | From last measurement |
-| tinggi_badan | decimal | Yes | 0-250 cm | From last measurement |
-| massa_otot | decimal | No | 0-200 kg | From last measurement |
-| massa_lemak | decimal | No | 0-100% | From last measurement |
-| lingkar_pinggang | decimal | No | 0-300 cm | From last measurement |
+| berat_badan | decimal | Yes | 0-300 kg | From last assessment |
+| tinggi_badan | decimal | Yes | 0-250 cm | From last assessment |
+| massa_otot | decimal | No | 0-200 kg | From last assessment |
+| massa_lemak | decimal | No | 0-100% | From last assessment |
+| lingkar_pinggang | decimal | No | 0-300 cm | From last assessment |
 | jenis_kelamin | enum | Yes | male/female | From profile |
-| faktor_aktivitas | select | Yes | Valid value | 1.25 (Normal) |
-| faktor_stres | select | Yes | Valid value | 1.25 (No stress) |
-| catatan | text | No | Max 5000 chars | Empty |
+| umur | integer | Yes | 1-120 | From profile/derived |
+| faktor_aktivitas | select | Yes | Valid value | 1.2 (Normal) |
+| faktor_stres | select | Yes | Valid value | 1.2 (No stress) |
+| catatan_asesmen | text | No | Max 5000 chars | Empty |
 
 ---
 
@@ -103,8 +115,8 @@ ADD COLUMN catatan TEXT;
 - Add lazy import for ParticipantAssessment
 - Add route `/gizi/participants/:id/assessment`
 
-**`supabase/migration_*_assessment_notes.sql`**
-- Add catatan column to assessments table
+**`supabase/migration_*_assessment_complete.sql`**
+- Add body measurement fields and catatan_asesmen to assessments table
 
 ---
 
@@ -112,23 +124,21 @@ ADD COLUMN catatan TEXT;
 
 ### Load Phase
 1. Query `profiles` for client data
-2. Query `body_measurements` ordered by tanggal desc, limit 1
-3. Pre-populate form with last measurement values
+2. Query `assessments` ordered by tanggal desc, limit 1 (to pre-populate form)
+3. Pre-populate form with last assessment values
 4. Display derived age from tgl_lahir
 
 ### Calculation Phase
 - **BMI**: `weight (kg) / height (m)²`
 - **BMI Category**: WHO Asia-Pacific thresholds
 - **BMR**: Harris-Benedict formula
-  - Male: `66 + 13.7×weight + 5×height - 6.8×age`
-  - Female: `655 + 9.6×weight + 1.8×height - 4.7×age`
+  - Male: `66 + (13.7 × BB) + (5 × TB) – (6.8 × age)`
+  - Female: `655 + (9.6 × BB) + (1.8 × TB) – (4.7 × age)`
 - **Total Energy**: `BMR × activity_factor × stress_factor`
 
 ### Save Phase
-1. Validate required fields (weight, height, gender, factors)
-2. Begin transaction-like sequence:
-   - Insert to `body_measurements` (tanggal, berat_badan, tinggi_badan, massa_otot, massa_lemak, lingkar_pinggang)
-   - Insert to `assessments` (user_id, faktor_aktivitas, faktor_stres, energi_total, catatan, created_by)
+1. Validate required fields (weight, height, age, factors)
+2. Insert to `assessments` table with all fields (measurements + clinical data + catatan_asesmen)
 3. On success: invalidate queries, show toast, redirect
 4. On error: show error toast, stay on page
 
@@ -138,12 +148,17 @@ ADD COLUMN catatan TEXT;
 
 ```javascript
 const assessmentSchema = {
+  tanggal: { required: true },
   berat_badan: { min: 0, max: 300, required: true },
   tinggi_badan: { min: 0, max: 250, required: true },
   massa_otot: { min: 0, max: 200, required: false },
   massa_lemak: { min: 0, max: 100, required: false },
   lingkar_pinggang: { min: 0, max: 300, required: false },
-  catatan: { maxLength: 5000, required: false }
+  jenis_kelamin: { required: true, enum: ['male', 'female'] },
+  umur: { min: 1, max: 120, required: true },
+  faktor_aktivitas: { required: true },
+  faktor_stres: { required: true },
+  catatan_asesmen: { maxLength: 5000, required: false }
 }
 ```
 
@@ -191,16 +206,16 @@ const assessmentSchema = {
 
 ## Activity & Stress Factors
 
-**Activity Factors:**
-- Bed Rest: 1.15
-- Normal (not bed rest): 1.25
+**Activity Factors (Harris-Benedict):**
+- Bed Rest (Istirahat): 1.1
+- Normal (Tidak bed rest): 1.2
 
 **Stress Factors:**
-- No stress: 1.25
-- Mild stress (GI inflammation, cancer, elective surgery, trauma, fever): 1.35
-- Moderate stress (Sepsis, bone surgery, burns, liver disease): 1.45
-- Severe stress (HIV/AIDS, multi-system surgery, pulmonary TB, complications): 1.55
-- Severe stress — head injury: 1.7
+- No stress (Tidak ada stress): 1.2
+- Mild stress (Stres ringan - peradangan saluran cerna, kanker, bedah efektif, trauma, demam): 1.3
+- Moderate stress (Stres sedang - sepsis, bedah tulang, luka bakar, penyakit hati): 1.4
+- Severe stress (Stres berat - HIV/AIDS, bedah multistem, TB Paru, komplikasi): 1.5
+- Head injury (Stres berat - luka kepala berat): 1.7
 
 ---
 
@@ -211,8 +226,7 @@ const assessmentSchema = {
 - [ ] BMI calculates correctly in real-time
 - [ ] Energy calculates correctly with all factors
 - [ ] Validation prevents invalid saves
-- [ ] Save writes to both tables
-- [ ] Catatan field saves and retrieves correctly
+- [ ] Save writes to assessments table (complete record)
 - [ ] Success toast displays
 - [ ] Redirect works after save
 - [ ] Mobile layout is functional
@@ -223,7 +237,7 @@ const assessmentSchema = {
 
 ## Migration Path
 
-1. Add database migration for catatan column
+1. Add database migration for complete assessments table (body measurements + clinical data + notes)
 2. Create new ParticipantAssessment page
 3. Add route to App.jsx
 4. Update ParticipantDetail "Tambah Data" button to link to new page

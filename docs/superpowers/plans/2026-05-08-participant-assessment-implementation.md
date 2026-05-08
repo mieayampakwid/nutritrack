@@ -13,17 +13,37 @@
 ## Task 1: Database Migration
 
 **Files:**
-- Create: `supabase/migration_add_assessment_notes.sql`
+- Create: `supabase/migration_assessment_complete.sql`
 
 - [ ] **Step 1: Write the migration SQL**
 
 ```sql
--- Add catatan column to assessments table for evaluation notes
+-- Add body measurement fields and catatan_asesmen to assessments table
 ALTER TABLE public.assessments
-ADD COLUMN catatan TEXT;
+ADD COLUMN tanggal date not null default current_date,
+ADD COLUMN berat_badan numeric(5,2),
+ADD COLUMN tinggi_badan numeric(5,2),
+ADD COLUMN massa_otot numeric(5,2),
+ADD COLUMN massa_lemak numeric(5,2),
+ADD COLUMN lingkar_pinggang numeric(6,2),
+ADD COLUMN jenis_kelamin varchar(10),
+ADD COLUMN umur integer,
+ADD COLUMN catatan_asesmen TEXT;
 
--- Add comment for documentation
-COMMENT ON COLUMN public.assessments.catatan IS 'Free-form evaluation notes from dietitian';
+-- Create index for querying by user and date
+CREATE INDEX assessments_user_date_idx 
+ON public.assessments(user_id, tanggal DESC);
+
+-- Add comments for documentation
+COMMENT ON COLUMN public.assessments.tanggal IS 'Date of assessment';
+COMMENT ON COLUMN public.assessments.berat_badan IS 'Weight in kg';
+COMMENT ON COLUMN public.assessments.tinggi_badan IS 'Height in cm';
+COMMENT ON COLUMN public.assessments.massa_otot IS 'Muscle mass in kg';
+COMMENT ON COLUMN public.assessments.massa_lemak IS 'Fat mass percentage';
+COMMENT ON COLUMN public.assessments.lingkar_pinggang IS 'Waist circumference in cm';
+COMMENT ON COLUMN public.assessments.jenis_kelamin IS 'Gender: male or female';
+COMMENT ON COLUMN public.assessments.umur IS 'Age in years';
+COMMENT ON COLUMN public.assessments.catatan_asesmen IS 'Clinical evaluation notes from dietitian';
 ```
 
 - [ ] **Step 2: Run migration on Supabase**
@@ -33,14 +53,14 @@ Expected: Column added successfully, no errors
 
 - [ ] **Step 3: Verify the change**
 
-Run: `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'assessments' AND column_name = 'catatan';`
-Expected: Row showing catatan column with text data type
+Run: `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'assessments' AND column_name IN ('tanggal', 'berat_badan', 'tinggi_badan', 'massa_otot', 'massa_lemak', 'lingkar_pinggang', 'jenis_kelamin', 'umur', 'catatan_asesmen');`
+Expected: Rows showing all new columns with correct data types
 
 - [ ] **Step 4: Commit migration file**
 
 ```bash
-git add supabase/migration_add_assessment_notes.sql
-git commit -m "db: add catatan column to assessments for evaluation notes"
+git add supabase/migration_assessment_complete.sql
+git commit -m "db: add body measurement fields and catatan_asesmen to assessments table"
 ```
 
 ---
@@ -67,12 +87,19 @@ const mockClient = {
   tgl_lahir: '1990-01-01',
 }
 
-const mockLastMeasurement = {
+const mockLastAssessment = {
+  tanggal: '2024-01-01',
   berat_badan: 65.5,
   tinggi_badan: 165,
   massa_otot: 28,
   massa_lemak: 25,
   lingkar_pinggang: 80,
+  jenis_kelamin: 'female',
+  umur: 34,
+  faktor_aktivitas: 1.2,
+  faktor_stres: 1.2,
+  energi_total: 1800,
+  catatan_asesmen: 'Previous notes',
 }
 
 function createWrapper() {
@@ -89,7 +116,7 @@ describe('AssessmentForm', () => {
     render(
       <AssessmentForm
         client={mockClient}
-        lastMeasurement={mockLastMeasurement}
+        lastAssessment={mockLastAssessment}
         onSave={vi.fn()}
         isSaving={false}
       />,
@@ -103,7 +130,7 @@ describe('AssessmentForm', () => {
     render(
       <AssessmentForm
         client={mockClient}
-        lastMeasurement={mockLastMeasurement}
+        lastAssessment={mockLastAssessment}
         onSave={vi.fn()}
         isSaving={false}
       />,
@@ -142,41 +169,41 @@ import { formatNumberId, parseIsoDateLocal } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 const ACTIVITY = [
-  { label: 'Bed Rest', value: 1.15 },
-  { label: 'Normal (not bed rest)', value: 1.25 },
+  { label: 'Bed Rest (Istirahat)', value: 1.1 },
+  { label: 'Normal (Tidak bed rest)', value: 1.2 },
 ]
 
 const STRESS = [
-  { label: 'No stress', value: 1.25 },
-  { label: 'Mild stress', desc: 'GI inflammation, cancer, elective surgery, trauma, fever', value: 1.35 },
-  { label: 'Moderate stress', desc: 'Sepsis, bone surgery, burns, liver disease', value: 1.45 },
-  { label: 'Severe stress', desc: 'HIV/AIDS, multi-system surgery, pulmonary TB, complications', value: 1.55 },
-  { label: 'Severe stress — head injury', desc: 'Head injury', value: 1.7 },
+  { label: 'No stress (Tidak ada stress)', value: 1.2 },
+  { label: 'Mild stress (Stres ringan)', desc: 'Peradangan saluran cerna, kanker, bedah efektif, trauma, demam', value: 1.3 },
+  { label: 'Moderate stress (Stres sedang)', desc: 'Sepsis, bedah tulang, luka bakar, penyakit hati', value: 1.4 },
+  { label: 'Severe stress (Stres berat)', desc: 'HIV/AIDS, bedah multistem, TB paru, komplikasi', value: 1.5 },
+  { label: 'Head injury (Luka kepala berat)', desc: 'Luka kepala berat', value: 1.7 },
 ]
 
 function harrisBenedictBmr({ sex, bbKg, tbCm, ageYears }) {
   if (!Number.isFinite(ageYears) || ageYears < 1 || !Number.isFinite(bbKg) || !Number.isFinite(tbCm)) {
     return null
   }
-  if (sex === 'male') return 66 + 13.7 * bbKg + 5 * tbCm - 6.8 * ageYears
-  if (sex === 'female') return 655 + 9.6 * bbKg + 1.8 * tbCm - 4.7 * ageYears
+  if (sex === 'male') return 66 + (13.7 * bbKg) + (5 * tbCm) - (6.8 * ageYears)
+  if (sex === 'female') return 655 + (9.6 * bbKg) + (1.8 * tbCm) - (4.7 * ageYears)
   return null
 }
 
-export function AssessmentForm({ client, lastMeasurement, onSave, isSaving }) {
+export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
   const today = new Date().toISOString().slice(0, 10)
 
   // Form state
   const [tanggal, setTanggal] = useState(today)
-  const [bbStr, setBbStr] = useState(() => lastMeasurement?.berat_badan != null ? String(lastMeasurement.berat_badan) : '')
-  const [tbStr, setTbStr] = useState(() => lastMeasurement?.tinggi_badan != null ? String(lastMeasurement.tinggi_badan) : '')
-  const [muscleStr, setMuscleStr] = useState(() => lastMeasurement?.massa_otot != null ? String(lastMeasurement.massa_otot) : '')
-  const [fatStr, setFatStr] = useState(() => lastMeasurement?.massa_lemak != null ? String(lastMeasurement.massa_lemak) : '')
-  const [waistStr, setWaistStr] = useState(() => lastMeasurement?.lingkar_pinggang != null ? String(lastMeasurement.lingkar_pinggang) : '')
+  const [bbStr, setBbStr] = useState(() => lastAssessment?.berat_badan != null ? String(lastAssessment.berat_badan) : '')
+  const [tbStr, setTbStr] = useState(() => lastAssessment?.tinggi_badan != null ? String(lastAssessment.tinggi_badan) : '')
+  const [muscleStr, setMuscleStr] = useState(() => lastAssessment?.massa_otot != null ? String(lastAssessment.massa_otot) : '')
+  const [fatStr, setFatStr] = useState(() => lastAssessment?.massa_lemak != null ? String(lastAssessment.massa_lemak) : '')
+  const [waistStr, setWaistStr] = useState(() => lastAssessment?.lingkar_pinggang != null ? String(lastAssessment.lingkar_pinggang) : '')
   const [sex, setSex] = useState(() => (client.jenis_kelamin === 'male' || client.jenis_kelamin === 'female' ? client.jenis_kelamin : 'female'))
-  const [activity, setActivity] = useState('1.25')
-  const [stress, setStress] = useState('1.25')
-  const [catatan, setCatatan] = useState('')
+  const [activity, setActivity] = useState('1.2')
+  const [stress, setStress] = useState('1.2')
+  const [catatan, setCatatan] = useState(() => lastAssessment?.catatan_asesmen || '')
 
   // Derived values
   const derivedAge = useMemo(() => {
@@ -215,10 +242,11 @@ export function AssessmentForm({ client, lastMeasurement, onSave, isSaving }) {
       massa_lemak: parseFloat(fatStr) || null,
       lingkar_pinggang: parseFloat(waistStr) || null,
       jenis_kelamin: sex,
+      umur: derivedAge || null,
       faktor_aktivitas: actNum,
       faktor_stres: strNum,
       energi_total: totalEnergy,
-      catatan: catatan.trim() || null,
+      catatan_asesmen: catatan.trim() || null,
     })
   }
 
@@ -447,7 +475,7 @@ Expected: No errors
 
 ```bash
 git add src/components/participants/AssessmentForm.jsx src/components/participants/AssessmentForm.test.js
-git commit -m "feat: add AssessmentForm component with real-time calculations"
+git commit -m "feat: add AssessmentForm component with real-time calculations (Harris-Benedict)"
 ```
 
 ---
@@ -510,7 +538,7 @@ describe('ParticipantAssessment', () => {
     }
     mockSupabase.single.mockResolvedValue({ data: mockClient, error: null })
     mockSupabase.order.mockReturnValue(mockSupabase)
-    mockSupabase.limit.mockResolvedValue({ data: [], error: null })
+    mockSupabase.limit.mockResolvedValue({ data: mockLastAssessment, error: null })
 
     render(<ParticipantAssessment />, { wrapper: createWrapper() })
 
@@ -562,13 +590,13 @@ export function ParticipantAssessment() {
     },
   })
 
-  // Load last measurement
-  const { data: lastMeasurement } = useQuery({
-    queryKey: ['body_measurements_last', id],
+  // Load last assessment
+  const { data: lastAssessment } = useQuery({
+    queryKey: ['assessments_last', id],
     enabled: Boolean(id),
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('body_measurements')
+        .from('assessments')
         .select('*')
         .eq('user_id', id)
         .order('tanggal', { ascending: false })
@@ -585,9 +613,8 @@ export function ParticipantAssessment() {
       if (!staff?.id) throw new Error('Sesi tidak valid.')
       if (!id) throw new Error('ID peserta tidak valid.')
 
-      // Save body measurement
-      const { error: measError } = await supabase
-        .from('body_measurements')
+        const { error: assessError } = await supabase
+        .from('assessments')
         .insert({
           user_id: id,
           tanggal: data.tanggal,
@@ -596,19 +623,12 @@ export function ParticipantAssessment() {
           massa_otot: data.massa_otot,
           massa_lemak: data.massa_lemak,
           lingkar_pinggang: data.lingkar_pinggang,
-          created_by: staff.id,
-        })
-      if (measError) throw measError
-
-      // Save assessment
-      const { error: assessError } = await supabase
-        .from('assessments')
-        .insert({
-          user_id: id,
+          jenis_kelamin: data.jenis_kelamin,
+          umur: data.umur,
           faktor_aktivitas: data.faktor_aktivitas,
           faktor_stres: data.faktor_stres,
           energi_total: data.energi_total,
-          catatan: data.catatan,
+          catatan_asesmen: data.catatan_asesmen,
           created_by: staff.id,
         })
       if (assessError) throw assessError
@@ -682,7 +702,7 @@ export function ParticipantAssessment() {
       {/* Assessment Form */}
       <AssessmentForm
         client={client}
-        lastMeasurement={lastMeasurement}
+        lastAssessment={lastAssessment}
         onSave={saveMutation.mutate}
         isSaving={saveMutation.isPending}
       />
@@ -705,7 +725,7 @@ Expected: No errors
 
 ```bash
 git add src/pages/ahli-gizi/ParticipantAssessment.jsx src/pages/ahli-gizi/ParticipantAssessment.test.js
-git commit -m "feat: add ParticipantAssessment page with form integration"
+git commit -m "feat: add ParticipantAssessment page with single-table save pattern"
 ```
 
 ---
