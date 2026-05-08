@@ -51,7 +51,9 @@ const ROLE_NAV = {
       { to: '/gizi/dashboard', label: 'Dasbor', icon: LayoutDashboard },
       { to: '/gizi/clients', label: 'Klien', icon: Users },
     ],
-    more: [],
+    more: [
+      { to: '/gizi/my-group', label: 'Grup Saya', icon: Users },
+    ],
   },
   klien: {
     primary: [
