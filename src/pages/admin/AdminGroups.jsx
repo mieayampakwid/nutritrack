@@ -131,7 +131,7 @@ export function AdminGroups() {
       return data
     },
     onSuccess: () => {
-      toast.success('Grup dibuat.')
+      toast.success('Kelompok dibuat.')
       setOpenCreate(false)
       qc.invalidateQueries({ queryKey: ['admin_groups'] })
       setForm({ nama: '', ahli_gizi_id: '' })
@@ -148,7 +148,7 @@ export function AdminGroups() {
       if (error) throw error
     },
     onSuccess: () => {
-      toast.success('Grup dihapus.')
+      toast.success('Kelompok dihapus.')
       setConfirmDeleteId('')
       qc.invalidateQueries({ queryKey: ['admin_groups'] })
     },
@@ -164,7 +164,7 @@ export function AdminGroups() {
           <CardContent className="p-0">
             <div className="p-4 md:p-5">
               <div>
-                <h1 className="text-lg font-semibold tracking-tight sm:text-xl">Kelola Grup</h1>
+                <h1 className="text-lg font-semibold tracking-tight sm:text-xl">Kelola Kelompok</h1>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-1.5">
                   Satu ahli gizi per grup, satu grup per klien.
                 </p>
@@ -301,7 +301,7 @@ export function AdminGroups() {
               <Input
                 value={form.nama}
                 onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))}
-                placeholder="Contoh: Grup A"
+                placeholder="Contoh: Kelompok A"
               />
             </div>
             <div className="space-y-1">

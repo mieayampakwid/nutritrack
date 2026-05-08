@@ -67,7 +67,7 @@ export function GiziMyGroup() {
         <div className="mb-6">
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{group.nama}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Grup klien yang Anda tangani
+            Kelompok klien yang Anda tangani
           </p>
         </div>
 
