@@ -42,6 +42,7 @@ const ROLE_NAV = {
       { to: '/admin/users', label: 'User', icon: Users },
     ],
     more: [
+      { to: '/admin/groups', label: 'Grup', icon: Users },
       { to: '/admin/import', label: 'Impor', icon: Upload },
       { to: '/admin/food-units', label: 'Master ukuran', icon: Settings2 },
     ],
