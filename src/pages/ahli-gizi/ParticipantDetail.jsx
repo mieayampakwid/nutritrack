@@ -5,7 +5,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
 import { VitalMetricCard } from '@/components/participants/VitalMetricCard'
 import { ProgressTimeline } from '@/components/participants/ProgressTimeline'
-import { SectionScrollCards } from '@/components/participants/SectionScrollCards'
+import { SectionAccordion } from '@/components/participants/SectionAccordion'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { useMeasurements } from '@/hooks/useMeasurement'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
@@ -167,7 +167,7 @@ export function ParticipantDetail() {
       </div>
 
       {/* Section Cards */}
-      <SectionScrollCards
+      <SectionAccordion
         participantId={id}
         measurements={measurements}
         foodLogs={logs}
