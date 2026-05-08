@@ -16,7 +16,7 @@ create function admin_create_user(
 ) returns json
   volatile
   security definer
-  set search_path TO 'public', 'auth'
+  set search_path = public, extensions, auth
 language plpgsql
 AS $$
 declare
