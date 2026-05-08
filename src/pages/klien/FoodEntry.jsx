@@ -1,13 +1,33 @@
+import { useState } from 'react'
+import { ChevronLeft, ChevronRight, CalendarIcon } from 'lucide-react'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { AppShell } from '@/components/layout/AppShell'
 import { FoodEntryForm } from '@/components/food/FoodEntryForm'
 import { ExerciseLogEntryCard } from '@/components/exercise/ExerciseLogEntryCard'
 import { Card } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
+import { toIsoDateLocal, parseIsoDateLocal, formatDateId } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 export function FoodEntry() {
   const { profile } = useAuth()
+  const [selectedDate, setSelectedDate] = useState(() => toIsoDateLocal(new Date()))
+  const [calendarOpen, setCalendarOpen] = useState(false)
+
+  const prevDay = () => {
+    const date = parseIsoDateLocal(selectedDate)
+    date.setDate(date.getDate() - 1)
+    setSelectedDate(toIsoDateLocal(date))
+  }
+
+  const nextDay = () => {
+    const date = parseIsoDateLocal(selectedDate)
+    date.setDate(date.getDate() + 1)
+    setSelectedDate(toIsoDateLocal(date))
+  }
+
   return (
     <AppShell>
       <div className="mx-auto max-w-2xl space-y-3 pb-1 sm:space-y-4">
@@ -20,8 +40,48 @@ export function FoodEntry() {
             kalori sebelum disimpan.
           </p>
         </header>
+
         {profile?.id ? (
           <>
+            {/* Date picker bar */}
+            <div className="flex items-center justify-between rounded-2xl bg-white/90 px-4 py-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur-sm">
+              <button
+                onClick={prevDay}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-neutral-600 hover:bg-black/5 active:bg-black/10 transition-colors"
+                aria-label="Hari sebelumnya"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <button className="flex-1 px-4 text-sm font-medium text-neutral-800 tabular-nums hover:bg-black/5 rounded-md transition-colors">
+                    {formatDateId(parseIsoDateLocal(selectedDate))}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center" sideOffset={8}>
+                  <Calendar
+                    mode="single"
+                    selected={parseIsoDateLocal(selectedDate)}
+                    onSelect={(d) => {
+                      if (d) {
+                        setSelectedDate(toIsoDateLocal(d))
+                        setCalendarOpen(false)
+                      }
+                    }}
+                    defaultMonth={parseIsoDateLocal(selectedDate)}
+                    autoFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <button
+                onClick={nextDay}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-neutral-600 hover:bg-black/5 active:bg-black/10 transition-colors"
+                aria-label="Hari berikutnya"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
             <Card
               className={cn(
                 'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:delay-75 motion-safe:fill-mode-both',
@@ -47,11 +107,11 @@ export function FoodEntry() {
                 aria-hidden
               />
               <div className="relative">
-                <FoodEntryForm userId={profile.id} />
+                <FoodEntryForm userId={profile.id} tanggal={selectedDate} />
               </div>
             </Card>
             <section aria-label="Log olahraga">
-              <ExerciseLogEntryCard userId={profile.id} />
+              <ExerciseLogEntryCard userId={profile.id} tanggal={selectedDate} />
             </section>
           </>
         ) : null}

@@ -132,7 +132,7 @@ describe('FoodEntryForm', () => {
     renderWithProviders(<FoodEntryForm userId="u1" />)
     expect(screen.getByText('Log makanan')).toBeInTheDocument()
     expect(screen.getByRole('group', { name: /diary makanan ke-1/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /analisa & simpan/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /analisa/i })).toBeInTheDocument()
   })
 
   it('"Tambah makanan" button adds a second food row', async () => {
@@ -147,7 +147,7 @@ describe('FoodEntryForm', () => {
   it('shows an error message when submitting with an empty food name', async () => {
     renderWithProviders(<FoodEntryForm userId="u1" />)
 
-    expect(screen.getByRole('button', { name: /analisa & simpan/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /analisa/i })).toBeDisabled()
   })
 
   it('blocks submit until meal type selected', async () => {
@@ -158,11 +158,11 @@ describe('FoodEntryForm', () => {
     await user.type(screen.getByPlaceholderText('0'), '1')
     await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
 
-    expect(screen.getByRole('button', { name: /analisa & simpan/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /analisa/i })).toBeDisabled()
 
-    await user.selectOptions(screen.getByLabelText(/waktu makan/i), 'pagi')
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
 
-    expect(screen.getByRole('button', { name: /analisa & simpan/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /analisa/i })).toBeEnabled()
   })
 
   it('does not estimate or save when any food is invalid, and highlights the invalid row', async () => {
@@ -176,7 +176,7 @@ describe('FoodEntryForm', () => {
     renderWithProviders(<FoodEntryForm userId="u1" />)
 
     // pick meal type
-    await user.selectOptions(screen.getByLabelText(/waktu makan/i), 'pagi')
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
 
     // row 1 (valid)
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Nasi Goreng')
@@ -189,12 +189,12 @@ describe('FoodEntryForm', () => {
     expect(groups).toHaveLength(2)
 
     // open second row and fill it
-    await user.click(within(groups[1]).getByRole('button', { name: /item baru/i }))
+    await user.click(within(groups[1]).getByRole('button', { name: /ketuk untuk mengisi makanan/i }))
     await user.type(within(groups[1]).getByPlaceholderText(/nama makanan/i), 'asdfqwer')
     await user.type(within(groups[1]).getByPlaceholderText('0'), '1')
     await user.selectOptions(within(groups[1]).getByLabelText(/satuan/i), 'g')
 
-    await user.click(screen.getByRole('button', { name: /analisa & simpan/i }))
+    await user.click(screen.getByRole('button', { name: /analisa/i }))
 
     await waitFor(() => expect(screen.getAllByRole('alert').length).toBeGreaterThan(0))
     expect(screen.getAllByRole('alert')[0]).toHaveTextContent(/asdfqwer/i)
@@ -216,12 +216,12 @@ describe('FoodEntryForm', () => {
 
     renderWithProviders(<FoodEntryForm userId="u1" />)
 
-    await user.selectOptions(screen.getByLabelText(/waktu makan/i), 'pagi')
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'bak')
     await user.type(screen.getByPlaceholderText('0'), '1')
     await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
 
-    await user.click(screen.getByRole('button', { name: /analisa & simpan/i }))
+    await user.click(screen.getByRole('button', { name: /analisa/i }))
 
     await waitFor(() => expect(screen.getAllByRole('alert').length).toBeGreaterThan(0))
     expect(openaiMock.estimateCalories).not.toHaveBeenCalled()
@@ -240,12 +240,12 @@ describe('FoodEntryForm', () => {
     })
     renderWithProviders(<FoodEntryForm userId="u1" />)
 
-    await user.selectOptions(screen.getByLabelText(/waktu makan/i), 'pagi')
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Bakso')
     await user.type(screen.getByPlaceholderText('0'), '1')
     await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
 
-    await user.click(screen.getByRole('button', { name: /analisa & simpan/i }))
+    await user.click(screen.getByRole('button', { name: /analisa/i }))
 
     await waitFor(() => expect(openaiMock.validateFoodInput).toHaveBeenCalledTimes(1))
     expect(openaiMock.validateFoodInput).toHaveBeenCalledWith([

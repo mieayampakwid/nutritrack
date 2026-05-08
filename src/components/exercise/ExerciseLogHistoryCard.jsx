@@ -12,10 +12,11 @@ import { formatDateId } from '@/lib/format'
 import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
 import { KLIEN_DASHBOARD_LOG_CARD_SHELL } from '@/lib/pageCard'
 
-export function ExerciseLogHistoryCard({ userId }) {
+export function ExerciseLogHistoryCard({ userId, tanggal }) {
   const { data: logs = [], isLoading } = useExerciseLogsForUser(userId, {
     enabled: Boolean(userId),
-    recentDays: 14,
+    dateFrom: tanggal,
+    dateTo: tanggal,
   })
 
   const rows = useMemo(() => logs ?? [], [logs])
@@ -28,7 +29,7 @@ export function ExerciseLogHistoryCard({ userId }) {
             <CardTitle className="text-sm font-semibold tracking-tight text-neutral-900">
               Log olahraga
             </CardTitle>
-            <p className="mt-0.5 text-xs text-muted-foreground">Ringkas 14 hari terakhir.</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">Tanggal {formatDateId(tanggal)}.</p>
           </div>
         </div>
       </CardHeader>
@@ -43,7 +44,7 @@ export function ExerciseLogHistoryCard({ userId }) {
           <div className="rounded-xl border border-border/70 bg-background/60 p-4 text-center shadow-sm">
             <p className="text-sm font-medium text-foreground">Belum ada log olahraga.</p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Kalau kamu mulai catat aktivitas di halaman food entry, riwayat 14 harinya akan muncul di sini.
+              Kalau kamu mulai catat aktivitas di halaman food entry, lognya akan muncul di sini.
             </p>
           </div>
         ) : (
@@ -51,16 +52,16 @@ export function ExerciseLogHistoryCard({ userId }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tanggal</TableHead>
+                  <TableHead>No.</TableHead>
                   <TableHead>Jenis Olahraga</TableHead>
                   <TableHead>Durasi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r) => (
+                {rows.map((r, idx) => (
                   <TableRow key={r.id}>
-                    <TableCell className="whitespace-nowrap align-top">
-                      {formatDateId(r.tanggal)}
+                    <TableCell className="whitespace-nowrap align-top tabular-nums text-muted-foreground">
+                      #{idx + 1}
                     </TableCell>
                     <TableCell className="min-w-48 align-top text-sm">
                       {r.jenis_olahraga || '—'}

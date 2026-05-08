@@ -202,7 +202,7 @@ export function MyProgress() {
 
         <Card className={cn('p-0', cardShell)}>
           <CardHeader className="space-y-0 border-b border-border/60 px-4 pb-3 pt-4 text-center sm:px-5">
-            <CardTitle className="text-base font-semibold tracking-tight">Riwayat</CardTitle>
+            <CardTitle className="text-base font-semibold tracking-tight">Riwayat Perubahan Antropometri</CardTitle>
           </CardHeader>
           <CardContent className="px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
             <div className="overflow-x-auto">
