@@ -30,7 +30,7 @@ export function ParticipantAssessment() {
     },
   })
 
-  const { data: measurements = [] } = useMeasurements(id, Boolean(id))
+  const { data: measurements = [], isLoading: loadingMeasurements } = useMeasurements(id, Boolean(id))
 
   const lastAssessment = useMemo(() => {
     if (!measurements.length) return null
@@ -66,7 +66,7 @@ export function ParticipantAssessment() {
     },
   })
 
-  if (loadingClient || !id) {
+  if (loadingClient || loadingMeasurements || !id) {
     return (
       <AppShell>
         <LoadingSpinner />

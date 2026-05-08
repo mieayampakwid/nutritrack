@@ -5,6 +5,7 @@ export function useMeasurements(userId, enabled = true) {
   return useQuery({
     queryKey: ['assessments', userId],
     enabled: Boolean(userId) && enabled,
+    staleTime: 30_000, // 30 seconds
     queryFn: async () => {
       const { data, error } = await supabase
         .from('assessments')
