@@ -395,6 +395,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
   }
 
   function adjustRowJumlah(rowIndex, delta) {
+    const STEP = 0.5
     setRows((prev) =>
       prev.map((r, j) => {
         if (j !== rowIndex) return r
@@ -409,9 +410,10 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
         }
         const base = r.jumlah === '' ? 0 : Number(r.jumlah)
         const n = Number.isFinite(base) ? base : 0
-        const next = n + delta
+        const next = n + delta * STEP
         const clamped = next < 0 ? 0 : next
-        return { ...r, jumlah: String(clamped) }
+        const rounded = Math.round(clamped * 100) / 100
+        return { ...r, jumlah: String(rounded) }
       }),
     )
   }
