@@ -555,9 +555,8 @@ git commit -m "feat: add useMyGroup hook with test"
 ```javascript
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ChevronRight, Loader2, Plus, Trash2, Users } from 'lucide-react'
+import { Loader2, Plus, Trash2, Users } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -595,13 +594,21 @@ function useAvailableAhliGizi() {
   return useQuery({
     queryKey: ['ahli_gizi_available'],
     queryFn: async () => {
+      // Get nutritionists who are not already assigned to a group
       const { data, error } = await supabase
         .from('profiles')
         .select('id, nama, email')
         .eq('role', 'ahli_gizi')
-        .is('groups', null)
       if (error) throw error
-      return data ?? []
+
+      const profiles = data ?? []
+      // Get assigned nutritionist IDs
+      const { data: groups } = await supabase
+        .from('groups')
+        .select('ahli_gizi_id')
+      const assignedIds = new Set(groups?.map((g) => g.ahli_gizi_id) ?? [])
+
+      return profiles.filter((p) => !assignedIds.has(p.id))
     },
   })
 }
@@ -610,13 +617,21 @@ function useAvailableKlien() {
   return useQuery({
     queryKey: ['klien_available'],
     queryFn: async () => {
+      // Get clients who are not already assigned to any group
       const { data, error } = await supabase
         .from('profiles')
         .select('id, nama, email')
         .eq('role', 'klien')
-        .is('group_members', null)
       if (error) throw error
-      return data ?? []
+
+      const profiles = data ?? []
+      // Get assigned client IDs
+      const { data: members } = await supabase
+        .from('group_members')
+        .select('klien_id')
+      const assignedIds = new Set(members?.map((m) => m.klien_id) ?? [])
+
+      return profiles.filter((p) => !assignedIds.has(p.id))
     },
   })
 }
