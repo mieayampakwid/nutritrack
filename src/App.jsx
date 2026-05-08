@@ -39,6 +39,9 @@ const ImportData = lazy(() =>
 const AllClients = lazy(() =>
   import('@/pages/admin/AllClients').then((m) => ({ default: m.AllClients })),
 )
+const AdminGroups = lazy(() =>
+  import('@/pages/admin/AdminGroups').then((m) => ({ default: m.AdminGroups })),
+)
 const FoodLogMonitor = lazy(() =>
   import('@/pages/staff/FoodLogMonitor').then((m) => ({ default: m.FoodLogMonitor })),
 )
@@ -64,6 +67,9 @@ const ClientList = lazy(() =>
 )
 const GiziClientDetail = lazy(() =>
   import('@/pages/ahli-gizi/ClientDetail').then((m) => ({ default: m.ClientDetail })),
+)
+const GiziMyGroup = lazy(() =>
+  import('@/pages/ahli-gizi/GiziMyGroup').then((m) => ({ default: m.GiziMyGroup })),
 )
 const KlienDashboard = lazy(() =>
   import('@/pages/klien/KlienDashboard').then((m) => ({ default: m.KlienDashboard })),
@@ -229,6 +235,14 @@ function AppRoutes() {
             </RequireAuth>
           }
         />
+        <Route
+          path="/admin/groups"
+          element={
+            <RequireAuth roles={['admin']}>
+              <AdminGroups />
+            </RequireAuth>
+          }
+        />
 
         <Route
           path="/gizi/dashboard"
@@ -291,6 +305,14 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['ahli_gizi']}>
               <ParticipantEvaluation />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/gizi/my-group"
+          element={
+            <RequireAuth roles={['ahli_gizi']}>
+              <GiziMyGroup />
             </RequireAuth>
           }
         />
