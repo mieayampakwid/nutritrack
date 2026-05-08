@@ -17,7 +17,7 @@ export function GiziDashboard() {
           </h2>
           <div className="grid gap-3.5 sm:grid-cols-2 sm:gap-4">
             <DashboardActionCard
-              to="/gizi/clients"
+              to="/gizi/my-group"
               title="Daftar klien"
               desc="Antropometri dan ringkasan per klien."
               icon={Users}

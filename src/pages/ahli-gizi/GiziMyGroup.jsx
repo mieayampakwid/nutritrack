@@ -82,7 +82,7 @@ export function GiziMyGroup() {
                 {members.map((member) => (
                   <Link
                     key={member.id}
-                    to={`/gizi/clients/${member.klien_id}`}
+                    to={`/gizi/participants/${member.klien_id}`}
                     className="block hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-center gap-3 px-6 py-4">
