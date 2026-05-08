@@ -19,6 +19,8 @@ const { mockSupabase } = vi.hoisted(() => {
   const refreshSession = vi.fn()
   const getUser = vi.fn()
   const signUp = vi.fn()
+  const getSession = vi.fn()
+  const setSession = vi.fn()
   const rpc = vi.fn()
 
   function from(table) {
@@ -33,7 +35,7 @@ const { mockSupabase } = vi.hoisted(() => {
     mockSupabase: {
       from,
       rpc,
-      auth: { refreshSession, getUser, signUp },
+      auth: { refreshSession, getUser, signUp, getSession, setSession },
       functions: { invoke },
     },
   }
@@ -58,6 +60,16 @@ function setupDefaultMocks() {
   })
   mockSupabase.auth.signUp.mockResolvedValue({
     data: { user: { id: 'new-user-id' }, session: null },
+    error: null,
+  })
+  mockSupabase.auth.getSession.mockResolvedValue({
+    data: {
+      session: { access_token: 'admin-token', refresh_token: 'admin-refresh' },
+    },
+    error: null,
+  })
+  mockSupabase.auth.setSession.mockResolvedValue({
+    data: { session: { access_token: 'admin-token' } },
     error: null,
   })
   mockSupabase.auth.refreshSession.mockResolvedValue({
