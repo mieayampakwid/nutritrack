@@ -18,6 +18,7 @@ const { mockSupabase } = vi.hoisted(() => {
   const invoke = vi.fn()
   const refreshSession = vi.fn()
   const getUser = vi.fn()
+  const signUp = vi.fn()
   const rpc = vi.fn()
 
   function from(table) {
@@ -32,7 +33,7 @@ const { mockSupabase } = vi.hoisted(() => {
     mockSupabase: {
       from,
       rpc,
-      auth: { refreshSession, getUser },
+      auth: { refreshSession, getUser, signUp },
       functions: { invoke },
     },
   }
@@ -44,6 +45,28 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 import { UserManagement } from './UserManagement'
+
+function setupDefaultMocks() {
+  mockSupabase.rpc.mockImplementation((fn) => {
+    if (fn === 'admin_list_profiles') {
+      return Promise.resolve({ data: [], error: null })
+    }
+    if (fn === 'admin_activate_user') {
+      return Promise.resolve({ data: { success: true }, error: null })
+    }
+    throw new Error(`Unexpected rpc: ${fn}`)
+  })
+  mockSupabase.auth.signUp.mockResolvedValue({
+    data: { user: { id: 'new-user-id' }, session: null },
+    error: null,
+  })
+  mockSupabase.auth.refreshSession.mockResolvedValue({
+    data: { session: { access_token: 'tok' } },
+    error: null,
+  })
+  mockSupabase.auth.getUser.mockResolvedValue({ error: null, data: { user: { id: 'admin' } } })
+  mockSupabase.functions.invoke.mockResolvedValue({ data: { ok: true }, error: null })
+}
 
 describe('UserManagement reject pending user', () => {
   beforeEach(() => {
@@ -105,23 +128,10 @@ describe('UserManagement reject pending user', () => {
 describe('UserManagement create user', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockSupabase.rpc.mockImplementation((fn) => {
-      if (fn === 'admin_list_profiles') {
-        return Promise.resolve({ data: [], error: null })
-      }
-      if (fn === 'admin_create_user') {
-        return Promise.resolve({ data: null, error: null })
-      }
-      throw new Error(`Unexpected rpc: ${fn}`)
-    })
-    mockSupabase.auth.refreshSession.mockResolvedValue({
-      data: { session: { access_token: 'tok' } },
-      error: null,
-    })
-    mockSupabase.auth.getUser.mockResolvedValue({ error: null, data: { user: { id: 'admin' } } })
+    setupDefaultMocks()
   })
 
-  it('successfully creates user via RPC and displays generated password', async () => {
+  it('successfully creates user and displays generated password', async () => {
     const user = userEvent.setup()
     const { queryClient } = renderWithProviders(<UserManagement />)
 
@@ -143,13 +153,23 @@ describe('UserManagement create user', () => {
     await user.click(saveButton)
 
     await waitFor(() => {
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('admin_create_user',
+      expect(mockSupabase.auth.signUp).toHaveBeenCalledWith(
         expect.objectContaining({
-          p_email: 'test@example.com',
-          p_nama: 'Test User',
-          p_role: 'klien',
-        })
+          email: 'test@example.com',
+          options: expect.objectContaining({
+            data: expect.objectContaining({
+              nama: 'Test User',
+              role: 'klien',
+            }),
+          }),
+        }),
       )
+    })
+
+    await waitFor(() => {
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('admin_activate_user', {
+        p_user_id: 'new-user-id',
+      })
     })
 
     await waitFor(() => {
@@ -187,7 +207,7 @@ describe('UserManagement create user', () => {
       expect(toast.error).toHaveBeenCalledWith('Format email tidak valid')
     }, { timeout: 3000 })
 
-    expect(mockSupabase.rpc).not.toHaveBeenCalledWith('admin_create_user', expect.any(Object))
+    expect(mockSupabase.auth.signUp).not.toHaveBeenCalled()
   })
 
   it('validates required fields and shows error for missing nama', async () => {
@@ -210,22 +230,14 @@ describe('UserManagement create user', () => {
       expect(toast.error).toHaveBeenCalledWith('Nama wajib diisi')
     }, { timeout: 3000 })
 
-    expect(mockSupabase.rpc).not.toHaveBeenCalledWith('admin_create_user', expect.any(Object))
+    expect(mockSupabase.auth.signUp).not.toHaveBeenCalled()
   })
 
-  it('handles RPC duplicate email error', async () => {
+  it('handles signUp error', async () => {
     const user = userEvent.setup()
-    mockSupabase.rpc.mockImplementation((fn) => {
-      if (fn === 'admin_list_profiles') {
-        return Promise.resolve({ data: [], error: null })
-      }
-      if (fn === 'admin_create_user') {
-        return Promise.resolve({
-          data: { error: 'duplicate_email' },
-          error: null
-        })
-      }
-      throw new Error(`Unexpected rpc: ${fn}`)
+    mockSupabase.auth.signUp.mockResolvedValue({
+      data: { user: null, session: null },
+      error: { message: 'User already registered' },
     })
 
     renderWithProviders(<UserManagement />)
@@ -246,20 +258,20 @@ describe('UserManagement create user', () => {
     await user.click(saveButton)
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('duplicate_email')
+      expect(toast.error).toHaveBeenCalledWith('User already registered')
     }, { timeout: 3000 })
   })
 
-  it('handles RPC unauthorized error', async () => {
+  it('handles admin_activate_user RPC error', async () => {
     const user = userEvent.setup()
     mockSupabase.rpc.mockImplementation((fn) => {
       if (fn === 'admin_list_profiles') {
         return Promise.resolve({ data: [], error: null })
       }
-      if (fn === 'admin_create_user') {
+      if (fn === 'admin_activate_user') {
         return Promise.resolve({
           data: null,
-          error: { message: 'permission_denied' }
+          error: { message: 'permission_denied' },
         })
       }
       throw new Error(`Unexpected rpc: ${fn}`)
@@ -309,16 +321,6 @@ describe('UserManagement create user', () => {
     await user.click(saveButton)
 
     await waitFor(() => {
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('admin_create_user',
-        expect.objectContaining({
-          p_email: 'test@example.com',
-          p_nama: 'Test User',
-          p_role: 'klien',
-        })
-      )
-    })
-
-    await waitFor(() => {
       expect(screen.getByText('Simpan kata sandi sementara')).toBeInTheDocument()
       const passwordInput = screen.getByDisplayValue(/^[a-zA-Z0-9]{12}$/)
       expect(passwordInput).toBeInTheDocument()
@@ -350,4 +352,3 @@ describe('UserManagement password generation', () => {
     expect(allPasswords).not.toContain('0')
   })
 })
-

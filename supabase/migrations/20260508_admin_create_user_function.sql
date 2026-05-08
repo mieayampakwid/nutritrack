@@ -1,87 +1,25 @@
--- Migration: admin_create_user RPC function
--- This function allows admins to create users with is_active=true
--- Replaces the multi-step signup + edge function + profile update flow
+-- Migration: admin_activate_user RPC function
+-- Activates a user profile so admin-created users skip approval
 
--- Enable pgcrypto extension for password hashing
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
-create function admin_create_user(
-  p_email text,
-  p_password text,
-  p_nama text,
-  p_role text,
-  p_phone text default null,
-  p_tgl_lahir text default null,
-  p_instalasi text default null
-) returns json
-  volatile
+create function admin_activate_user(p_user_id uuid)
+returns json
   security definer
-  set search_path = public, extensions, auth
+  set search_path = public
 language plpgsql
 AS $$
-declare
-  v_user_id uuid;
-  v_existing_user uuid;
 begin
-  -- Verify caller is staff (admin or ahli_gizi) using existing security function
   if not public.jwt_is_staff() then
     return json_build_object('error', 'Unauthorized: staff role required');
   end if;
 
-  -- Validate password strength (minimum 8 characters)
-  if length(p_password) < 8 then
-    return json_build_object('error', 'Password must be at least 8 characters long');
-  end if;
+  update profiles set is_active = true where id = p_user_id;
 
-  -- Check if user already exists
-  select id into v_existing_user
-  from auth.users
-  where email = p_email;
-
-  if v_existing_user is not null then
-    return json_build_object('error', 'User with this email already exists');
-  end if;
-
-  -- Create auth user
-  insert into auth.users (id, email, encrypted_password, email_confirmed_at, phone, raw_user_meta_data)
-  values (
-    gen_random_uuid(),
-    p_email,
-    crypt(p_password, gen_salt('bf')),
-    now(),
-    p_phone,
-    jsonb_build_object(
-      'nama', p_nama,
-      'role', p_role,
-      'phone', coalesce(p_phone, ''),
-      'tgl_lahir', coalesce(p_tgl_lahir, ''),
-      'instalasi', coalesce(p_instalasi, '')
-    )
-  )
-  returning id into v_user_id;
-
-  -- Trigger already created a profile with is_active=false, update it
-  UPDATE profiles SET
-    nama = p_nama,
-    role = p_role,
-    tgl_lahir = CASE
-      WHEN p_tgl_lahir ~ '^\d{4}-\d{2}-\d{2}$' THEN p_tgl_lahir::date
-      ELSE NULL
-    END,
-    instalasi = p_instalasi,
-    is_active = true
-  WHERE id = v_user_id;
-
-  return json_build_object(
-    'success', true,
-    'user_id', v_user_id,
-    'email', p_email
-  );
+  return json_build_object('success', true);
 end;
 $$;
 
 -- Grant execute to authenticated users
-grant execute on function admin_create_user to authenticated;
+grant execute on function admin_activate_user to authenticated;
 
 -- Add comment for documentation
-comment on function admin_create_user is 'Creates a new user with active status. Only accessible by admins.';
+comment on function admin_activate_user is 'Activates a user profile. Only accessible by staff.';

@@ -37,7 +37,7 @@ import { roleLabel, USERS_PAGE_SIZE } from '@/lib/adminUsers'
 import { supabase } from '@/lib/supabase'
 import { userCreateSchema } from '@/lib/validators'
 
-function randomPassword() {
+export function randomPassword() {
   const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   return Array.from(
     { length: 12 },
@@ -112,21 +112,48 @@ export function UserManagement() {
       }
       const pw = form.password || randomPassword()
 
-      const { data, error } = await supabase.rpc('admin_create_user', {
-        p_email: form.email.trim(),
-        p_password: pw,
-        p_nama: form.nama.trim(),
-        p_role: form.role,
-        p_phone: form.phone.trim() || null,
-        p_tgl_lahir: form.tgl_lahir.trim() || null,
-        p_instalasi: form.instalasi.trim() || null,
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email.trim(),
+        password: pw,
+        options: {
+          data: {
+            nama: form.nama.trim(),
+            tgl_lahir: form.tgl_lahir.trim(),
+            instalasi: form.instalasi.trim(),
+            role: form.role,
+          },
+        },
       })
-
       if (error) throw error
-      if (data && typeof data === 'object' && data.error) {
-        throw new Error(String(data.error))
+      const uid = data.user?.id
+      if (uid) {
+        const phone = form.phone.trim()
+        if (phone) {
+          const { data: fnData, error: fnErr } = await supabase.functions.invoke(
+            'admin-update-user-phone',
+            { body: { user_id: uid, phone } },
+          )
+          if (fnErr) throw fnErr
+          if (fnData && typeof fnData === 'object' && fnData.error) {
+            throw new Error(String(fnData.error))
+          }
+        }
+        const { data: actData, error: actErr } = await supabase.rpc('admin_activate_user', {
+          p_user_id: uid,
+        })
+        if (actErr) throw actErr
+        if (actData && typeof actData === 'object' && actData.error) {
+          throw new Error(String(actData.error))
+        }
+        const tgl = form.tgl_lahir.trim()
+        const { error: upErr } = await supabase
+          .from('profiles')
+          .update({
+            tgl_lahir: tgl && /^\d{4}-\d{2}-\d{2}$/.test(tgl) ? tgl : null,
+          })
+          .eq('id', uid)
+        if (upErr) throw upErr
       }
-
       return { password: pw }
     },
     onSuccess: ({ password }) => {
