@@ -21,7 +21,7 @@ export function VitalMetricCard({ label, value, unit, icon, trend, category }) {
 
         <div className="flex items-baseline gap-1">
           <span className="font-mono text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            {value != null ? value.toFixed(1) : '—'}
+            {value != null ? Number(value).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : '—'}
           </span>
           {unit && (
             <span className="text-sm text-muted-foreground sm:text-base">{unit}</span>

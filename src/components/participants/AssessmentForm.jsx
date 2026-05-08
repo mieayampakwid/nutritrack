@@ -48,8 +48,8 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
   const [fatStr, setFatStr] = useState(() => lastAssessment?.massa_lemak != null ? String(lastAssessment.massa_lemak) : '')
   const [waistStr, setWaistStr] = useState(() => lastAssessment?.lingkar_pinggang != null ? String(lastAssessment.lingkar_pinggang) : '')
   const [sex, setSex] = useState(() => (client.jenis_kelamin === 'male' || client.jenis_kelamin === 'female' ? client.jenis_kelamin : 'female'))
-  const [activity, setActivity] = useState('1.2')
-  const [stress, setStress] = useState('1.2')
+  const [activity, setActivity] = useState(() => lastAssessment?.faktor_aktivitas != null ? String(lastAssessment.faktor_aktivitas) : '1.2')
+  const [stress, setStress] = useState(() => lastAssessment?.faktor_stres != null ? String(lastAssessment.faktor_stres) : '1.2')
   const [catatan, setCatatan] = useState(() => lastAssessment?.catatan_asesmen || '')
 
   // Derived values
