@@ -122,6 +122,9 @@ export function FoodLogDetailModal({ open, onOpenChange, tanggal, logsForDay, it
                                       <span className="whitespace-nowrap tabular-nums">{formatNumberId(it.jumlah)}</span>
                                       <span className="truncate">{it.unit_nama}</span>
                                     </div>
+                                    <div className="mt-1.5 text-[10px] leading-none text-muted-foreground/70">
+                                      P:{formatNumberId(it.protein, { maximumFractionDigits: 1 })}g · K:{formatNumberId(it.karbohidrat, { maximumFractionDigits: 1 })}g · L:{formatNumberId(it.lemak, { maximumFractionDigits: 1 })}g · S:{formatNumberId(it.serat, { maximumFractionDigits: 1 })}g · Na:{formatNumberId(it.natrium, { maximumFractionDigits: 0 })}mg
+                                    </div>
                                   </div>
                                   <div className="shrink-0 text-right">
                                     <div className="text-sm font-semibold tabular-nums text-foreground">
@@ -144,6 +147,12 @@ export function FoodLogDetailModal({ open, onOpenChange, tanggal, logsForDay, it
                                 <div className="col-span-2 text-right text-sm text-muted-foreground">{it.unit_nama}</div>
                                 <div className="col-span-1 text-right tabular-nums font-semibold text-foreground">
                                   {formatNumberId(it.kalori_estimasi)}
+                                </div>
+                              </div>
+                              <div className="hidden grid-cols-12 px-2.5 pb-2 text-[10px] text-muted-foreground/70 sm:grid">
+                                <div className="col-span-2" />
+                                <div className="col-span-10">
+                                  P:{formatNumberId(it.protein, { maximumFractionDigits: 1 })}g · K:{formatNumberId(it.karbohidrat, { maximumFractionDigits: 1 })}g · L:{formatNumberId(it.lemak, { maximumFractionDigits: 1 })}g · S:{formatNumberId(it.serat, { maximumFractionDigits: 1 })}g · Na:{formatNumberId(it.natrium, { maximumFractionDigits: 0 })}mg
                                 </div>
                               </div>
                             </div>

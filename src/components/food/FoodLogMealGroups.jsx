@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { KaloriValue } from '@/components/shared/KaloriValue'
+import { formatNumberId } from '@/lib/format'
 import { KLIEN_DASHBOARD_LOG_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 
@@ -69,9 +70,41 @@ function groupTotal(logs) {
   return (logs ?? []).reduce((a, log) => a + (Number(log.total_kalori) || 0), 0)
 }
 
+function groupNutrients(logs) {
+  return (logs ?? []).reduce(
+    (a, log) => ({
+      karbohidrat: a.karbohidrat + (Number(log.total_karbohidrat) || 0),
+      protein: a.protein + (Number(log.total_protein) || 0),
+      lemak: a.lemak + (Number(log.total_lemak) || 0),
+      serat: a.serat + (Number(log.total_serat) || 0),
+      natrium: a.natrium + (Number(log.total_natrium) || 0),
+    }),
+    { karbohidrat: 0, protein: 0, lemak: 0, serat: 0, natrium: 0 },
+  )
+}
+
+function NutrientLine({ nutrients, className }) {
+  const { karbohidrat, protein, lemak, serat, natrium } = nutrients
+  if (!karbohidrat && !protein && !lemak && !serat && !natrium) return null
+  return (
+    <p className={cn('text-[10px] leading-none text-muted-foreground/70', className)}>
+      K: {formatNumberId(karbohidrat, { maximumFractionDigits: 1 })}g
+      <span className="mx-1 text-muted-foreground/30">·</span>
+      P: {formatNumberId(protein, { maximumFractionDigits: 1 })}g
+      <span className="mx-1 text-muted-foreground/30">·</span>
+      L: {formatNumberId(lemak, { maximumFractionDigits: 1 })}g
+      <span className="mx-1 text-muted-foreground/30">·</span>
+      S: {formatNumberId(serat, { maximumFractionDigits: 1 })}g
+      <span className="mx-1 text-muted-foreground/30">·</span>
+      Na: {formatNumberId(natrium, { maximumFractionDigits: 0 })}mg
+    </p>
+  )
+}
+
 export function FoodLogMealGroups({ logs, itemsByLogId }) {
   const groups = getMealGroups(logs)
   const dayTotal = groupTotal(logs)
+  const dayNutrients = groupNutrients(logs)
 
   const hasAnyLogs = MEAL_ORDER.some((key) => groups[key].length > 0)
 
@@ -110,6 +143,7 @@ export function FoodLogMealGroups({ logs, itemsByLogId }) {
             {MEAL_ORDER.map((key) => {
               const groupLogs = groups[key]
               const groupKalori = groupTotal(groupLogs)
+              const nutrients = groupNutrients(groupLogs)
               const label = WAKTU_LABELS[key] || key
               const colors = MEAL_CARD_COLORS[key] || MEAL_CARD_COLORS.pagi
 
@@ -130,8 +164,13 @@ export function FoodLogMealGroups({ logs, itemsByLogId }) {
                       colors.header,
                     )}
                   >
-                    <span className={cn('font-semibold', colors.text)}>{label}</span>
-                    <span className="font-semibold tabular-nums text-primary">
+                    <div className="min-w-0">
+                      <span className={cn('font-semibold', colors.text)}>{label}</span>
+                      {groupLogs.length > 0 && (
+                        <NutrientLine nutrients={nutrients} className="mt-0.5" />
+                      )}
+                    </div>
+                    <span className="shrink-0 font-semibold tabular-nums text-primary">
                       <KaloriValue value={groupKalori} />
                     </span>
                   </div>
@@ -183,9 +222,12 @@ export function FoodLogMealGroups({ logs, itemsByLogId }) {
               )
             })}
             <div className="rounded-lg border border-teal-200/50 bg-teal-50/30 px-3 py-2 text-sm ring-1 ring-teal-200/25">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-foreground">Total hari ini</span>
-                <span className="font-semibold tabular-nums text-primary">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="font-semibold text-foreground">Total hari ini</span>
+                  <NutrientLine nutrients={dayNutrients} className="mt-0.5" />
+                </div>
+                <span className="shrink-0 font-semibold tabular-nums text-primary">
                   <KaloriValue value={dayTotal} />
                 </span>
               </div>

@@ -106,7 +106,15 @@ export async function estimateCalories(items) {
     throw new Error('Format respons tidak valid')
   }
 
-  return data
+  return data.map((item) => ({
+    nama_makanan: String(item.nama_makanan ?? ''),
+    kalori: Number(item.kalori) || 0,
+    karbohidrat: Number(item.karbohidrat) || 0,
+    protein: Number(item.protein) || 0,
+    lemak: Number(item.lemak) || 0,
+    serat: Number(item.serat) || 0,
+    natrium: Number(item.natrium) || 0,
+  }))
 }
 
 export async function validateFoodInput(items) {

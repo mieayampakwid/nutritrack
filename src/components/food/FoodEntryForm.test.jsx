@@ -85,7 +85,7 @@ vi.mock('@/hooks/useFoodLog', () => ({
 }))
 
 const openaiMock = vi.hoisted(() => ({
-  estimateCalories: vi.fn().mockResolvedValue([{ kalori: 200, nama_makanan: 'Nasi Goreng' }]),
+  estimateCalories: vi.fn().mockResolvedValue([{ kalori: 200, karbohidrat: 45, protein: 8, lemak: 5, serat: 2, natrium: 400, nama_makanan: 'Nasi Goreng' }]),
   validateFoodInput: vi.fn().mockResolvedValue({ valid: true }),
 }))
 

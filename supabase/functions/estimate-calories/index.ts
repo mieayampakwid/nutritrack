@@ -20,11 +20,21 @@ function sanitize(s: string, maxLen = 100): string {
     .slice(0, maxLen)
 }
 
-const SYSTEM_MESSAGE = `Kamu adalah ahli gizi. Estimasi kalori untuk setiap makanan yang diberikan user.
+const SYSTEM_MESSAGE = `Kamu adalah ahli gizi. Estimasi kandungan gizi untuk setiap makanan yang diberikan user.
 Berikan response HANYA dalam format JSON array, tanpa teks lain.
-Format: [{ "nama_makanan": "...", "kalori": 123 }, ...]
-Gunakan estimasi kalori yang umum untuk makanan Indonesia.
-Jika makanan tidak dikenal, estimasi berdasarkan bahan utama yang paling mungkin.`
+Format per item:
+{
+  "nama_makanan": "string",
+  "kalori": number (kkal, bilangan bulat),
+  "karbohidrat": number (gram, 1 desimal),
+  "protein": number (gram, 1 desimal),
+  "lemak": number (gram, 1 desimal),
+  "serat": number (gram, 1 desimal),
+  "natrium": number (miligram, bilangan bulat)
+}
+Gunakan estimasi kandungan gizi yang umum untuk makanan Indonesia.
+Jika makanan tidak dikenal, estimasi berdasarkan bahan utama yang paling mungkin.
+Pastikan setiap field numerik selalu ada — jangan ada yang kosong atau null.`
 
 function buildUserMessage(
   items: { nama_makanan: string; jumlah: number; unit_nama: string }[],
@@ -180,7 +190,7 @@ Deno.serve(async (req) => {
           { role: 'user', content: userMessage },
         ],
         temperature: 0.3,
-        max_tokens: 500,
+        max_tokens: 1200,
       }),
     })
 
