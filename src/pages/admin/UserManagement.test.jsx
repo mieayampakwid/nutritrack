@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/test/renderWithProviders'
+import { randomPassword } from './UserManagement.jsx'
 
 vi.mock('@/components/layout/AppShell', () => ({
   AppShell: ({ children }) => <div data-testid="app-shell">{children}</div>,
@@ -10,6 +11,8 @@ vi.mock('@/components/layout/AppShell', () => ({
 vi.mock('sonner', () => ({
   toast: { error: vi.fn(), success: vi.fn(), info: vi.fn(), warning: vi.fn() },
 }))
+
+import { toast } from 'sonner'
 
 const { mockSupabase } = vi.hoisted(() => {
   const invoke = vi.fn()
@@ -97,5 +100,254 @@ describe('UserManagement reject pending user', () => {
       ),
     )
   }, 15000)
+})
+
+describe('UserManagement create user', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockSupabase.rpc.mockImplementation((fn) => {
+      if (fn === 'admin_list_profiles') {
+        return Promise.resolve({ data: [], error: null })
+      }
+      if (fn === 'admin_create_user') {
+        return Promise.resolve({ data: null, error: null })
+      }
+      throw new Error(`Unexpected rpc: ${fn}`)
+    })
+    mockSupabase.auth.refreshSession.mockResolvedValue({
+      data: { session: { access_token: 'tok' } },
+      error: null,
+    })
+    mockSupabase.auth.getUser.mockResolvedValue({ error: null, data: { user: { id: 'admin' } } })
+  })
+
+  it('successfully creates user via RPC and displays generated password', async () => {
+    const user = userEvent.setup()
+    const { queryClient } = renderWithProviders(<UserManagement />)
+
+    const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    const addButton = screen.getByRole('button', { name: 'Tambah pengguna' })
+    await user.click(addButton)
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+
+    const inputs = screen.getAllByRole('textbox')
+    const namaInput = inputs[0]
+    const emailInput = inputs[1]
+
+    await user.type(namaInput, 'Test User')
+    await user.type(emailInput, 'test@example.com')
+
+    const saveButton = screen.getByRole('button', { name: 'Simpan' })
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('admin_create_user',
+        expect.objectContaining({
+          p_email: 'test@example.com',
+          p_nama: 'Test User',
+          p_role: 'klien',
+        })
+      )
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('Simpan kata sandi sementara')).toBeInTheDocument()
+      const passwordInput = screen.getByDisplayValue(/^[a-zA-Z0-9]{12}$/)
+      expect(passwordInput).toBeInTheDocument()
+      expect(passwordInput.value).toHaveLength(12)
+    })
+
+    expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['profiles_admin'] })
+    expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['client_directory'] })
+    expect(toast.success).toHaveBeenCalledWith('Pengguna dibuat.')
+  }, 15000)
+
+  it('validates email format and shows error', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<UserManagement />)
+
+    const addButton = screen.getByRole('button', { name: 'Tambah pengguna' })
+    await user.click(addButton)
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+
+    const inputs = screen.getAllByRole('textbox')
+    const namaInput = inputs[0]
+    const emailInput = inputs[1]
+
+    await user.type(namaInput, 'Test User')
+    await user.type(emailInput, 'invalid-email')
+
+    const saveButton = screen.getByRole('button', { name: 'Simpan' })
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Format email tidak valid')
+    }, { timeout: 3000 })
+
+    expect(mockSupabase.rpc).not.toHaveBeenCalledWith('admin_create_user', expect.any(Object))
+  })
+
+  it('validates required fields and shows error for missing nama', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<UserManagement />)
+
+    const addButton = screen.getByRole('button', { name: 'Tambah pengguna' })
+    await user.click(addButton)
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+
+    const inputs = screen.getAllByRole('textbox')
+    const emailInput = inputs[1]
+    await user.type(emailInput, 'test@example.com')
+
+    const saveButton = screen.getByRole('button', { name: 'Simpan' })
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Nama wajib diisi')
+    }, { timeout: 3000 })
+
+    expect(mockSupabase.rpc).not.toHaveBeenCalledWith('admin_create_user', expect.any(Object))
+  })
+
+  it('handles RPC duplicate email error', async () => {
+    const user = userEvent.setup()
+    mockSupabase.rpc.mockImplementation((fn) => {
+      if (fn === 'admin_list_profiles') {
+        return Promise.resolve({ data: [], error: null })
+      }
+      if (fn === 'admin_create_user') {
+        return Promise.resolve({
+          data: { error: 'duplicate_email' },
+          error: null
+        })
+      }
+      throw new Error(`Unexpected rpc: ${fn}`)
+    })
+
+    renderWithProviders(<UserManagement />)
+
+    const addButton = screen.getByRole('button', { name: 'Tambah pengguna' })
+    await user.click(addButton)
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+
+    const inputs = screen.getAllByRole('textbox')
+    const namaInput = inputs[0]
+    const emailInput = inputs[1]
+
+    await user.type(namaInput, 'Test User')
+    await user.type(emailInput, 'existing@example.com')
+
+    const saveButton = screen.getByRole('button', { name: 'Simpan' })
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('duplicate_email')
+    }, { timeout: 3000 })
+  })
+
+  it('handles RPC unauthorized error', async () => {
+    const user = userEvent.setup()
+    mockSupabase.rpc.mockImplementation((fn) => {
+      if (fn === 'admin_list_profiles') {
+        return Promise.resolve({ data: [], error: null })
+      }
+      if (fn === 'admin_create_user') {
+        return Promise.resolve({
+          data: null,
+          error: { message: 'permission_denied' }
+        })
+      }
+      throw new Error(`Unexpected rpc: ${fn}`)
+    })
+
+    renderWithProviders(<UserManagement />)
+
+    const addButton = screen.getByRole('button', { name: 'Tambah pengguna' })
+    await user.click(addButton)
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+
+    const inputs = screen.getAllByRole('textbox')
+    const namaInput = inputs[0]
+    const emailInput = inputs[1]
+
+    await user.type(namaInput, 'Test User')
+    await user.type(emailInput, 'test@example.com')
+
+    const saveButton = screen.getByRole('button', { name: 'Simpan' })
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('permission_denied')
+    }, { timeout: 3000 })
+  })
+
+  it('uses auto-generated password when password field is empty', async () => {
+    const user = userEvent.setup()
+    const { queryClient } = renderWithProviders(<UserManagement />)
+
+    const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    const addButton = screen.getByRole('button', { name: 'Tambah pengguna' })
+    await user.click(addButton)
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+
+    const inputs = screen.getAllByRole('textbox')
+    const namaInput = inputs[0]
+    const emailInput = inputs[1]
+
+    await user.type(namaInput, 'Test User')
+    await user.type(emailInput, 'test@example.com')
+
+    const saveButton = screen.getByRole('button', { name: 'Simpan' })
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('admin_create_user',
+        expect.objectContaining({
+          p_email: 'test@example.com',
+          p_nama: 'Test User',
+          p_role: 'klien',
+        })
+      )
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('Simpan kata sandi sementara')).toBeInTheDocument()
+      const passwordInput = screen.getByDisplayValue(/^[a-zA-Z0-9]{12}$/)
+      expect(passwordInput).toBeInTheDocument()
+      expect(passwordInput.value).toHaveLength(12)
+    })
+
+    expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['profiles_admin'] })
+    expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['client_directory'] })
+    expect(toast.success).toHaveBeenCalledWith('Pengguna dibuat.')
+  })
+})
+
+describe('UserManagement password generation', () => {
+  it('generates 12-character password with valid characters', () => {
+    const password = randomPassword()
+
+    expect(password).toHaveLength(12)
+    expect(password).toMatch(/^[a-zA-Z0-9]+$/)
+
+    const allPasswords = Array.from({ length: 100 }, () => randomPassword())
+    const uniquePasswords = new Set(allPasswords)
+    expect(uniquePasswords.size).toBeGreaterThan(90)
+  })
+
+  it('excludes ambiguous characters (1 and 0) from password', () => {
+    const allPasswords = Array.from({ length: 100 }, () => randomPassword()).join('')
+
+    expect(allPasswords).not.toContain('1')
+    expect(allPasswords).not.toContain('0')
+  })
 })
 
