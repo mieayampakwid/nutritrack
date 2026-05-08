@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
+import { subDays } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -13,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { FoodLogDetailModal } from '@/components/food/FoodLogDetailModal'
-import { formatDateId, formatNumberId } from '@/lib/format'
+import { formatDateId, formatNumberId, toIsoDateLocal } from '@/lib/format'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { MEAL_LOG_DAY_CARD_RADIUS_CLASS } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
@@ -92,8 +93,28 @@ function NutrientSummary({ nutrients }) {
   )
 }
 
-export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
-  const byDateLists = useMemo(() => groupLogsByDateLists(logs), [logs])
+export function FoodLogTable({ logs, pageSize = 10, embedded = false, tanggal }) {
+  // Filter logs by date range
+  const filteredLogs = useMemo(() => {
+    if (!logs || logs.length === 0) []
+
+    // If specific tanggal provided, filter for that date only
+    if (tanggal) {
+      return logs.filter(log => log.tanggal === tanggal)
+    }
+
+    // Otherwise, filter for last 2 weeks (default)
+    const today = new Date()
+    const twoWeeksAgo = subDays(today, 14)
+    const minTanggal = toIsoDateLocal(twoWeeksAgo)
+
+    return logs.filter(log => {
+      if (!log.tanggal) return false
+      return log.tanggal >= minTanggal
+    })
+  }, [logs, tanggal])
+
+  const byDateLists = useMemo(() => groupLogsByDateLists(filteredLogs), [filteredLogs])
   const sortedDates = useMemo(
     () => [...byDateLists.keys()].sort((a, b) => b.localeCompare(a)),
     [byDateLists],
@@ -210,7 +231,7 @@ export function FoodLogTable({ logs, pageSize = 10, embedded = false }) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
-                  <TableHead>Diary</TableHead>
+                  <TableHead>Log Makan</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead />
                 </TableRow>
