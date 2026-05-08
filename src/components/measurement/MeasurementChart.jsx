@@ -103,10 +103,10 @@ export function MeasurementChart({ measurements, metric }) {
             type="monotone"
             dataKey={key}
             name={labels[key]}
-            stroke="var(--color-primary)"
+            stroke="#059669"
             strokeWidth={2}
-            dot={{ r: 3, strokeWidth: 0, fill: 'var(--color-primary)' }}
-            activeDot={{ r: 5, strokeWidth: 0 }}
+            dot={{ r: 3, strokeWidth: 0, fill: '#059669' }}
+            activeDot={{ r: 5, strokeWidth: 0, fill: '#059669' }}
             connectNulls
           />
         </LineChart>
