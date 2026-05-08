@@ -9,6 +9,7 @@ import { SectionScrollCards } from '@/components/participants/SectionScrollCards
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { useMeasurements } from '@/hooks/useMeasurement'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
+import { getBMICategoryAsiaPacific } from '@/lib/bmiCalculator'
 import { supabase } from '@/lib/supabase'
 import { useMemo, useState } from 'react'
 import { differenceInYears, format } from 'date-fns'
@@ -126,6 +127,7 @@ export function ParticipantDetail() {
           value={lastMeasurement?.bmi}
           unit=""
           icon={<TrendingUp className="h-5 w-5" />}
+          category={lastMeasurement?.bmi ? getBMICategoryAsiaPacific(lastMeasurement.bmi).label : null}
           trend={measurements.length > 1 ? calculateTrend(measurements, 'bmi') : null}
         />
         <VitalMetricCard

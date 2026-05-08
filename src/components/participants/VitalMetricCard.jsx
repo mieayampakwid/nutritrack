@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 
-export function VitalMetricCard({ label, value, unit, icon, trend }) {
+export function VitalMetricCard({ label, value, unit, icon, trend, category }) {
   const trendColor = trend === 'up' ? 'text-rose-500' : trend === 'down' ? 'text-emerald-500' : 'text-muted-foreground'
   const trendIcon = trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'
 
@@ -27,6 +27,12 @@ export function VitalMetricCard({ label, value, unit, icon, trend }) {
             <span className="text-sm text-muted-foreground sm:text-base">{unit}</span>
           )}
         </div>
+
+        {category && (
+          <div className="mt-1 text-xs font-medium text-primary">
+            {category}
+          </div>
+        )}
 
         {trend && (
           <div className="mt-2 flex items-center gap-1 text-xs">
