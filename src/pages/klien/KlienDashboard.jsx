@@ -6,10 +6,10 @@ import { AppShell } from '@/components/layout/AppShell'
 import { ClientNutritionSummaryCard } from '@/components/clients/ClientNutritionSummaryCard'
 import { DailyCalorieChart } from '@/components/dashboard/DailyCalorieChart'
 import { DashboardActionCard } from '@/components/dashboard/DashboardActionCard'
-import { FoodLogMealGroups } from '@/components/food/FoodLogMealGroups'
+import { ActivityLogTable } from '@/components/shared/ActivityLogTable'
 import { useAuth } from '@/hooks/useAuth'
-import { useFoodLogsForUser, useFoodLogItems } from '@/hooks/useFoodLog'
-import { ExerciseLogHistoryCard } from '@/components/exercise/ExerciseLogHistoryCard'
+import { useFoodLogsForUser } from '@/hooks/useFoodLog'
+import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
 import { toIsoDateLocal, parseIsoDateLocal, formatDateId } from '@/lib/format'
 
 export function KlienDashboard() {
@@ -29,20 +29,17 @@ export function KlienDashboard() {
     setSelectedDate(toIsoDateLocal(date))
   }
 
-  const { data: logs = [], isLoading } = useFoodLogsForUser(profile?.id, {
+  const { data: logs = [], isLoading: foodLoading } = useFoodLogsForUser(profile?.id, {
     enabled: Boolean(profile?.id),
     dateFrom: selectedDate,
     dateTo: selectedDate,
   })
 
-  const logIds = (logs ?? []).map((log) => log.id)
-  const { data: items = [] } = useFoodLogItems(logIds, logIds.length > 0)
-
-  const itemsByLogId = {}
-  for (const it of items) {
-    if (!itemsByLogId[it.food_log_id]) itemsByLogId[it.food_log_id] = []
-    itemsByLogId[it.food_log_id].push(it)
-  }
+  const { data: exerciseLogs = [], isLoading: exerciseLoading } = useExerciseLogsForUser(profile?.id, {
+    enabled: Boolean(profile?.id),
+    dateFrom: selectedDate,
+    dateTo: selectedDate,
+  })
 
   return (
     <AppShell dashboardHero dashboardHeroBareMobile dashboardHeroCompactLogo>
@@ -109,19 +106,27 @@ export function KlienDashboard() {
         </div>
 
         <section aria-label="Log makanan">
-          {isLoading ? (
+          {foodLoading ? (
             <div className="space-y-2.5 py-1">
               <div className="h-10 w-full animate-pulse rounded-lg bg-muted/70" />
               <div className="h-10 w-full animate-pulse rounded-lg bg-muted/60" />
               <div className="h-10 w-full animate-pulse rounded-lg bg-muted/50" />
             </div>
           ) : (
-            <FoodLogMealGroups logs={logs} itemsByLogId={itemsByLogId} />
+            <ActivityLogTable type="food" data={logs} tanggal={selectedDate} />
           )}
         </section>
 
         <section aria-label="Log olahraga">
-          <ExerciseLogHistoryCard userId={profile?.id} tanggal={selectedDate} />
+          {exerciseLoading ? (
+            <div className="space-y-2.5 py-1">
+              <div className="h-10 w-full animate-pulse rounded-lg bg-muted/70" />
+              <div className="h-10 w-full animate-pulse rounded-lg bg-muted/60" />
+              <div className="h-10 w-full animate-pulse rounded-lg bg-muted/50" />
+            </div>
+          ) : (
+            <ActivityLogTable type="exercise" data={exerciseLogs} tanggal={selectedDate} />
+          )}
         </section>
       </div>
     </AppShell>

@@ -10,6 +10,16 @@ if (typeof Element !== 'undefined') {
   Element.prototype.releasePointerCapture ??= () => {}
 }
 
+// Radix Popover also portals; mock to render inline.
+vi.mock('@/components/ui/popover', async () => {
+  const React = await import('react')
+  const Popover = ({ children }) => React.createElement(React.Fragment, null, children)
+  const PopoverTrigger = ({ children }) => React.createElement(React.Fragment, null, children)
+  const PopoverContent = ({ children }) =>
+    React.createElement('div', { 'data-testid': 'popover-content' }, children)
+  return { Popover, PopoverTrigger, PopoverContent }
+})
+
 // Radix Select also portals & depends on browser event semantics; mock with native <select>.
 vi.mock('@/components/ui/select', async () => {
   const React = await import('react')
@@ -128,6 +138,15 @@ describe('FoodEntryForm', () => {
     vi.clearAllMocks()
   })
 
+  async function setJamMakan(user, hour, minute) {
+    const popover = screen.getByTestId('popover-content')
+    await user.clear(within(popover).getByLabelText(/jam/i))
+    await user.type(within(popover).getByLabelText(/jam/i), hour)
+    await user.clear(within(popover).getByLabelText(/menit/i))
+    await user.type(within(popover).getByLabelText(/menit/i), minute)
+    await user.click(within(popover).getByRole('button', { name: /simpan/i }))
+  }
+
   it('renders the food list header and a single initial food row', () => {
     renderWithProviders(<FoodEntryForm userId="u1" />)
     expect(screen.getByText('Log makanan')).toBeInTheDocument()
@@ -150,7 +169,7 @@ describe('FoodEntryForm', () => {
     expect(screen.getByRole('button', { name: /analisa/i })).toBeDisabled()
   })
 
-  it('blocks submit until meal type selected', async () => {
+  it('blocks submit until meal type and jam makan selected', async () => {
     const user = userEvent.setup()
     renderWithProviders(<FoodEntryForm userId="u1" />)
 
@@ -161,6 +180,7 @@ describe('FoodEntryForm', () => {
     expect(screen.getByRole('button', { name: /analisa/i })).toBeDisabled()
 
     await user.click(screen.getByRole('radio', { name: /sarapan/i }))
+    await setJamMakan(user, '7', '30')
 
     expect(screen.getByRole('button', { name: /analisa/i })).toBeEnabled()
   })
@@ -177,6 +197,7 @@ describe('FoodEntryForm', () => {
 
     // pick meal type
     await user.click(screen.getByRole('radio', { name: /sarapan/i }))
+    await setJamMakan(user, '7', '30')
 
     // row 1 (valid)
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Nasi Goreng')
@@ -217,6 +238,7 @@ describe('FoodEntryForm', () => {
     renderWithProviders(<FoodEntryForm userId="u1" />)
 
     await user.click(screen.getByRole('radio', { name: /sarapan/i }))
+    await setJamMakan(user, '7', '30')
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'bak')
     await user.type(screen.getByPlaceholderText('0'), '1')
     await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
@@ -244,6 +266,8 @@ describe('FoodEntryForm', () => {
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Bakso')
     await user.type(screen.getByPlaceholderText('0'), '1')
     await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
+
+    await setJamMakan(user, '7', '30')
 
     await user.click(screen.getByRole('button', { name: /analisa/i }))
 
