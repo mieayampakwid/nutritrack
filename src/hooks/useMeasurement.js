@@ -11,6 +11,7 @@ export function useMeasurements(userId, enabled = true) {
         .select('*')
         .eq('user_id', userId)
         .order('tanggal', { ascending: true })
+        .order('created_at', { ascending: true })
       if (error) throw error
       return data ?? []
     },

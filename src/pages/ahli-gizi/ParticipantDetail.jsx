@@ -37,7 +37,12 @@ export function ParticipantDetail() {
 
   const lastMeasurement = useMemo(() => {
     if (!measurements.length) return null
-    return [...measurements].sort((a, b) => b.tanggal.localeCompare(a.tanggal))[0]
+    return [...measurements].sort((a, b) => {
+      const dateCompare = b.tanggal.localeCompare(a.tanggal)
+      if (dateCompare !== 0) return dateCompare
+      // Secondary sort by created_at for same tanggal
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0)
+    })[0]
   }, [measurements])
 
   const ageYears = useMemo(() => {
