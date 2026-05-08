@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { differenceInYears } from 'date-fns'
+import { Save } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -100,7 +101,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pb-24">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Anthropometric Section */}
       <section>
         <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Pengukuran Antropometri</h2>
@@ -295,13 +296,14 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
       </section>
 
       {/* Save Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 border-t border-border/60 backdrop-blur sm:relative sm:bg-transparent sm:border-0 sm:p-0 sm:backdrop-blur-none">
+      <div className="flex justify-end sm:justify-end">
         <Button
           type="submit"
           disabled={!isValid || isSaving}
           className="w-full sm:w-auto"
           size="lg"
         >
+          <Save className="mr-2 h-5 w-5" />
           {isSaving ? 'Menyimpan...' : 'Simpan Asesmen'}
         </Button>
       </div>
