@@ -11,6 +11,7 @@ import {
 import { formatDateId } from '@/lib/format'
 import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
 import { KLIEN_DASHBOARD_LOG_CARD_SHELL } from '@/lib/pageCard'
+import { KaloriValue } from '@/components/shared/KaloriValue'
 
 export function ExerciseLogHistoryCard({ userId, tanggal }) {
   const { data: logs = [], isLoading } = useExerciseLogsForUser(userId, {
@@ -55,6 +56,7 @@ export function ExerciseLogHistoryCard({ userId, tanggal }) {
                   <TableHead>No.</TableHead>
                   <TableHead>Jenis Olahraga</TableHead>
                   <TableHead>Durasi</TableHead>
+                  <TableHead>Kalori Dipakai</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -68,6 +70,13 @@ export function ExerciseLogHistoryCard({ userId, tanggal }) {
                     </TableCell>
                     <TableCell className="whitespace-nowrap align-top text-sm">
                       {r.durasi || '—'}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap align-top text-sm tabular-nums">
+                      {r.kalori_estimasi != null && r.kalori_estimasi > 0 ? (
+                        <KaloriValue value={r.kalori_estimasi} />
+                      ) : (
+                        '—'
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
