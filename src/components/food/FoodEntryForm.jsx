@@ -22,7 +22,7 @@ import { KaloriValue } from '@/components/shared/KaloriValue'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { APP_ACRONYM } from '@/lib/appMeta'
-import { formatDateId, formatNumberId, toIsoDateLocal } from '@/lib/format'
+import { formatDateId, formatNumberId, toIsoDateLocal, parseIsoDateLocal } from '@/lib/format'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
@@ -310,7 +310,7 @@ function foodRowSummaryLine(r, unitMap) {
   return parts.length ? parts.join(' ') : 'Item baru'
 }
 
-export function FoodEntryForm({ userId }) {
+export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
   const reduceMotion = useReducedMotion()
   const qc = useQueryClient()
   const { data: units = [] } = useFoodUnits()
@@ -468,7 +468,7 @@ export function FoodEntryForm({ userId }) {
     }
 
     const submittedAt = new Date()
-    const tanggal = toIsoDateLocal(submittedAt)
+    const tanggal = tanggalProp || toIsoDateLocal(submittedAt)
     const waktu = mealKey
 
     setLoading(true)
@@ -659,8 +659,8 @@ export function FoodEntryForm({ userId }) {
                   <span className="text-neutral-300" aria-hidden>
                     |
                   </span>
-                  <time className="tabular-nums" dateTime={new Date().toISOString()}>
-                    {formatDateId(new Date())}
+                  <time className="tabular-nums" dateTime={displayResult.tanggal}>
+                    {formatDateId(parseIsoDateLocal(displayResult.tanggal))}
                   </time>
                   <span className="text-neutral-300" aria-hidden>
                     ·

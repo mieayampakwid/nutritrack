@@ -13,7 +13,7 @@ function normalizeText(s) {
   return String(s ?? '').trim()
 }
 
-export function ExerciseLogEntryCard({ userId }) {
+export function ExerciseLogEntryCard({ userId, tanggal: tanggalProp }) {
   const qc = useQueryClient()
   const [jenis, setJenis] = useState('')
   const [durasi, setDurasi] = useState('')
@@ -38,7 +38,7 @@ export function ExerciseLogEntryCard({ userId }) {
 
     setSaving(true)
     try {
-      const tanggal = toIsoDateLocal(new Date())
+      const tanggal = tanggalProp || toIsoDateLocal(new Date())
       const { error } = await supabase.from('exercise_logs').insert({
         user_id: userId,
         tanggal,
@@ -66,7 +66,7 @@ export function ExerciseLogEntryCard({ userId }) {
             <CardTitle className="text-sm font-semibold leading-tight tracking-tight text-neutral-900 sm:text-sm md:text-sm">
               Log olahraga
             </CardTitle>
-            <p className="mt-0.5 text-xs text-muted-foreground">Catat untuk hari ini (tanpa pilih tanggal).</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">Catat sesuai tanggal di atas.</p>
           </div>
         </div>
       </CardHeader>
