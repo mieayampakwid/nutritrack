@@ -60,20 +60,17 @@ begin
   )
   returning id into v_user_id;
 
-  -- Create profile with is_active = true
-  insert into profiles (id, email, nama, role, tgl_lahir, instalasi, is_active)
-  values (
-    v_user_id,
-    p_email,
-    p_nama,
-    p_role,
-    case
-      when p_tgl_lahir ~ '^\d{4}-\d{2}-\d{2}$' then p_tgl_lahir::date
-      else null
-    end,
-    p_instalasi,
-    true  -- Admin-created users are active
-  );
+  -- Trigger already created a profile with is_active=false, update it
+  UPDATE profiles SET
+    nama = p_nama,
+    role = p_role,
+    tgl_lahir = CASE
+      WHEN p_tgl_lahir ~ '^\d{4}-\d{2}-\d{2}$' THEN p_tgl_lahir::date
+      ELSE NULL
+    END,
+    instalasi = p_instalasi,
+    is_active = true
+  WHERE id = v_user_id;
 
   return json_build_object(
     'success', true,
