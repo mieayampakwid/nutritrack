@@ -51,10 +51,10 @@ export function ProgressTimeline({ measurements, selectedMetric, onMetricChange 
             key={key}
             onClick={() => onMetricChange(key)}
             className={cn(
-              'rounded-full px-3 py-1.5 text-xs font-medium transition-all',
+              'rounded-full border px-3 py-1.5 text-xs font-medium transition-all',
               selectedMetric === key
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'bg-muted/50 text-muted-foreground hover:bg-muted',
+                ? 'border-emerald-600/60 bg-emerald-100/95 text-emerald-950 shadow-sm shadow-emerald-500/15 ring-2 ring-emerald-500/25'
+                : 'border-emerald-500/40 bg-emerald-50/80 text-emerald-800 hover:bg-emerald-100/90',
             )}
           >
             {label}

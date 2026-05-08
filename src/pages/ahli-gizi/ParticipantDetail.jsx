@@ -158,12 +158,7 @@ export function ParticipantDetail() {
 
       {/* Progress Timeline */}
       <div className="mb-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">Perkembangan</h2>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to={`/gizi/participants/${id}/change-log`}>Lihat Semua</Link>
-          </Button>
-        </div>
+        <h2 className="mb-4 text-xl font-semibold tracking-tight text-foreground">Perkembangan</h2>
         <ProgressTimeline
           measurements={measurements}
           selectedMetric={selectedMetric}
