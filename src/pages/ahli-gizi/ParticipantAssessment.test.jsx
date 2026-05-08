@@ -8,6 +8,17 @@ vi.mock('@/components/layout/AppShell', () => ({
   AppShell: ({ children }) => <div data-testid="app-shell">{children}</div>,
 }))
 
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    session: { user: { id: 'nutritionist-1' } },
+    profile: null,
+    loading: false,
+    signOut: vi.fn(),
+    refreshProfile: vi.fn(),
+    isInactive: false,
+  }),
+}))
+
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => ({
   ...((await vi.importActual('react-router-dom')) ?? {}),

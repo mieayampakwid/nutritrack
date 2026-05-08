@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AssessmentForm } from '@/components/participants/AssessmentForm'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 
@@ -11,6 +12,7 @@ export function ParticipantAssessment() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { session } = useAuth()
 
   const { data: client, isLoading: loadingClient } = useQuery({
     queryKey: ['profile', id],
@@ -48,6 +50,7 @@ export function ParticipantAssessment() {
         .from('assessments')
         .insert({
           user_id: id,
+          created_by: session?.user?.id,
           ...assessmentData,
         })
         .select()
