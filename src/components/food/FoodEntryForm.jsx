@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { AnimatePresence, motion as Motion, useReducedMotion } from 'framer-motion'
-import { ChevronDown, Cookie, Loader2, Moon, Plus, Sparkles, Sunrise, Sun, Trash2 } from 'lucide-react'
+import { ChevronDown, Clock, Cookie, Loader2, Moon, Plus, Sparkles, Sunrise, Sun, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
 import { useFoodNameSuggestions, useFoodUnits } from '@/hooks/useFoodLog'
 import { estimateCalories, validateFoodInput } from '@/lib/openai'
@@ -317,18 +318,24 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
   const { data: suggestions = [] } = useFoodNameSuggestions()
 
   const [mealKey, setMealKey] = useState('')
+  const [jamMakan, setJamMakan] = useState('')
+  const [jamPopupOpen, setJamPopupOpen] = useState(false)
+  const [jamHour, setJamHour] = useState('')
+  const [jamMinute, setJamMinute] = useState('')
   const [rows, setRows] = useState(() => [emptyRow()])
   const [expandedRowId, setExpandedRowId] = useState(() => rows[0].id)
   const [suggestionsOpenRowId, setSuggestionsOpenRowId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [jamError, setJamError] = useState(false)
   const [rowErrorsById, setRowErrorsById] = useState(() => ({}))
   const [pendingResult, setPendingResult] = useState(null)
   const [result, setResult] = useState(null)
   const resultRef = useRef(null)
   const analyzingAnchorRef = useRef(null)
   const rowErrorAnchorRef = useRef(null)
+  const minuteRef = useRef(null)
 
   const suggestionNames = useMemo(
     () => suggestions.map((s) => s.nama_makanan).filter(Boolean),
@@ -375,6 +382,13 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
     })
     return () => cancelAnimationFrame(id)
   }, [loading, reduceMotion])
+
+  useEffect(() => {
+    if (!jamPopupOpen) return
+    const [h = '', m = ''] = (jamMakan || '').split(':')
+    setJamHour(h)
+    setJamMinute(m)
+  }, [jamPopupOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function setRow(i, patch) {
     setRows((prev) =>
@@ -436,6 +450,11 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
 
     if (!mealKey) {
       setError('Pilih waktu makan terlebih dahulu.')
+      return
+    }
+
+    if (!jamMakan) {
+      setJamError(true)
       return
     }
 
@@ -589,6 +608,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
           user_id: userId,
           tanggal,
           waktu_makan: waktuMakan,
+          jam_makan: jamMakan || null,
           total_kalori: total,
           total_karbohidrat: totalKarbohidrat ?? 0,
           total_protein: totalProtein ?? 0,
@@ -627,6 +647,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
       setRows([nextRow])
       setExpandedRowId(nextRow.id)
       setMealKey('')
+      setJamMakan('')
       toast.success('Data tersimpan.')
     } catch (e) {
       logError('FoodEntryForm.handleConfirmSave', e)
@@ -697,7 +718,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
                   <span className="text-neutral-300" aria-hidden>
                     ·
                   </span>
-                  <span className="tabular-nums">{format(new Date(), 'HH:mm', { locale: localeId })}</span>
+                  <span className="tabular-nums">{jamMakan || format(new Date(), 'HH:mm', { locale: localeId })}</span>
                 </div>
                 <div className="mt-4 flex justify-center">
                   <span
@@ -903,6 +924,115 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
             })}
           </div>
         </section>
+
+        <Popover open={jamPopupOpen} onOpenChange={(open) => { setJamPopupOpen(open); if (open) setJamError(false) }}>
+          <div className="grid gap-1.5">
+            <Label className={cn(typeLabel, 'text-xs uppercase tracking-wider text-muted-foreground')} htmlFor="jam-makan-trigger">
+              Jam makan
+            </Label>
+            <PopoverTrigger asChild>
+              <button
+                id="jam-makan-trigger"
+                type="button"
+                className={cn(
+                  foodRowControlShell,
+                  foodRowSelectFocus,
+                  foodRowSelectMobileType,
+                  'group min-w-0 w-full',
+                  jamError && 'border-destructive/55 ring-1 ring-destructive/25 bg-destructive/3',
+                )}
+              >
+                <Clock className="mr-2 h-4 w-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground/60" />
+                <span className={cn(
+                  'flex-1 text-left text-sm font-semibold tabular-nums',
+                  jamMakan ? 'text-foreground' : 'text-muted-foreground/40',
+                )}>
+                  {jamMakan || '—'}
+                </span>
+                <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground/40 transition-transform duration-200 group-hover:text-muted-foreground/60" />
+              </button>
+            </PopoverTrigger>
+          </div>
+          <PopoverContent className="w-64 p-0" align="center" sideOffset={16}>
+            <div className="space-y-4 p-5">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground/60" />
+                <span className="text-sm font-semibold tracking-tight text-foreground">Jam makan</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={2}
+                  placeholder="00"
+                  value={jamHour}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '').slice(0, 2)
+                    if (raw === '') {
+                      setJamHour('')
+                      return
+                    }
+                    const n = parseInt(raw, 10)
+                    if (n > 23) setJamHour('23')
+                    else setJamHour(String(n))
+                    if (raw.length === 2) minuteRef.current?.focus()
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  className="food-entry-compact-input h-10 min-h-[44px] w-[4rem] text-center text-base tabular-nums leading-tight md:h-9 md:min-h-0 md:text-sm"
+                  aria-label="Jam"
+                />
+                <span className="text-base font-medium text-muted-foreground/40 md:text-sm">:</span>
+                <Input
+                  ref={minuteRef}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={2}
+                  placeholder="00"
+                  value={jamMinute}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '').slice(0, 2)
+                    if (raw === '') {
+                      setJamMinute('')
+                      return
+                    }
+                    const n = parseInt(raw, 10)
+                    if (n > 59) setJamMinute('59')
+                    else setJamMinute(String(n))
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  className="food-entry-compact-input h-10 min-h-[44px] w-[4rem] text-center text-base tabular-nums leading-tight md:h-9 md:min-h-0 md:text-sm"
+                  aria-label="Menit"
+                />
+              </div>
+              <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
+                <span>Jam</span>
+                <span>Menit</span>
+              </div>
+            </div>
+            <div className="border-t border-border/60 px-5 py-3">
+              <Button
+                type="button"
+                className="w-full text-sm"
+                onClick={() => {
+                  const hh = jamHour.padStart(2, '0') || '00'
+                  const mm = jamMinute.padStart(2, '0') || '00'
+                  setJamMakan(`${hh}:${mm}`)
+                  setJamPopupOpen(false)
+                  setJamError(false)
+                  setError('')
+                }}
+              >
+                Simpan
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {jamError && (
+          <p className="text-xs leading-relaxed text-destructive motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200" role="alert">
+            Pilih jam makan.
+          </p>
+        )}
 
         <AnimatePresence initial={false}>
           <div className="space-y-2.5">
@@ -1132,7 +1262,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
             'bg-gradient-to-r from-primary to-primary/90',
             'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
           )}
-          disabled={loading || saving || !mealKey || filledCount !== rows.length}
+          disabled={loading || saving || !mealKey || !jamMakan || filledCount !== rows.length}
           onClick={handleAnalyze}
         >
           {loading ? (

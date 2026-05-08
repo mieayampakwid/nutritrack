@@ -50,6 +50,13 @@ function formatLogTime(iso) {
   }
 }
 
+function formatJamMakan(timeStr) {
+  if (!timeStr) return null
+  const parts = String(timeStr).split(':')
+  if (parts.length >= 2) return `${parts[0]}:${parts[1]}`
+  return String(timeStr)
+}
+
 export function ActivityLogTable({
   type = 'food',
   data,
@@ -143,7 +150,7 @@ export function ActivityLogTable({
       return (
         <li className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-xs">
           <span className="tabular-nums text-muted-foreground">
-            {formatLogTime(item.created_at)}
+            {item.jam_makan ? formatJamMakan(item.jam_makan) : formatLogTime(item.created_at)}
           </span>
           <span className="text-foreground">
             {WAKTU_LABELS[item.waktu_makan] ?? item.waktu_makan}
@@ -180,7 +187,7 @@ export function ActivityLogTable({
       return (
         <li key={item.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="tabular-nums text-muted-foreground">
-            {formatLogTime(item.created_at)}
+            {item.jam_makan ? formatJamMakan(item.jam_makan) : formatLogTime(item.created_at)}
           </span>
           <span className="text-foreground">
             {WAKTU_LABELS[item.waktu_makan] ?? item.waktu_makan}

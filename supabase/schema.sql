@@ -51,6 +51,7 @@ create table if not exists public.food_logs (
   user_id uuid references public.profiles(id) on delete cascade,
   tanggal date not null,
   waktu_makan text check (waktu_makan in ('pagi', 'siang', 'malam', 'snack')) not null,
+  jam_makan time,
   total_kalori numeric(8,2) default 0,
   total_karbohidrat numeric(8,2) default 0,
   total_protein numeric(8,2) default 0,
