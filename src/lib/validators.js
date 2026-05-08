@@ -50,3 +50,8 @@ export const bodyMeasurementSchema = z.object({
   lingkar_pinggang: z.number().min(0).max(300).optional().nullable(),
   catatan: z.string().max(1000).optional(),
 })
+
+export const groupCreateSchema = z.object({
+  nama: z.string().min(1, 'Nama grup wajib diisi').max(100),
+  ahli_gizi_id: z.string().uuid('Pilih ahli gizi'),
+})
