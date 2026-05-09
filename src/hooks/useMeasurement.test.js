@@ -24,6 +24,7 @@ import { useMeasurements } from './useMeasurement'
 describe('useMeasurements', () => {
   afterEach(() => {
     resultRef.current = { data: [], error: null }
+    vi.clearAllMocks()
   })
 
   it('returns data from supabase', async () => {
@@ -44,5 +45,50 @@ describe('useMeasurements', () => {
     const { result } = renderHook(() => useMeasurements(''), { wrapper })
 
     expect(result.current.fetchStatus).toBe('idle')
+  })
+
+  it('passes dateFrom / dateTo to supabase query when provided', async () => {
+    const mockData = [
+      { id: '2', user_id: 'u1', tanggal: '2026-05-05', berat_badan: 71 },
+    ]
+    resultRef.current = { data: mockData, error: null }
+
+    const { wrapper } = createQueryWrapper()
+    const { result } = renderHook(
+      () => useMeasurements('u1', { dateFrom: '2026-05-01', dateTo: '2026-05-09' }),
+      { wrapper },
+    )
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(chain.gte).toHaveBeenCalledWith('tanggal', '2026-05-01')
+    expect(chain.lte).toHaveBeenCalledWith('tanggal', '2026-05-09')
+    expect(result.current.data).toEqual(mockData)
+  })
+
+  it('does not add date filters when dateFrom/dateTo are not provided', async () => {
+    const mockData = [{ id: '3', user_id: 'u1', tanggal: '2026-05-05', berat_badan: 71 }]
+    resultRef.current = { data: mockData, error: null }
+
+    const { wrapper } = createQueryWrapper()
+    const { result } = renderHook(
+      () => useMeasurements('u1', { enabled: true }),
+      { wrapper },
+    )
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(chain.gte).not.toHaveBeenCalled()
+    expect(chain.lte).not.toHaveBeenCalled()
+    expect(result.current.data).toEqual(mockData)
+  })
+
+  it('remains backward compatible with boolean second argument', async () => {
+    const mockData = [{ id: '4', user_id: 'u1', tanggal: '2026-05-05', berat_badan: 71 }]
+    resultRef.current = { data: mockData, error: null }
+
+    const { wrapper } = createQueryWrapper()
+    const { result } = renderHook(() => useMeasurements('u1', true), { wrapper })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toEqual(mockData)
   })
 })
