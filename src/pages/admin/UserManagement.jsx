@@ -37,7 +37,7 @@ import { roleLabel, USERS_PAGE_SIZE } from '@/lib/adminUsers'
 import { supabase } from '@/lib/supabase'
 import { userCreateSchema } from '@/lib/validators'
 
-function randomPassword() {
+export function randomPassword() {
   const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   return Array.from(
     { length: 12 },
@@ -111,6 +111,10 @@ export function UserManagement() {
         throw new Error(result.error.issues[0].message)
       }
       const pw = form.password || randomPassword()
+
+      // Save admin session before signUp replaces it
+      const { data: { session: adminSession } } = await supabase.auth.getSession()
+
       const { data, error } = await supabase.auth.signUp({
         email: form.email.trim(),
         password: pw,
@@ -125,6 +129,16 @@ export function UserManagement() {
       })
       if (error) throw error
       const uid = data.user?.id
+
+      // Restore admin session BEFORE making admin-only calls
+      // (signUp switches session to the new user)
+      if (adminSession) {
+        await supabase.auth.setSession({
+          access_token: adminSession.access_token,
+          refresh_token: adminSession.refresh_token,
+        })
+      }
+
       if (uid) {
         const phone = form.phone.trim()
         if (phone) {
@@ -137,6 +151,13 @@ export function UserManagement() {
             throw new Error(String(fnData.error))
           }
         }
+        const { data: actData, error: actErr } = await supabase.rpc('admin_activate_user', {
+          p_user_id: uid,
+        })
+        if (actErr) throw actErr
+        if (actData && typeof actData === 'object' && actData.error) {
+          throw new Error(String(actData.error))
+        }
         const tgl = form.tgl_lahir.trim()
         const { error: upErr } = await supabase
           .from('profiles')
@@ -146,7 +167,8 @@ export function UserManagement() {
           .eq('id', uid)
         if (upErr) throw upErr
       }
-      return { user: data.user, password: pw }
+
+      return { password: pw }
     },
     onSuccess: ({ password }) => {
       toast.success('Pengguna dibuat.')
