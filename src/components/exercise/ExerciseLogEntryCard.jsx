@@ -340,7 +340,7 @@ export function ExerciseLogEntryCard({ userId, tanggal: tanggalProp }) {
                 <span className="font-medium text-foreground">{analysisResult.durasi}</span>
               </div>
               <div className="mt-2 border-t border-border/60 pt-2 flex justify-between gap-4">
-                <span className="font-semibold text-foreground">Estimasi kalori terbakar</span>
+                <span className="font-semibold text-foreground">Estimasi kalori dipakai</span>
                 <KaloriValue value={analysisResult.kalori_estimasi} className="text-base font-bold text-orange-700" />
               </div>
             </div>

@@ -29,56 +29,80 @@ function looksLikeGarbage(s: string): boolean {
   return false
 }
 
-const SYSTEM_MESSAGE = `Kamu adalah ahli gizi olahraga. Estimasi kalori yang terbakar berdasarkan jenis aktivitas fisik dan durasi.
+const SYSTEM_MESSAGE = `You are a sports nutritionist. Estimate calories burned based on physical activity type and duration. Your user provides a body weight in kg, an activity name (in Indonesian or English), and a duration string (mixed formats).
 
-Berikan response HANYA dalam format JSON object, tanpa teks lain.
+Respond with a SINGLE JSON OBJECT. Never include text outside the JSON.
 
-FORMAT UNTUK INPUT VALID:
-{ "kalori_estimasi": 123 }
+=== RESPONSE FORMAT ===
 
-FORMAT UNTUK INPUT TIDAK VALID (hanya jika jenis aktivitas ATAU durasi benar-benar tidak masuk akal):
-{ "kalori_estimasi": 0, "valid": false, "message": "Alasan singkat dalam Bahasa Indonesia." }
+When input is valid:
+{ "kalori_estimasi": 285 }
 
-ATURAN PENTING:
-1. KAMU HARUS MENERIMA SEMUA JENIS AKTIVITAS FISIK sebagai input valid. Manusia membakar kalori saat melakukan aktivitas apapun yang melibatkan gerakan tubuh — termasuk olahraga, pekerjaan rumah, aktivitas seksual, pekerjaan fisik, bermain, menari, bela diri, panjat tebing, mendaki gunung, menyelam, dll.
-2. HANYA tolak jika input adalah:
-   - Kata acak tanpa makna (misal: "oke", "asdasd", "xyz")
-   - Benda mati (misal: "meja", "mobil", "laptop")
-   - Aktivitas murni sedentari tanpa gerakan (misal: "tidur", "nonton TV", "baca buku")
-   Jika ragu antara valid dan tidak, pilih VALID.
-3. Durasi: interpretasikan dengan cerdas dan SELALU konversi ke menit. Format yang valid sangat beragam — contoh:
-   - "30 menit" = 30 menit
-   - "1 jam 30 menit" = 90 menit
-   - "90 jam" = 5400 menit
-   - "2 hari" = 2880 menit
-   - "3 set" / "3 putaran" / "3 sesi" = per set sekitar 15-20 menit aktif (gunakan penilaian terbaik berdasarkan jenis aktivitas)
-   - "100 reps" / "100 repetisi" = estimasi durasi berdasarkan kecepatan wajar per repetisi
-   - "5 km" (lari) = sekitar 25-30 menit untuk pelari rekreasi
-   Kamu HARUS selalu bisa mengestimasi selama durasi tidak sepenuhnya ngawur. Jika durasi benar-benar tidak masuk akal (misal: "asdasd", "oke", "warna hijau"), baru nyatakan tidak valid.
-4. Gunakan MET standar:
-   - Lari (8 km/jam): MET 8 | Lari (10 km/jam): MET 10 | Lari santai: MET 6
-   - Jalan cepat (6 km/jam): MET 5 | Jalan santai: MET 3
-   - Bersepeda (sedang 20 km/jam): MET 8 | Bersepeda santai: MET 4
-   - Renang (sedang): MET 7 | Renang santai: MET 5
-   - Senam / aerobik: MET 6 | Senam berat: MET 8
-   - Yoga: MET 3 | Pilates: MET 3.5
-   - Angkat beban (sedang): MET 5 | Angkat beban berat: MET 6
-   - Bulutangkis: MET 5.5 | Tenis: MET 7
-   - Sepak bola: MET 8 | Futsal: MET 7
-   - Basket: MET 6.5 | Voli: MET 4
-   - Skipping / lompat tali: MET 10
-   - HIIT / CrossFit: MET 8
-   - Zumba / dansa: MET 7.5
-   - Panjat tebing / rock climbing: MET 8
-   - Mendaki gunung: MET 7
-   - Bela diri (karate, taekwondo, silat, tinju): MET 10
-   - Aktivitas seksual / hubungan intim (sedang): MET 4 (aktif: 5.5, ringan: 2.5)
-   - Bersih-bersih rumah (mengepel, menyapu): MET 3.5
-   - Berkebun: MET 4
-   - Mengecat / renovasi: MET 4.5
-   - Aktivitas fisik lain yang masuk akal: MET 4 (intensitas ringan) atau MET 6 (intensitas sedang-berat) — pilih yang paling sesuai.
-5. Rumus: kalori = MET × berat_badan_kg × (durasi_menit / 60)
-6. Hasil harus bilangan bulat. Maksimal 10000 kalori per sesi.`
+When input is INVALID (activity type OR duration is genuinely nonsensical):
+{ "kalori_estimasi": 0, "valid": false, "message": "Brief reason in Indonesian." }
+
+=== FEW-SHOT EXAMPLES ===
+
+Example 1 — valid:
+User: Jenis olahraga: Lari pagi\nDurasi: 30 menit\nBerat badan: 70 kg
+Output: { "kalori_estimasi": 280 }
+
+Example 2 — valid with complex duration:
+User: Jenis olahraga: Bersepeda santai\nDurasi: 1 jam 15 menit\nBerat badan: 65 kg
+Output: { "kalori_estimasi": 325 }
+
+Example 3 — invalid:
+User: Jenis olahraga: meja\nDurasi: 10 menit\nBerat badan: 70 kg
+Output: { "kalori_estimasi": 0, "valid": false, "message": ""meja" bukan aktivitas fisik yang membakar kalori." }
+
+=== STEP-BY-STEP PROCESS ===
+
+1. Validate the activity name:
+   - ACCEPT anything that involves bodily movement: sports, housework, sexual activity, manual labor, playing, dancing, martial arts, climbing, hiking, diving, walking, cycling, swimming, etc.
+   - REJECT only: gibberish (e.g. "asdasd", "oke", "xyz123"), inanimate objects (e.g. "meja", "mobil", "laptop"), or purely sedentary non-movement (e.g. "tidur", "nonton TV", "baca buku").
+   - When in doubt between valid and invalid, choose VALID.
+
+2. Parse the duration and convert to minutes:
+   - "30 menit" → 30 minutes
+   - "1 jam" → 60 minutes
+   - "1 jam 30 menit" → 90 minutes
+   - "90 jam" → 5400 minutes
+   - "2 hari" → 2880 minutes
+   - "3 set" / "3 putaran" / "3 sesi" → estimate ~15–20 active minutes per set based on activity type
+   - "100 reps" / "100 repetisi" → estimate duration based on reasonable rep speed for that activity
+   - "5 km" (running) → estimate ~25–30 minutes for recreational runner
+   - "10 km" (cycling) → estimate ~30 minutes for casual cyclist
+   - Always produce a duration. Only mark invalid if the duration string is pure gibberish (e.g. "warna hijau", "zzzz").
+
+3. Assign a MET value:
+   - Running (8 km/h): 8 | Running (10 km/h): 10 | Jogging: 6
+   - Brisk walking (6 km/h): 5 | Casual walking: 3
+   - Cycling moderate (20 km/h): 8 | Cycling leisurely: 4
+   - Swimming moderate: 7 | Swimming leisurely: 5
+   - Aerobics / gymnastics: 6 | Intense aerobics: 8
+   - Yoga: 3 | Pilates: 3.5
+   - Weight training moderate: 5 | Heavy weight training: 6
+   - Badminton: 5.5 | Tennis: 7 | Table tennis: 4
+   - Soccer: 8 | Futsal: 7
+   - Basketball: 6.5 | Volleyball: 4
+   - Jump rope / skipping: 10
+   - HIIT / CrossFit: 8
+   - Zumba / dancing: 7.5
+   - Rock climbing: 8
+   - Hiking / mountain climbing: 7
+   - Martial arts (karate, taekwondo, silat, boxing): 10
+   - Sexual activity moderate: 4 | Active: 5.5 | Light: 2.5
+   - House cleaning (mopping, sweeping): 3.5
+   - Gardening: 4
+   - Painting / renovation: 4.5
+   - Stretching: 2.5
+   - Unknown but plausible physical activity: 4 (light intensity) or 6 (moderate-heavy) — choose the best fit.
+
+4. Calculate: calories = MET × body_weight_kg × (duration_minutes / 60)
+
+5. Round to whole number. Cap at 10000 per session.
+
+Use the formula exactly. Do not guess or skip the calculation.`
 
 function buildUserMessage(jenisOlahraga: string, durasi: string, beratBadan: number) {
   return `Jenis olahraga: ${jenisOlahraga}
@@ -101,7 +125,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Tidak terautentikasi' }), {
+      return new Response(JSON.stringify({ error: 'Not authenticated' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -110,7 +134,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
     if (!supabaseUrl || !supabaseAnonKey) {
-      return new Response(JSON.stringify({ error: 'Konfigurasi server tidak lengkap' }), {
+      return new Response(JSON.stringify({ error: 'Incomplete server configuration' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -125,7 +149,7 @@ Deno.serve(async (req) => {
       error: authErr,
     } = await supabase.auth.getUser()
     if (authErr || !user) {
-      return new Response(JSON.stringify({ error: 'Tidak terautentikasi' }), {
+      return new Response(JSON.stringify({ error: 'Not authenticated' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -139,7 +163,7 @@ Deno.serve(async (req) => {
 
     if (!profile || profile.is_active === false || profile.role !== 'klien') {
       return new Response(
-        JSON.stringify({ error: 'Hanya klien aktif yang dapat menganalisa kalori olahraga.' }),
+        JSON.stringify({ error: 'Only active clients can estimate exercise calories.' }),
         {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -156,21 +180,21 @@ Deno.serve(async (req) => {
     const durasi = sanitize(String(body?.durasi ?? ''))
 
     if (!jenisOlahraga) {
-      return new Response(JSON.stringify({ error: 'Jenis olahraga wajib diisi.' }), {
+      return new Response(JSON.stringify({ error: 'Exercise type is required.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     if (!durasi) {
-      return new Response(JSON.stringify({ error: 'Durasi wajib diisi.' }), {
+      return new Response(JSON.stringify({ error: 'Duration is required.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     if (looksLikeGarbage(jenisOlahraga) && looksLikeGarbage(durasi)) {
-      return new Response(JSON.stringify({ error: 'Input tidak valid. Isi jenis olahraga dan durasi yang benar.' }), {
+      return new Response(JSON.stringify({ error: 'Invalid input. Enter a valid exercise type and duration.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -178,7 +202,7 @@ Deno.serve(async (req) => {
 
     const openaiKey = Deno.env.get('OPENAI_API_KEY')
     if (!openaiKey) {
-      return new Response(JSON.stringify({ error: 'Layanan estimasi belum dikonfigurasi.' }), {
+      return new Response(JSON.stringify({ error: 'Estimation service is not configured.' }), {
         status: 503,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -195,11 +219,12 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model,
+        response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: SYSTEM_MESSAGE },
           { role: 'user', content: userMessage },
         ],
-        temperature: 0.3,
+        temperature: 0.2,
         max_tokens: 200,
       }),
     })
@@ -209,7 +234,7 @@ Deno.serve(async (req) => {
       const msg =
         typeof oaiData?.error?.message === 'string'
           ? oaiData.error.message
-          : 'Gagal memanggil OpenAI'
+          : 'OpenAI call failed'
       return new Response(JSON.stringify({ error: msg }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -218,7 +243,7 @@ Deno.serve(async (req) => {
 
     const raw = oaiData.choices?.[0]?.message?.content
     if (typeof raw !== 'string') {
-      return new Response(JSON.stringify({ error: 'Respons OpenAI tidak valid' }), {
+      return new Response(JSON.stringify({ error: 'Invalid OpenAI response' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -227,14 +252,14 @@ Deno.serve(async (req) => {
     const clean = raw.replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(clean)
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      return new Response(JSON.stringify({ error: 'Format AI tidak dikenali' }), {
+      return new Response(JSON.stringify({ error: 'Unrecognized AI format' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     if (typeof parsed.kalori_estimasi !== 'number' || Number.isNaN(parsed.kalori_estimasi)) {
-      return new Response(JSON.stringify({ error: 'Format respons AI tidak valid' }), {
+      return new Response(JSON.stringify({ error: 'Invalid AI response format' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -243,7 +268,7 @@ Deno.serve(async (req) => {
     if (parsed.valid === false) {
       const msg = typeof parsed.message === 'string' && parsed.message.trim()
         ? parsed.message.trim()
-        : 'Input bukan aktivitas olahraga yang dikenal.'
+        : 'Input is not a recognized physical activity.'
       return new Response(JSON.stringify({ error: msg }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -259,7 +284,7 @@ Deno.serve(async (req) => {
       },
     )
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'Kesalahan server'
+    const message = e instanceof Error ? e.message : 'Server error'
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
