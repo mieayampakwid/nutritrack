@@ -95,8 +95,7 @@ vi.mock('@/hooks/useFoodLog', () => ({
 }))
 
 const openaiMock = vi.hoisted(() => ({
-  estimateCalories: vi.fn().mockResolvedValue([{ kalori: 200, karbohidrat: 45, protein: 8, lemak: 5, serat: 2, natrium: 400, nama_makanan: 'Nasi Goreng' }]),
-  validateFoodInput: vi.fn().mockResolvedValue({ valid: true }),
+  analyzeFood: vi.fn().mockResolvedValue([{ kalori: 200, karbohidrat: 45, protein: 8, lemak: 5, serat: 2, natrium: 400, nama_makanan: 'Nasi Goreng' }]),
 }))
 
 vi.mock('@/lib/openai', () => openaiMock)
@@ -139,11 +138,25 @@ describe('FoodEntryForm', () => {
   })
 
   async function setJamMakan(user, hour, minute) {
-    const popover = screen.getByTestId('popover-content')
-    await user.clear(within(popover).getByLabelText(/jam/i))
-    await user.type(within(popover).getByLabelText(/jam/i), hour)
-    await user.clear(within(popover).getByLabelText(/menit/i))
-    await user.type(within(popover).getByLabelText(/menit/i), minute)
+    // Open the jam makan popover
+    await user.click(screen.getByLabelText(/jam makan/i))
+
+    const popover = screen.getAllByTestId('popover-content').find(
+      (el) => within(el).queryByLabelText(/tambah jam/i),
+    )
+
+    // Click hour stepper to reach target
+    const tambahJam = within(popover).getByLabelText(/tambah jam/i)
+    for (let i = 0; i < Number(hour); i++) {
+      await user.click(tambahJam)
+    }
+
+    // Click minute stepper to reach target
+    const tambahMenit = within(popover).getByLabelText(/tambah menit/i)
+    for (let i = 0; i < Number(minute); i++) {
+      await user.click(tambahMenit)
+    }
+
     await user.click(within(popover).getByRole('button', { name: /simpan/i }))
   }
 
@@ -180,14 +193,14 @@ describe('FoodEntryForm', () => {
     expect(screen.getByRole('button', { name: /analisa/i })).toBeDisabled()
 
     await user.click(screen.getByRole('radio', { name: /sarapan/i }))
-    await setJamMakan(user, '7', '30')
+    await setJamMakan(user, '7', '5')
 
     expect(screen.getByRole('button', { name: /analisa/i })).toBeEnabled()
-  })
+  }, 15000)
 
-  it('does not estimate or save when any food is invalid, and highlights the invalid row', async () => {
+  it('does not save when food is invalid, and highlights the invalid row', async () => {
     const user = userEvent.setup()
-    openaiMock.validateFoodInput.mockResolvedValueOnce({
+    openaiMock.analyzeFood.mockResolvedValueOnce({
       valid: false,
       message: '"asdfqwer" sepertinya bukan makanan/minuman yang bisa kami nilai.',
       invalid_indices: [1],
@@ -195,21 +208,17 @@ describe('FoodEntryForm', () => {
 
     renderWithProviders(<FoodEntryForm userId="u1" />)
 
-    // pick meal type
     await user.click(screen.getByRole('radio', { name: /sarapan/i }))
-    await setJamMakan(user, '7', '30')
+    await setJamMakan(user, '7', '5')
 
-    // row 1 (valid)
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Nasi Goreng')
     await user.type(screen.getByPlaceholderText('0'), '1')
     await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
 
-    // add row 2 (invalid food)
     await user.click(screen.getByRole('button', { name: /tambah makanan/i }))
     const groups = screen.getAllByRole('group', { name: /diary makanan/i })
     expect(groups).toHaveLength(2)
 
-    // open second row and fill it
     await user.click(within(groups[1]).getByRole('button', { name: /ketuk untuk mengisi makanan/i }))
     await user.type(within(groups[1]).getByPlaceholderText(/nama makanan/i), 'asdfqwer')
     await user.type(within(groups[1]).getByPlaceholderText('0'), '1')
@@ -220,7 +229,6 @@ describe('FoodEntryForm', () => {
     await waitFor(() => expect(screen.getAllByRole('alert').length).toBeGreaterThan(0))
     expect(screen.getAllByRole('alert')[0]).toHaveTextContent(/asdfqwer/i)
 
-    expect(openaiMock.estimateCalories).not.toHaveBeenCalled()
     expect(supabaseMock.from).not.toHaveBeenCalled()
 
     const groupsAfter = screen.getAllByRole('group', { name: /diary makanan/i })
@@ -229,16 +237,15 @@ describe('FoodEntryForm', () => {
 
   it('maps single-item validation error to the only row (no global alert duplication)', async () => {
     const user = userEvent.setup()
-    openaiMock.validateFoodInput.mockResolvedValueOnce({
+    openaiMock.analyzeFood.mockResolvedValueOnce({
       valid: false,
       message: '"bak" sepertinya bukan makanan/minuman yang bisa kami nilai.',
-      // no invalid_indices / invalid_inputs returned
     })
 
     renderWithProviders(<FoodEntryForm userId="u1" />)
 
     await user.click(screen.getByRole('radio', { name: /sarapan/i }))
-    await setJamMakan(user, '7', '30')
+    await setJamMakan(user, '7', '5')
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'bak')
     await user.type(screen.getByPlaceholderText('0'), '1')
     await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
@@ -246,16 +253,15 @@ describe('FoodEntryForm', () => {
     await user.click(screen.getByRole('button', { name: /analisa/i }))
 
     await waitFor(() => expect(screen.getAllByRole('alert').length).toBeGreaterThan(0))
-    expect(openaiMock.estimateCalories).not.toHaveBeenCalled()
     expect(supabaseMock.from).not.toHaveBeenCalled()
 
     const onlyGroup = screen.getByRole('group', { name: /diary makanan ke-1/i })
     expect(onlyGroup).toHaveAttribute('data-invalid', 'true')
-  })
+  }, 15000)
 
-  it('sends food name + selected unit to the AI validator (unit compatibility hardening)', async () => {
+  it('sends food name, quantity, and unit to analyze-food', async () => {
     const user = userEvent.setup()
-    openaiMock.validateFoodInput.mockResolvedValueOnce({
+    openaiMock.analyzeFood.mockResolvedValueOnce({
       valid: false,
       message: '"Bakso 1 gram" sepertinya tidak cocok. Periksa satuan porsinya.',
       invalid_indices: [0],
@@ -267,13 +273,13 @@ describe('FoodEntryForm', () => {
     await user.type(screen.getByPlaceholderText('0'), '1')
     await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
 
-    await setJamMakan(user, '7', '30')
+    await setJamMakan(user, '7', '5')
 
     await user.click(screen.getByRole('button', { name: /analisa/i }))
 
-    await waitFor(() => expect(openaiMock.validateFoodInput).toHaveBeenCalledTimes(1))
-    expect(openaiMock.validateFoodInput).toHaveBeenCalledWith([
-      { nama_makanan: 'Bakso', unit_nama: 'gram' },
+    await waitFor(() => expect(openaiMock.analyzeFood).toHaveBeenCalledTimes(1))
+    expect(openaiMock.analyzeFood).toHaveBeenCalledWith([
+      { nama_makanan: 'Bakso', jumlah: 1, unit_nama: 'gram' },
     ])
-  })
+  }, 15000)
 })
