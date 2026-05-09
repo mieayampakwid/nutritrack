@@ -17,8 +17,9 @@ import {
 } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
+import { TimeScroller } from '@/components/food/TimeScroller'
 import { useFoodNameSuggestions, useFoodUnits } from '@/hooks/useFoodLog'
-import { estimateCalories, validateFoodInput } from '@/lib/openai'
+import { analyzeFood } from '@/lib/openai'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
@@ -335,7 +336,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
   const resultRef = useRef(null)
   const analyzingAnchorRef = useRef(null)
   const rowErrorAnchorRef = useRef(null)
-  const minuteRef = useRef(null)
 
   const suggestionNames = useMemo(
     () => suggestions.map((s) => s.nama_makanan).filter(Boolean),
@@ -494,40 +494,117 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
 
     setLoading(true)
     try {
-      const validation = await validateFoodInput(
-        filled.map((x) => ({ nama_makanan: x.nama_makanan, unit_nama: x.unit_nama })),
+      const result = await analyzeFood(
+        filled.map((x) => ({
+          nama_makanan: x.nama_makanan,
+          jumlah: x.jumlah,
+          unit_nama: x.unit_nama,
+        })),
       )
-      if (validation.valid === false) {
-        setError(validation.message)
-        const invalidRowIds = new Set()
-        const message = validation.message?.trim() || 'Input makanan tidak valid.'
 
-        if (Array.isArray(validation.invalid_indices) && validation.invalid_indices.length > 0) {
-          for (const idx of validation.invalid_indices) {
+      // Success — server returns nutrition array
+      if (Array.isArray(result)) {
+        const est = result
+        const byName = {}
+        for (const e of est) {
+          if (e?.nama_makanan != null)
+            byName[String(e.nama_makanan).trim().toLowerCase()] = e
+        }
+
+        const itemsWithKal = filled.map((x) => {
+          const key = x.nama_makanan.toLowerCase()
+          const e = byName[key] ?? {}
+          return {
+            ...x,
+            kalori_estimasi: Number(e.kalori) || 0,
+            karbohidrat: Number(e.karbohidrat) || 0,
+            protein: Number(e.protein) || 0,
+            lemak: Number(e.lemak) || 0,
+            serat: Number(e.serat) || 0,
+            natrium: Number(e.natrium) || 0,
+          }
+        })
+
+        const total = itemsWithKal.reduce((a, x) => a + x.kalori_estimasi, 0)
+        const totalKarbohidrat = itemsWithKal.reduce((a, x) => a + (x.karbohidrat || 0), 0)
+        const totalProtein = itemsWithKal.reduce((a, x) => a + (x.protein || 0), 0)
+        const totalLemak = itemsWithKal.reduce((a, x) => a + (x.lemak || 0), 0)
+        const totalSerat = itemsWithKal.reduce((a, x) => a + (x.serat || 0), 0)
+        const totalNatrium = itemsWithKal.reduce((a, x) => a + (x.natrium || 0), 0)
+
+        setPendingResult({
+          items: itemsWithKal,
+          total,
+          totalKarbohidrat,
+          totalProtein,
+          totalLemak,
+          totalSerat,
+          totalNatrium,
+          waktuMakan: waktu,
+          tanggal,
+        })
+        return
+      }
+
+      // Error — server returns { valid: false, ... }
+      if (result && typeof result === 'object' && result.valid === false) {
+        const msg = String(result.message ?? 'Input makanan tidak valid.')
+        setError(msg)
+
+        const rowMessages = {}
+
+        if (Array.isArray(result.item_issues) && result.item_issues.length > 0) {
+          for (const issue of result.item_issues) {
+            const idx = typeof issue?.index === 'number' ? issue.index : -1
+            if (idx < 0 || idx >= filled.length) continue
             const rowId = filled[idx]?.row?.id
-            if (rowId) invalidRowIds.add(rowId)
-          }
-        } else if (Array.isArray(validation.invalid_inputs) && validation.invalid_inputs.length > 0) {
-          const normalizedBad = new Set(
-            validation.invalid_inputs
-              .map((s) => String(s ?? '').trim().toLowerCase())
-              .filter(Boolean),
-          )
-          for (const x of filled) {
-            const key = x.nama_makanan.trim().toLowerCase()
-            if (normalizedBad.has(key)) invalidRowIds.add(x.row.id)
+            if (!rowId) continue
+            if (Array.isArray(issue.fields) && issue.fields.length > 0) {
+              const fieldMsgs = issue.fields
+                .filter((f) => f && typeof f.message === 'string' && f.message.trim())
+                .map((f) => f.message.trim())
+              if (fieldMsgs.length > 0) {
+                rowMessages[rowId] = fieldMsgs.join(' ')
+              }
+            }
           }
         }
 
-        // If there's only one submitted row, map the error to that row even if the
-        // backend didn't return structured invalid indices/inputs.
-        if (invalidRowIds.size === 0 && filled.length === 1 && filled[0]?.row?.id) {
-          invalidRowIds.add(filled[0].row.id)
+        if (Object.keys(rowMessages).length === 0) {
+          const invalidRowIds = new Set()
+          if (
+            Array.isArray(result.invalid_indices) &&
+            result.invalid_indices.length > 0
+          ) {
+            for (const idx of result.invalid_indices) {
+              const rowId = filled[idx]?.row?.id
+              if (rowId) invalidRowIds.add(rowId)
+            }
+          } else if (
+            Array.isArray(result.invalid_inputs) &&
+            result.invalid_inputs.length > 0
+          ) {
+            const normalizedBad = new Set(
+              result.invalid_inputs
+                .map((s) => String(s ?? '').trim().toLowerCase())
+                .filter(Boolean),
+            )
+            for (const x of filled) {
+              const key = x.nama_makanan.trim().toLowerCase()
+              if (normalizedBad.has(key)) invalidRowIds.add(x.row.id)
+            }
+          }
+          if (invalidRowIds.size === 0 && filled.length === 1 && filled[0]?.row?.id) {
+            invalidRowIds.add(filled[0].row.id)
+          }
+          for (const id of invalidRowIds) {
+            rowMessages[id] = msg
+          }
         }
 
-        if (invalidRowIds.size > 0) {
-          setRowErrorsById(Object.fromEntries(Array.from(invalidRowIds).map((id) => [id, message])))
-          const firstBad = Array.from(invalidRowIds)[0]
+        if (Object.keys(rowMessages).length > 0) {
+          setRowErrorsById(rowMessages)
+          const firstBad = Object.keys(rowMessages)[0]
           setExpandedRowId(firstBad)
           requestAnimationFrame(() => {
             rowErrorAnchorRef.current?.scrollIntoView({
@@ -539,54 +616,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
         return
       }
 
-      const est = await estimateCalories(
-        filled.map((x) => ({
-          nama_makanan: x.nama_makanan,
-          jumlah: x.jumlah,
-          unit_nama: x.unit_nama,
-        })),
-      )
-
-      if (!Array.isArray(est)) throw new Error('Format respons AI tidak valid.')
-
-      const byName = {}
-      for (const e of est) {
-        if (e?.nama_makanan != null)
-          byName[String(e.nama_makanan).trim().toLowerCase()] = e
-      }
-
-      const itemsWithKal = filled.map((x) => {
-        const key = x.nama_makanan.toLowerCase()
-        const e = byName[key] ?? {}
-        return {
-          ...x,
-          kalori_estimasi: Number(e.kalori) || 0,
-          karbohidrat: Number(e.karbohidrat) || 0,
-          protein: Number(e.protein) || 0,
-          lemak: Number(e.lemak) || 0,
-          serat: Number(e.serat) || 0,
-          natrium: Number(e.natrium) || 0,
-        }
-      })
-
-      const total = itemsWithKal.reduce((a, x) => a + x.kalori_estimasi, 0)
-      const totalKarbohidrat = itemsWithKal.reduce((a, x) => a + (x.karbohidrat || 0), 0)
-      const totalProtein = itemsWithKal.reduce((a, x) => a + (x.protein || 0), 0)
-      const totalLemak = itemsWithKal.reduce((a, x) => a + (x.lemak || 0), 0)
-      const totalSerat = itemsWithKal.reduce((a, x) => a + (x.serat || 0), 0)
-      const totalNatrium = itemsWithKal.reduce((a, x) => a + (x.natrium || 0), 0)
-
-      setPendingResult({
-        items: itemsWithKal,
-        total,
-        totalKarbohidrat,
-        totalProtein,
-        totalLemak,
-        totalSerat,
-        totalNatrium,
-        waktuMakan: waktu,
-        tanggal,
-      })
+      throw new Error('Format respons AI tidak valid.')
     } catch (e) {
       logError('FoodEntryForm.handleAnalyze', e)
       setError(e.message ?? 'Terjadi kesalahan.')
@@ -959,54 +989,22 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp }) {
                 <Clock className="h-4 w-4 text-muted-foreground/60" />
                 <span className="text-sm font-semibold tracking-tight text-foreground">Jam makan</span>
               </div>
-              <div className="flex items-center justify-center gap-2">
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={2}
-                  placeholder="00"
+              <div className="flex items-center justify-center gap-4">
+                <TimeScroller
+                  min={0}
+                  max={23}
                   value={jamHour}
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, '').slice(0, 2)
-                    if (raw === '') {
-                      setJamHour('')
-                      return
-                    }
-                    const n = parseInt(raw, 10)
-                    if (n > 23) setJamHour('23')
-                    else setJamHour(String(n))
-                    if (raw.length === 2) minuteRef.current?.focus()
-                  }}
-                  onFocus={(e) => e.target.select()}
-                  className="food-entry-compact-input h-10 min-h-[44px] w-[4rem] text-center text-base tabular-nums leading-tight md:h-9 md:min-h-0 md:text-sm"
-                  aria-label="Jam"
+                  onChange={setJamHour}
+                  ariaLabel="Jam"
                 />
-                <span className="text-base font-medium text-muted-foreground/40 md:text-sm">:</span>
-                <Input
-                  ref={minuteRef}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={2}
-                  placeholder="00"
+                <span className="text-lg font-light text-muted-foreground/60 md:text-base">:</span>
+                <TimeScroller
+                  min={0}
+                  max={59}
                   value={jamMinute}
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, '').slice(0, 2)
-                    if (raw === '') {
-                      setJamMinute('')
-                      return
-                    }
-                    const n = parseInt(raw, 10)
-                    if (n > 59) setJamMinute('59')
-                    else setJamMinute(String(n))
-                  }}
-                  onFocus={(e) => e.target.select()}
-                  className="food-entry-compact-input h-10 min-h-[44px] w-[4rem] text-center text-base tabular-nums leading-tight md:h-9 md:min-h-0 md:text-sm"
-                  aria-label="Menit"
+                  onChange={setJamMinute}
+                  ariaLabel="Menit"
                 />
-              </div>
-              <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
-                <span>Jam</span>
-                <span>Menit</span>
               </div>
             </div>
             <div className="border-t border-border/60 px-5 py-3">
