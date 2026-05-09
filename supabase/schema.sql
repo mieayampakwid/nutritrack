@@ -88,7 +88,8 @@ create table if not exists public.assessments (
   faktor_stres numeric(6,3) not null,
   energi_total numeric(10,2) not null,
   created_by uuid not null references public.profiles(id),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  anjuran_kalori_harian numeric(10,2)
 );
 
 create index if not exists assessments_user_created_idx on public.assessments (user_id, created_at desc);
