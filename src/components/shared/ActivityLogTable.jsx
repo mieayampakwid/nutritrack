@@ -65,6 +65,8 @@ export function ActivityLogTable({
   pageSize = 10,
   embedded = false,
   tanggal,
+  dateFrom,
+  dateTo,
 }) {
   const theme = THEMES[type]
   const Icon = theme.icon
@@ -73,10 +75,22 @@ export function ActivityLogTable({
   const filteredData = useMemo(() => {
     if (!data || data.length === 0) return []
 
+    // Date range filter (takes precedence)
+    if (dateFrom || dateTo) {
+      return data.filter(item => {
+        if (!item.tanggal) return false
+        if (dateFrom && item.tanggal < dateFrom) return false
+        if (dateTo && item.tanggal > dateTo) return false
+        return true
+      })
+    }
+
+    // Single date exact match (backward compat)
     if (tanggal) {
       return data.filter(item => item.tanggal === tanggal)
     }
 
+    // Default: last 14 days
     const today = new Date()
     const twoWeeksAgo = subDays(today, 14)
     const minTanggal = toIsoDateLocal(twoWeeksAgo)
@@ -85,7 +99,7 @@ export function ActivityLogTable({
       if (!item.tanggal) return false
       return item.tanggal >= minTanggal
     })
-  }, [data, tanggal])
+  }, [data, tanggal, dateFrom, dateTo])
 
   // Group by date
   const dataByDate = useMemo(() => {
