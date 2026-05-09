@@ -10,8 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { FoodLogMealDetailDialog } from '@/components/food/FoodLogMealDetailDialog'
 import { formatDateId, formatNumberId, toIsoDateLocal } from '@/lib/format'
 import { KaloriValue } from '@/components/shared/KaloriValue'
+import { useFoodLogItems } from '@/hooks/useFoodLog'
 import { cn } from '@/lib/utils'
 
 const THEMES = {
@@ -107,9 +109,32 @@ export function ActivityLogTable({
 
   // Pagination
   const [page, setPage] = useState(0)
+  const [modalDate, setModalDate] = useState(null)
   const totalPages = Math.max(1, Math.ceil(sortedDates.length / pageSize))
   const start = page * pageSize
   const paginatedDates = sortedDates.slice(start, start + pageSize)
+
+  const logIdsForPage = useMemo(() => {
+    if (type !== 'food') return []
+    const ids = []
+    for (const d of paginatedDates) {
+      for (const item of dataByDate.get(d) ?? []) {
+        ids.push(item.id)
+      }
+    }
+    return ids
+  }, [type, paginatedDates, dataByDate])
+
+  const { data: items = [] } = useFoodLogItems(logIdsForPage, type === 'food' && logIdsForPage.length > 0)
+
+  const itemsByLogId = useMemo(() => {
+    const acc = {}
+    for (const it of items) {
+      if (!acc[it.food_log_id]) acc[it.food_log_id] = []
+      acc[it.food_log_id].push(it)
+    }
+    return acc
+  }, [items])
 
   // Calculate totals
   function dayTotal(dataForDay) {
@@ -236,6 +261,8 @@ export function ActivityLogTable({
               <button
                 key={date}
                 type="button"
+                onClick={type === 'food' ? () => setModalDate(date) : undefined}
+                aria-label={type === 'food' ? `Buka detail log makan ${dateLabel}` : undefined}
                 className={cn(
                   'group w-full cursor-pointer touch-manipulation select-none text-left outline-none transition-[transform,box-shadow,border-color] duration-200',
                   'rounded-2xl border p-3.5 shadow-sm',
@@ -294,6 +321,7 @@ export function ActivityLogTable({
               <TableHead>Tanggal</TableHead>
               <TableHead>{type === 'food' ? 'Log Makan' : 'Aktivitas'}</TableHead>
               <TableHead className="text-right">Total</TableHead>
+              {type === 'food' && <TableHead />}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -326,12 +354,19 @@ export function ActivityLogTable({
                       </div>
                     ) : '—'}
                   </TableCell>
+                  {type === 'food' && (
+                    <TableCell className="align-top">
+                      <Button variant="outline" size="sm" onClick={() => setModalDate(date)}>
+                        Detail
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               )
             })}
             {paginatedDates.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="text-center text-muted-foreground">
+                <TableCell colSpan={type === 'food' ? 4 : 3} className="text-center text-muted-foreground">
                   Belum ada log.
                 </TableCell>
               </TableRow>
@@ -368,6 +403,16 @@ export function ActivityLogTable({
           Berikutnya
         </Button>
       </div>
+
+      {modalDate && type === 'food' && (
+        <FoodLogMealDetailDialog
+          open={Boolean(modalDate)}
+          onOpenChange={(o) => !o && setModalDate(null)}
+          tanggal={modalDate}
+          logsForDay={dataByDate.get(modalDate) ?? []}
+          itemsByLogId={itemsByLogId}
+        />
+      )}
     </div>
   )
 }
