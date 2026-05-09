@@ -22,7 +22,7 @@ const THEMES = {
     color: 'border-amber-200/55 bg-amber-50/95 text-card-foreground ring-1 ring-amber-200/35',
     hoverColor: 'hover:border-amber-300/55 hover:bg-amber-50',
     rowColor: 'border-amber-100/70 bg-amber-50/90 hover:bg-amber-50',
-    textColor: 'text-amber-600',
+    textColor: 'text-amber-700',
     borderColor: 'border-amber-200/40',
   },
   exercise: {
@@ -30,7 +30,7 @@ const THEMES = {
     color: 'border-blue-200/55 bg-blue-50/95 text-card-foreground ring-1 ring-blue-200/35',
     hoverColor: 'hover:border-blue-300/55 hover:bg-blue-50',
     rowColor: 'border-blue-100/70 bg-blue-50/90 hover:bg-blue-50',
-    textColor: 'text-blue-600',
+    textColor: 'text-blue-700',
     borderColor: 'border-blue-200/40',
   },
 }
@@ -182,7 +182,7 @@ export function ActivityLogTable({
     const { karbohidrat, protein, lemak } = nutrients
     if (!karbohidrat && !protein && !lemak) return null
     return (
-      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[9px] leading-none text-muted-foreground/60">
+      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] leading-none text-muted-foreground/80">
         <span>K:{formatNumberId(karbohidrat, { maximumFractionDigits: 1 })}g</span>
         <span>P:{formatNumberId(protein, { maximumFractionDigits: 1 })}g</span>
         <span>L:{formatNumberId(lemak, { maximumFractionDigits: 1 })}g</span>
@@ -299,10 +299,10 @@ export function ActivityLogTable({
                   </span>
                   <div className="flex shrink-0 items-center gap-2">
                     <div className="text-right">
-                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
                         Total
                       </div>
-                      <div className={cn('text-base font-semibold tabular-nums', theme.textColor)}>
+                      <div className={cn('text-base font-bold tabular-nums', theme.textColor)}>
                         {total > 0 ? <KaloriValue value={total} /> : '—'}
                       </div>
                       {type === 'food' && <NutrientSummary nutrients={nutrients} />}
@@ -318,7 +318,7 @@ export function ActivityLogTable({
                     />
                   </div>
                 </div>
-                <ul className="mt-3 space-y-2 border-t opacity-30 pt-3">
+                <ul className="mt-3 space-y-2 border-t border-muted/60 pt-3">
                   {(isSingleDate ? paginatedItemsForDay : dataForDay).map((item) => (
                     <li key={item.id}>{renderMobileItem(item)}</li>
                   ))}
@@ -352,7 +352,7 @@ export function ActivityLogTable({
               const nutrients = dayNutrients(dataForDay)
               return (
                 <TableRow key={date} className={theme.rowColor}>
-                  <TableCell className="whitespace-nowrap align-top">
+                  <TableCell className="whitespace-nowrap align-top font-semibold text-foreground">
                     {formatDateId(date)}
                   </TableCell>
                   <TableCell className="max-w-[min(28rem,42vw)] align-top text-sm">
