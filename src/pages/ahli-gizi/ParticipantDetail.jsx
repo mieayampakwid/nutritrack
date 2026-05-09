@@ -7,16 +7,20 @@ import { VitalMetricCard } from '@/components/participants/VitalMetricCard'
 import { ProgressTimeline } from '@/components/participants/ProgressTimeline'
 import { SectionAccordion } from '@/components/participants/SectionAccordion'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { DateRangeFilter } from '@/components/shared/DateRangeFilter'
 import { useMeasurements } from '@/hooks/useMeasurement'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { getBMICategoryAsiaPacific } from '@/lib/bmiCalculator'
+import { toIsoDateLocal } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import { useMemo, useState } from 'react'
-import { differenceInYears, format } from 'date-fns'
+import { differenceInYears, format, subDays } from 'date-fns'
 
 export function ParticipantDetail() {
   const { id } = useParams()
   const [selectedMetric, setSelectedMetric] = useState('berat_badan')
+  const [dateFrom, setDateFrom] = useState(() => toIsoDateLocal(subDays(new Date(), 13)))
+  const [dateTo, setDateTo] = useState(() => toIsoDateLocal(new Date()))
 
   const { data: client, isLoading: loadingClient } = useQuery({
     queryKey: ['profile', id],
@@ -32,8 +36,8 @@ export function ParticipantDetail() {
     },
   })
 
-  const { data: measurements = [] } = useMeasurements(id, Boolean(id))
-  const { data: logs = [] } = useFoodLogsForUser(id, Boolean(id))
+  const { data: measurements = [] } = useMeasurements(id, { enabled: Boolean(id), dateFrom, dateTo })
+  const { data: logs = [] } = useFoodLogsForUser(id, { enabled: Boolean(id), dateFrom, dateTo })
 
   const lastMeasurement = useMemo(() => {
     if (!measurements.length) return null
@@ -156,6 +160,18 @@ export function ParticipantDetail() {
         />
       </div>
 
+      {/* Date Range Filter */}
+      <div className="mb-4">
+        <DateRangeFilter
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onChange={({ dateFrom: newFrom, dateTo: newTo }) => {
+            setDateFrom(newFrom)
+            setDateTo(newTo)
+          }}
+        />
+      </div>
+
       {/* Progress Timeline */}
       <div className="mb-8">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-foreground">Perkembangan</h2>
@@ -170,6 +186,8 @@ export function ParticipantDetail() {
       <SectionAccordion
         participantId={id}
         foodLogs={logs}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
       />
     </AppShell>
   )
