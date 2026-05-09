@@ -87,7 +87,7 @@ function ClientQuickSummaryBody({ clientId, linkPrefix }) {
 
   const bmi = calculateBMI(client?.berat_badan, client?.tinggi_badan)
   const bmiCat = getBMICategoryAsiaPacific(bmi)
-  const energy = latestAssessment?.energi_total
+  const energy = latestAssessment?.anjuran_kalori_harian ?? latestAssessment?.energi_total
 
   const { dateFrom: evalRangeFrom, dateTo: evalRangeTo } = useMemo(() => {
     let a = evalDateFrom
