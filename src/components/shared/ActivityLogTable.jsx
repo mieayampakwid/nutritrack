@@ -110,20 +110,41 @@ export function ActivityLogTable({
   // Pagination
   const [page, setPage] = useState(0)
   const [modalDate, setModalDate] = useState(null)
-  const totalPages = Math.max(1, Math.ceil(sortedDates.length / pageSize))
+
+  const isSingleDate = sortedDates.length === 1 && Boolean(tanggal)
+
+  const totalItemCount = filteredData.length
+  const totalPages = isSingleDate
+    ? Math.max(1, Math.ceil(totalItemCount / pageSize))
+    : Math.max(1, Math.ceil(sortedDates.length / pageSize))
+
   const start = page * pageSize
-  const paginatedDates = sortedDates.slice(start, start + pageSize)
+  const paginatedDates = isSingleDate
+    ? sortedDates
+    : sortedDates.slice(start, start + pageSize)
+
+  const paginatedItemsForDay = useMemo(() => {
+    if (!isSingleDate || paginatedDates.length === 0) return []
+    const dataForDay = dataByDate.get(paginatedDates[0]) ?? []
+    return dataForDay.slice(start, start + pageSize)
+  }, [isSingleDate, paginatedDates, dataByDate, start, pageSize])
 
   const logIdsForPage = useMemo(() => {
     if (type !== 'food') return []
     const ids = []
-    for (const d of paginatedDates) {
-      for (const item of dataByDate.get(d) ?? []) {
+    if (isSingleDate) {
+      for (const item of paginatedItemsForDay) {
         ids.push(item.id)
+      }
+    } else {
+      for (const d of paginatedDates) {
+        for (const item of dataByDate.get(d) ?? []) {
+          ids.push(item.id)
+        }
       }
     }
     return ids
-  }, [type, paginatedDates, dataByDate])
+  }, [type, isSingleDate, paginatedDates, paginatedItemsForDay, dataByDate])
 
   const { data: items = [] } = useFoodLogItems(logIdsForPage, type === 'food' && logIdsForPage.length > 0)
 
@@ -298,7 +319,7 @@ export function ActivityLogTable({
                   </div>
                 </div>
                 <ul className="mt-3 space-y-2 border-t opacity-30 pt-3">
-                  {dataForDay.map((item) => (
+                  {(isSingleDate ? paginatedItemsForDay : dataForDay).map((item) => (
                     <li key={item.id}>{renderMobileItem(item)}</li>
                   ))}
                 </ul>
@@ -336,7 +357,7 @@ export function ActivityLogTable({
                   </TableCell>
                   <TableCell className="max-w-[min(28rem,42vw)] align-top text-sm">
                     <ul className="space-y-1.5 py-0.5">
-                      {dataForDay.map((item) => (
+                      {(isSingleDate ? paginatedItemsForDay : dataForDay).map((item) => (
                         <li key={item.id}>{renderTableRowItem(item)}</li>
                       ))}
                     </ul>
@@ -376,33 +397,35 @@ export function ActivityLogTable({
       </div>
 
       {/* Pagination Controls */}
-      <div
-        className={cn(
-          'flex items-center justify-between gap-2',
-          'rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm ring-1 ring-black/[0.04]',
-          'md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none md:ring-0',
-        )}
-      >
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page <= 0}
-          onClick={() => setPage((p) => Math.max(0, p - 1))}
+      {totalPages > 1 && (
+        <div
+          className={cn(
+            'flex items-center justify-between gap-2',
+            'rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm ring-1 ring-black/[0.04]',
+            'md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none md:ring-0',
+          )}
         >
-          Sebelumnya
-        </Button>
-        <span className="text-sm font-medium text-foreground tabular-nums md:font-normal md:text-muted-foreground">
-          Halaman {page + 1} / {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page >= totalPages - 1}
-          onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-        >
-          Berikutnya
-        </Button>
-      </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+          >
+            Sebelumnya
+          </Button>
+          <span className="text-sm font-medium text-foreground tabular-nums md:font-normal md:text-muted-foreground">
+            Halaman {page + 1} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+          >
+            Berikutnya
+          </Button>
+        </div>
+      )}
 
       {modalDate && type === 'food' && (
         <FoodLogMealDetailDialog
