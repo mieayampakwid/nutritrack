@@ -105,7 +105,7 @@ export function ClientNutritionSummaryCard({ profile, className }) {
         </dl>
 
         <div className="rounded-lg border border-primary/20 bg-primary/[0.06] px-3 py-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Kebutuhan kalori (asesmen)</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Kebutuhan kalori</p>
           {isLoading ? (
             <div className="mt-2 flex justify-center py-2">
               <LoadingSpinner />
@@ -113,9 +113,16 @@ export function ClientNutritionSummaryCard({ profile, className }) {
           ) : latest ? (
             <div className="mt-2 space-y-2">
               <p className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
-                {formatNumberId(latest.energi_total)}{' '}
+                {formatNumberId(latest.anjuran_kalori_harian ?? latest.energi_total)}{' '}
                 <span className="text-base font-semibold text-muted-foreground">kkal/hari</span>
               </p>
+              {latest.anjuran_kalori_harian != null ? (
+                <p className="text-xs text-muted-foreground">
+                  Anjuran ahli gizi{latest.energi_total != null ? ` (HB: ${formatNumberId(latest.energi_total)} kkal/hari)` : ''}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Berdasarkan Harris–Benedict</p>
+              )}
               <dl className="grid gap-1 text-xs text-muted-foreground">
                 <div className="flex justify-between gap-2">
                   <dt>Faktor aktivitas</dt>
