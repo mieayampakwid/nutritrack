@@ -36,7 +36,4 @@ supabase/.temp/
 coverage/
 
 # Local agent/IDE config
-.claude/
-.agents/
-skills/
-skills-lock.json
+.claude/.settings.local.json
