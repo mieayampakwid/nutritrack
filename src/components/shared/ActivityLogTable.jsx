@@ -10,8 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { FoodLogMealDetailDialog } from '@/components/food/FoodLogMealDetailDialog'
 import { formatDateId, formatNumberId, toIsoDateLocal } from '@/lib/format'
 import { KaloriValue } from '@/components/shared/KaloriValue'
+import { useFoodLogItems } from '@/hooks/useFoodLog'
 import { cn } from '@/lib/utils'
 
 const THEMES = {
@@ -20,7 +22,7 @@ const THEMES = {
     color: 'border-amber-200/55 bg-amber-50/95 text-card-foreground ring-1 ring-amber-200/35',
     hoverColor: 'hover:border-amber-300/55 hover:bg-amber-50',
     rowColor: 'border-amber-100/70 bg-amber-50/90 hover:bg-amber-50',
-    textColor: 'text-amber-600',
+    textColor: 'text-amber-700',
     borderColor: 'border-amber-200/40',
   },
   exercise: {
@@ -28,7 +30,7 @@ const THEMES = {
     color: 'border-blue-200/55 bg-blue-50/95 text-card-foreground ring-1 ring-blue-200/35',
     hoverColor: 'hover:border-blue-300/55 hover:bg-blue-50',
     rowColor: 'border-blue-100/70 bg-blue-50/90 hover:bg-blue-50',
-    textColor: 'text-blue-600',
+    textColor: 'text-blue-700',
     borderColor: 'border-blue-200/40',
   },
 }
@@ -107,9 +109,53 @@ export function ActivityLogTable({
 
   // Pagination
   const [page, setPage] = useState(0)
-  const totalPages = Math.max(1, Math.ceil(sortedDates.length / pageSize))
+  const [modalDate, setModalDate] = useState(null)
+
+  const isSingleDate = sortedDates.length === 1 && Boolean(tanggal)
+
+  const totalItemCount = filteredData.length
+  const totalPages = isSingleDate
+    ? Math.max(1, Math.ceil(totalItemCount / pageSize))
+    : Math.max(1, Math.ceil(sortedDates.length / pageSize))
+
   const start = page * pageSize
-  const paginatedDates = sortedDates.slice(start, start + pageSize)
+  const paginatedDates = isSingleDate
+    ? sortedDates
+    : sortedDates.slice(start, start + pageSize)
+
+  const paginatedItemsForDay = useMemo(() => {
+    if (!isSingleDate || paginatedDates.length === 0) return []
+    const dataForDay = dataByDate.get(paginatedDates[0]) ?? []
+    return dataForDay.slice(start, start + pageSize)
+  }, [isSingleDate, paginatedDates, dataByDate, start, pageSize])
+
+  const logIdsForPage = useMemo(() => {
+    if (type !== 'food') return []
+    const ids = []
+    if (isSingleDate) {
+      for (const item of paginatedItemsForDay) {
+        ids.push(item.id)
+      }
+    } else {
+      for (const d of paginatedDates) {
+        for (const item of dataByDate.get(d) ?? []) {
+          ids.push(item.id)
+        }
+      }
+    }
+    return ids
+  }, [type, isSingleDate, paginatedDates, paginatedItemsForDay, dataByDate])
+
+  const { data: items = [] } = useFoodLogItems(logIdsForPage, type === 'food' && logIdsForPage.length > 0)
+
+  const itemsByLogId = useMemo(() => {
+    const acc = {}
+    for (const it of items) {
+      if (!acc[it.food_log_id]) acc[it.food_log_id] = []
+      acc[it.food_log_id].push(it)
+    }
+    return acc
+  }, [items])
 
   // Calculate totals
   function dayTotal(dataForDay) {
@@ -136,7 +182,7 @@ export function ActivityLogTable({
     const { karbohidrat, protein, lemak } = nutrients
     if (!karbohidrat && !protein && !lemak) return null
     return (
-      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[9px] leading-none text-muted-foreground/60">
+      <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] leading-none text-muted-foreground/80">
         <span>K:{formatNumberId(karbohidrat, { maximumFractionDigits: 1 })}g</span>
         <span>P:{formatNumberId(protein, { maximumFractionDigits: 1 })}g</span>
         <span>L:{formatNumberId(lemak, { maximumFractionDigits: 1 })}g</span>
@@ -236,6 +282,8 @@ export function ActivityLogTable({
               <button
                 key={date}
                 type="button"
+                onClick={type === 'food' ? () => setModalDate(date) : undefined}
+                aria-label={type === 'food' ? `Buka detail log makan ${dateLabel}` : undefined}
                 className={cn(
                   'group w-full cursor-pointer touch-manipulation select-none text-left outline-none transition-[transform,box-shadow,border-color] duration-200',
                   'rounded-2xl border p-3.5 shadow-sm',
@@ -251,10 +299,10 @@ export function ActivityLogTable({
                   </span>
                   <div className="flex shrink-0 items-center gap-2">
                     <div className="text-right">
-                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
                         Total
                       </div>
-                      <div className={cn('text-base font-semibold tabular-nums', theme.textColor)}>
+                      <div className={cn('text-base font-bold tabular-nums', theme.textColor)}>
                         {total > 0 ? <KaloriValue value={total} /> : '—'}
                       </div>
                       {type === 'food' && <NutrientSummary nutrients={nutrients} />}
@@ -270,8 +318,8 @@ export function ActivityLogTable({
                     />
                   </div>
                 </div>
-                <ul className="mt-3 space-y-2 border-t opacity-30 pt-3">
-                  {dataForDay.map((item) => (
+                <ul className="mt-3 space-y-2 border-t border-muted/60 pt-3">
+                  {(isSingleDate ? paginatedItemsForDay : dataForDay).map((item) => (
                     <li key={item.id}>{renderMobileItem(item)}</li>
                   ))}
                 </ul>
@@ -294,6 +342,7 @@ export function ActivityLogTable({
               <TableHead>Tanggal</TableHead>
               <TableHead>{type === 'food' ? 'Log Makan' : 'Aktivitas'}</TableHead>
               <TableHead className="text-right">Total</TableHead>
+              {type === 'food' && <TableHead />}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -303,12 +352,12 @@ export function ActivityLogTable({
               const nutrients = dayNutrients(dataForDay)
               return (
                 <TableRow key={date} className={theme.rowColor}>
-                  <TableCell className="whitespace-nowrap align-top">
+                  <TableCell className="whitespace-nowrap align-top font-semibold text-foreground">
                     {formatDateId(date)}
                   </TableCell>
                   <TableCell className="max-w-[min(28rem,42vw)] align-top text-sm">
                     <ul className="space-y-1.5 py-0.5">
-                      {dataForDay.map((item) => (
+                      {(isSingleDate ? paginatedItemsForDay : dataForDay).map((item) => (
                         <li key={item.id}>{renderTableRowItem(item)}</li>
                       ))}
                     </ul>
@@ -326,12 +375,19 @@ export function ActivityLogTable({
                       </div>
                     ) : '—'}
                   </TableCell>
+                  {type === 'food' && (
+                    <TableCell className="align-top">
+                      <Button variant="outline" size="sm" onClick={() => setModalDate(date)}>
+                        Detail
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               )
             })}
             {paginatedDates.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="text-center text-muted-foreground">
+                <TableCell colSpan={type === 'food' ? 4 : 3} className="text-center text-muted-foreground">
                   Belum ada log.
                 </TableCell>
               </TableRow>
@@ -341,33 +397,45 @@ export function ActivityLogTable({
       </div>
 
       {/* Pagination Controls */}
-      <div
-        className={cn(
-          'flex items-center justify-between gap-2',
-          'rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm ring-1 ring-black/[0.04]',
-          'md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none md:ring-0',
-        )}
-      >
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page <= 0}
-          onClick={() => setPage((p) => Math.max(0, p - 1))}
+      {totalPages > 1 && (
+        <div
+          className={cn(
+            'flex items-center justify-between gap-2',
+            'rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm ring-1 ring-black/[0.04]',
+            'md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none md:ring-0',
+          )}
         >
-          Sebelumnya
-        </Button>
-        <span className="text-sm font-medium text-foreground tabular-nums md:font-normal md:text-muted-foreground">
-          Halaman {page + 1} / {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page >= totalPages - 1}
-          onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-        >
-          Berikutnya
-        </Button>
-      </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+          >
+            Sebelumnya
+          </Button>
+          <span className="text-sm font-medium text-foreground tabular-nums md:font-normal md:text-muted-foreground">
+            Halaman {page + 1} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+          >
+            Berikutnya
+          </Button>
+        </div>
+      )}
+
+      {modalDate && type === 'food' && (
+        <FoodLogMealDetailDialog
+          open={Boolean(modalDate)}
+          onOpenChange={(o) => !o && setModalDate(null)}
+          tanggal={modalDate}
+          logsForDay={dataByDate.get(modalDate) ?? []}
+          itemsByLogId={itemsByLogId}
+        />
+      )}
     </div>
   )
 }
