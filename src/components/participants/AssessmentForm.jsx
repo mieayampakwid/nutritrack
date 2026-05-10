@@ -52,6 +52,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
   const [activity, setActivity] = useState(() => lastAssessment?.faktor_aktivitas != null ? String(lastAssessment.faktor_aktivitas) : '1.2')
   const [stress, setStress] = useState(() => lastAssessment?.faktor_stres != null ? String(lastAssessment.faktor_stres) : '1.2')
   const [catatan, setCatatan] = useState(() => lastAssessment?.catatan_asesmen || '')
+  const [anjuranStr, setAnjuranStr] = useState(() => lastAssessment?.anjuran_kalori_harian != null ? String(lastAssessment.anjuran_kalori_harian) : '')
 
   // Derived values
   const derivedAge = useMemo(() => {
@@ -96,6 +97,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
       bmi,
       bmr,
       energi_total: totalEnergy,
+      anjuran_kalori_harian: parseFloat(anjuranStr) || totalEnergy || null,
       catatan_asesmen: catatan.trim() || null,
     })
   }
@@ -269,6 +271,27 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
               <span className="font-semibold tabular-nums text-primary">
                 {totalEnergy != null ? `${formatNumberId(totalEnergy)} kkal/hari` : '—'}
               </span>
+            </p>
+          </div>
+
+          <div className="mt-4 space-y-1.5 border-t border-border/60 pt-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="anjuran-kalori">Anjuran Kalori Harian</Label>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {totalEnergy != null ? `HB: ${formatNumberId(totalEnergy)} kkal` : ''}
+              </span>
+            </div>
+            <Input
+              id="anjuran-kalori"
+              type="number"
+              inputMode="decimal"
+              value={anjuranStr}
+              onChange={(e) => setAnjuranStr(e.target.value)}
+              placeholder={totalEnergy != null ? String(totalEnergy) : 'Masukkan anjuran kalori'}
+              className="tabular-nums"
+            />
+            <p className="text-xs text-muted-foreground">
+              Nilai yang disimpan akan digunakan sebagai batas kalori di dashboard klien.
             </p>
           </div>
         </Card>

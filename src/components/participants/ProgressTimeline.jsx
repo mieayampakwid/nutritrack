@@ -44,7 +44,7 @@ export function ProgressTimeline({ measurements, selectedMetric, onMetricChange 
 
   if (chartData.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/20">
+      <div className="flex h-48 w-full items-center justify-center rounded-2xl border border-border/60 bg-white p-4 shadow-sm">
         <p className="text-sm text-muted-foreground">Belum ada data pengukuran</p>
       </div>
     )

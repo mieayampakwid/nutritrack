@@ -26,11 +26,16 @@ export function SectionAccordion({
   participantId,
   foodLogs,
   tanggal,
+  dateFrom,
+  dateTo,
 }) {
+  const effectiveFrom = tanggal ?? dateFrom
+  const effectiveTo = tanggal ?? dateTo
+
   const { data: exerciseLogs = [] } = useExerciseLogsForUser(participantId, {
     enabled: Boolean(participantId),
-    ...(tanggal
-      ? { dateFrom: tanggal, dateTo: tanggal }
+    ...(effectiveFrom || effectiveTo
+      ? { dateFrom: effectiveFrom, dateTo: effectiveTo }
       : {
           // Default: last 2 weeks
           dateFrom: (() => {
@@ -56,6 +61,8 @@ export function SectionAccordion({
             foodLogs={foodLogs}
             exerciseLogs={exerciseLogs}
             tanggal={tanggal}
+            dateFrom={effectiveFrom}
+            dateTo={effectiveTo}
           />
         ))}
       </div>
@@ -68,6 +75,8 @@ function SectionCard({
   foodLogs,
   exerciseLogs,
   tanggal,
+  dateFrom,
+  dateTo,
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const Icon = section.icon
@@ -106,11 +115,11 @@ function SectionCard({
       {isExpanded && (
         <div className="border-t border-border/60 px-5 py-4">
           {section.id === 'makan' && (
-            <ActivityLogTable type="food" data={foodLogs} tanggal={tanggal} />
+            <ActivityLogTable type="food" data={foodLogs} tanggal={tanggal} dateFrom={dateFrom} dateTo={dateTo} />
           )}
 
           {section.id === 'olahraga' && (
-            <ActivityLogTable type="exercise" data={exerciseLogs} tanggal={tanggal} />
+            <ActivityLogTable type="exercise" data={exerciseLogs} tanggal={tanggal} dateFrom={dateFrom} dateTo={dateTo} />
           )}
         </div>
       )}

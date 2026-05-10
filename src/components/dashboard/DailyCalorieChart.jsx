@@ -67,7 +67,7 @@ function buildDailySeries(logs, targetKcal, numDays) {
   return rows
 }
 
-function ChartLegend({ hasTarget }) {
+function ChartLegend({ hasTarget, isAnjuran }) {
   return (
     <div
       className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground"
@@ -83,7 +83,7 @@ function ChartLegend({ hasTarget }) {
             className="inline-block h-0 w-8 border-t-2 border-dashed border-primary"
             aria-hidden
           />
-          <span className="text-foreground">Garis putus: target kalori</span>
+          <span className="text-foreground">Garis putus: {isAnjuran ? 'anjuran kalori' : 'target kalori'}</span>
         </span>
       ) : null}
     </div>
@@ -116,8 +116,9 @@ export function DailyCalorieChart({ userId, className }) {
     },
   })
 
-  const targetKcal = latestAssessment?.energi_total
+  const targetKcal = latestAssessment?.anjuran_kalori_harian ?? latestAssessment?.energi_total
   const hasTarget = targetKcal != null && Number(targetKcal) > 0
+  const isAnjuran = latestAssessment?.anjuran_kalori_harian != null
 
   const chartData = useMemo(
     () => buildDailySeries(logs, hasTarget ? targetKcal : null, CHART_DAY_COUNT),
@@ -242,7 +243,7 @@ export function DailyCalorieChart({ userId, className }) {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <ChartLegend hasTarget={hasTarget} />
+            <ChartLegend hasTarget={hasTarget} isAnjuran={isAnjuran} />
             {!hasTarget ? (
               <p className="mt-2 text-center text-xs text-muted-foreground">
                 Target kalori akan tampil setelah ada asesmen kebutuhan energi.
