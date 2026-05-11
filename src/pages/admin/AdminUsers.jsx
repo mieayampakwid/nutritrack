@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { Plus, Search, UserCheck } from 'lucide-react'
+import { Pencil, Plus, Search, UserCheck } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -48,7 +48,26 @@ function roleBadgeVariant(role) {
   return 'outline'
 }
 
+const GENDER_LABELS = {
+  male: 'Laki-laki',
+  female: 'Perempuan',
+}
+
 const INITIAL_CREATE_FORM = { nama: '', email: '', password: '', role: 'klien' }
+const INITIAL_EDIT = null
+
+function formatDateDisplay(d) {
+  if (!d) return '—'
+  const parts = String(d).split('-')
+  if (parts.length !== 3) return d
+  return `${parts[2]}/${parts[1]}/${parts[0]}`
+}
+
+function isoToDateInput(d) {
+  if (!d) return ''
+  const s = String(d).slice(0, 10)
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : ''
+}
 
 export function AdminUsers() {
   const qc = useQueryClient()
@@ -59,7 +78,7 @@ export function AdminUsers() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, nama, email, role, is_active, created_at')
+        .select('id, nama, email, role, is_active, created_at, tgl_lahir, jenis_kelamin')
         .order('created_at', { ascending: false })
       if (error) throw error
       return data ?? []
@@ -70,6 +89,7 @@ export function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState('all')
   const [openCreate, setOpenCreate] = useState(false)
   const [createForm, setCreateForm] = useState(INITIAL_CREATE_FORM)
+  const [editUser, setEditUser] = useState(INITIAL_EDIT)
 
   const pendingCount = useMemo(
     () => users.filter((u) => !u.is_active).length,
@@ -131,6 +151,38 @@ export function AdminUsers() {
     },
     onError: (e) => toast.error(e.message ?? 'Gagal membuat pengguna.'),
   })
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, nama, tgl_lahir, jenis_kelamin, role }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          nama: nama.trim(),
+          tgl_lahir: tgl_lahir || null,
+          jenis_kelamin: jenis_kelamin || null,
+          role,
+        })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      toast.success('Profil diperbarui.')
+      setEditUser(null)
+      qc.invalidateQueries({ queryKey: ['admin_users'] })
+    },
+    onError: (e) => toast.error(e.message ?? 'Gagal memperbarui profil.'),
+  })
+
+  function openEdit(u) {
+    setEditUser({
+      id: u.id,
+      nama: u.nama || '',
+      email: u.email || '',
+      tgl_lahir: isoToDateInput(u.tgl_lahir),
+      jenis_kelamin: u.jenis_kelamin || '',
+      role: u.role,
+    })
+  }
 
   return (
     <AppShell>
@@ -213,8 +265,20 @@ export function AdminUsers() {
                           )}
                         </div>
                         <p className="truncate text-xs text-muted-foreground">{u.email}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {GENDER_LABELS[u.jenis_kelamin] || '—'} · {formatDateDisplay(u.tgl_lahir)}
+                        </p>
                       </div>
                       <div className="flex shrink-0 gap-1.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => openEdit(u)}
+                          aria-label="Ubah pengguna"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         {!u.is_active ? (
                           <Button
                             variant="outline"
@@ -255,8 +319,9 @@ export function AdminUsers() {
                           <TableHead>Nama</TableHead>
                           <TableHead>Email</TableHead>
                           <TableHead>Peran</TableHead>
+                          <TableHead>JK / Tgl Lahir</TableHead>
                           <TableHead>Status</TableHead>
-                          <TableHead className="w-36 text-right">Aksi</TableHead>
+                          <TableHead className="w-44 text-right">Aksi</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -269,12 +334,24 @@ export function AdminUsers() {
                                 {ROLE_LABELS[u.role] || u.role}
                               </Badge>
                             </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {GENDER_LABELS[u.jenis_kelamin] || '—'} · {formatDateDisplay(u.tgl_lahir)}
+                            </TableCell>
                             <TableCell>
                               <Badge variant={u.is_active ? 'default' : 'destructive'}>
                                 {u.is_active ? 'Aktif' : 'Menunggu'}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-right space-x-1.5">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                onClick={() => openEdit(u)}
+                                aria-label="Ubah pengguna"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
                               {!u.is_active ? (
                                 <Button
                                   variant="outline"
@@ -386,6 +463,94 @@ export function AdminUsers() {
               onClick={() => createMutation.mutate()}
             >
               {createMutation.isPending ? 'Menyimpan…' : 'Simpan'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(editUser)} onOpenChange={() => setEditUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ubah Profil</DialogTitle>
+          </DialogHeader>
+          {editUser && (
+            <div className="grid gap-3 py-2">
+              <div className="space-y-1">
+                <Label>Nama</Label>
+                <Input
+                  value={editUser.nama}
+                  onChange={(e) => setEditUser((f) => ({ ...f, nama: e.target.value }))}
+                  placeholder="Nama lengkap"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Email</Label>
+                <Input value={editUser.email} disabled className="opacity-60" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>Tanggal Lahir</Label>
+                  <Input
+                    type="date"
+                    value={editUser.tgl_lahir}
+                    onChange={(e) => setEditUser((f) => ({ ...f, tgl_lahir: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Jenis Kelamin</Label>
+                  <Select
+                    value={editUser.jenis_kelamin}
+                    onValueChange={(v) => setEditUser((f) => ({ ...f, jenis_kelamin: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Laki-laki</SelectItem>
+                      <SelectItem value="female">Perempuan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label>Peran</Label>
+                <Select
+                  value={editUser.role}
+                  onValueChange={(v) => setEditUser((f) => ({ ...f, role: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="klien">Klien</SelectItem>
+                    <SelectItem value="ahli_gizi">Ahli Gizi</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditUser(null)}>
+              Batal
+            </Button>
+            <Button
+              disabled={
+                updateMutation.isPending ||
+                !editUser?.nama.trim() ||
+                !editUser?.role
+              }
+              onClick={() =>
+                updateMutation.mutate({
+                  id: editUser.id,
+                  nama: editUser.nama,
+                  tgl_lahir: editUser.tgl_lahir || null,
+                  jenis_kelamin: editUser.jenis_kelamin || null,
+                  role: editUser.role,
+                })
+              }
+            >
+              {updateMutation.isPending ? 'Menyimpan…' : 'Simpan'}
             </Button>
           </DialogFooter>
         </DialogContent>
