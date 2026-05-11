@@ -45,11 +45,9 @@ const ROLE_NAV = {
   ahli_gizi: {
     primary: [
       { to: '/gizi/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-      { to: '/gizi/clients', label: 'Klien', icon: Users },
-    ],
-    more: [
       { to: '/gizi/my-group', label: 'Kelompok Saya', icon: Users },
     ],
+    more: [],
   },
   klien: {
     primary: [
