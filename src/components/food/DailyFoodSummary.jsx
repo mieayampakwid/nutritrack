@@ -52,7 +52,7 @@ export function DailyFoodSummary({ userId, tanggal }) {
   if (!foodLogs.length && !exerciseLogs.length) return null
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 border-t border-border/60 pt-2">
       {foodLogs.map((log) => {
         const Icon = MEAL_ICONS[log.waktu_makan] || Cookie
         const items = itemsByLogId[log.id] || []
