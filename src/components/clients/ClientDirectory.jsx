@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { ChevronRight, Search, X } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { formatDateId, formatDisplayName, formatNumberId } from '@/lib/format'
@@ -24,6 +25,7 @@ function subDays(isoDate, n) {
 export function ClientDirectory({ linkPrefix, title }) {
   const navigate = useNavigate()
   const [summaryId, setSummaryId] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['client_directory'],
@@ -57,6 +59,18 @@ export function ClientDirectory({ linkPrefix, title }) {
     },
   })
 
+  const profiles = useMemo(() => data?.profiles ?? [], [data?.profiles])
+
+  const filteredProfiles = useMemo(() => {
+    if (!searchQuery.trim()) return profiles
+    const q = searchQuery.toLowerCase().trim()
+    return profiles.filter(
+      (p) =>
+        (p.nama ?? '').toLowerCase().includes(q) ||
+        (p.instalasi ?? '').toLowerCase().includes(q),
+    )
+  }, [profiles, searchQuery])
+
   if (isLoading) return <LoadingSpinner />
 
   const latestByUser = {}
@@ -71,7 +85,7 @@ export function ClientDirectory({ linkPrefix, title }) {
   }
 
   const avgKal7 = {}
-  for (const u of data?.profiles ?? []) avgKal7[u.id] = { sum: 0, n: 0 }
+  for (const u of profiles) avgKal7[u.id] = { sum: 0, n: 0 }
   for (const l of data?.logs ?? []) {
     if (!avgKal7[l.user_id]) continue
     avgKal7[l.user_id].sum += Number(l.total_kalori) || 0
@@ -90,8 +104,31 @@ export function ClientDirectory({ linkPrefix, title }) {
           </p>
         </div>
       ) : null}
+
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Cari berdasarkan nama atau instalasi…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="h-11 pl-10 pr-10 md:h-10 bg-white text-neutral-900 border-neutral-200"
+          aria-label="Cari klien"
+        />
+        {searchQuery ? (
+          <button
+            type="button"
+            aria-label="Hapus pencarian"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setSearchQuery('')}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
-        {(data?.profiles ?? []).map((p) => {
+        {filteredProfiles.map((p) => {
           const lm = latestByUser[p.id]
           const ak = avgKal7[p.id]
           const avg =
@@ -111,7 +148,7 @@ export function ClientDirectory({ linkPrefix, title }) {
             >
               <Card
                 className={cn(
-                  'h-full transition-[colors,box-shadow] hover:bg-muted/35 hover:shadow-md',
+                  'h-full transition-[colors,box-shadow]',
                   MOBILE_DASHBOARD_CARD_SHELL,
                 )}
               >
@@ -182,12 +219,21 @@ export function ClientDirectory({ linkPrefix, title }) {
           )
         })}
       </div>
-      {(data?.profiles?.length ?? 0) > 0 ? (
-        <p className="pb-2 text-center text-xs text-muted-foreground/80 md:text-sm">Akhir daftar klien</p>
-      ) : null}
-      {data?.profiles?.length === 0 && (
+      {filteredProfiles.length > 0 && (
+        <p className="pb-2 text-center text-xs text-muted-foreground/80 md:text-sm">
+          {searchQuery.trim()
+            ? `${filteredProfiles.length} dari ${profiles.length} klien`
+            : 'Akhir daftar klien'}
+        </p>
+      )}
+      {profiles.length === 0 && !isLoading && (
         <p className="rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
           Belum ada klien aktif.
+        </p>
+      )}
+      {profiles.length > 0 && searchQuery.trim() && filteredProfiles.length === 0 && (
+        <p className="rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+          Tidak ada klien yang cocok dengan pencarian &ldquo;{searchQuery}&rdquo;.
         </p>
       )}
 
