@@ -42,8 +42,8 @@ export function ClientNutritionSummaryCard({ profile, className }) {
     return differenceInYears(new Date(), birth)
   })()
 
-  const bb = profile?.berat_badan
-  const tb = profile?.tinggi_badan
+  const bb = latest?.berat_badan ?? profile?.berat_badan
+  const tb = latest?.tinggi_badan ?? profile?.tinggi_badan
   const bmi = calculateBMI(bb, tb)
   const bmiCat = getBMICategoryAsiaPacific(bmi)
 
@@ -57,7 +57,7 @@ export function ClientNutritionSummaryCard({ profile, className }) {
       <CardHeader className="space-y-1 pb-2">
         <CardTitle className="text-base font-semibold">Ringkasan gizi &amp; kebutuhan energi</CardTitle>
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Data dari profil (BB/TB entri) dan asesmen Harris–Benedict terakhir.
+          Data dari asesmen Harris–Benedict terakhir (fallback ke profil).
         </p>
         {!isLoading && latestEvaluatedDate ? (
           <p className="pt-0.5 text-sm text-foreground">

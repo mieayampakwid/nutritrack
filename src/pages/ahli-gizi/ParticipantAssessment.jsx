@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AssessmentForm } from '@/components/participants/AssessmentForm'
@@ -12,7 +12,11 @@ import { useMemo } from 'react'
 
 export function ParticipantAssessment() {
   const { id } = useParams()
+  const location = useLocation()
   const navigate = useNavigate()
+  const participantBase = location.pathname.startsWith('/participants/')
+    ? '/participants'
+    : '/gizi/participants'
   const queryClient = useQueryClient()
   const { session } = useAuth()
 
@@ -59,7 +63,7 @@ export function ParticipantAssessment() {
       queryClient.invalidateQueries({ queryKey: ['assessments', id] })
       queryClient.invalidateQueries({ queryKey: ['profile', id] })
       toast.success('Asesmen berhasil disimpan.')
-      navigate(`/gizi/participants/${id}`)
+      navigate(`${participantBase}/${id}`)
     },
     onError: (e) => {
       toast.error(e.message ?? 'Gagal menyimpan asesmen.')
@@ -96,8 +100,8 @@ export function ParticipantAssessment() {
     <AppShell>
       <div className="mb-6">
         <Link
-          to={`/gizi/participants/${id}`}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          to={`${participantBase}/${id}`}
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground md:text-white/70 md:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
           Kembali ke detail peserta
@@ -105,10 +109,10 @@ export function ParticipantAssessment() {
       </div>
 
       <div className="mb-8 border-b border-border/60 pb-8">
-        <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+        <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl lg:text-5xl md:text-white">
           Asesmen Klien
         </h1>
-        <p className="mt-2 text-sm text-foreground/70 sm:text-base">
+        <p className="mt-2 text-sm text-foreground/70 sm:text-base md:text-white/85">
           {client.nama} • {client.jenis_kelamin === 'male' ? 'Laki-laki' : 'Perempuan'}
         </p>
       </div>

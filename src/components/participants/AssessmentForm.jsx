@@ -43,8 +43,16 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
 
   // Form state
   const tanggal = today
-  const [bbStr, setBbStr] = useState(() => lastAssessment?.berat_badan != null ? String(lastAssessment.berat_badan) : '')
-  const [tbStr, setTbStr] = useState(() => lastAssessment?.tinggi_badan != null ? String(lastAssessment.tinggi_badan) : '')
+  const [bbStr, setBbStr] = useState(() => {
+    if (lastAssessment?.berat_badan != null) return String(lastAssessment.berat_badan)
+    if (client?.berat_badan != null) return String(client.berat_badan)
+    return ''
+  })
+  const [tbStr, setTbStr] = useState(() => {
+    if (lastAssessment?.tinggi_badan != null) return String(lastAssessment.tinggi_badan)
+    if (client?.tinggi_badan != null) return String(client.tinggi_badan)
+    return ''
+  })
   const [muscleStr, setMuscleStr] = useState(() => lastAssessment?.massa_otot != null ? String(lastAssessment.massa_otot) : '')
   const [fatStr, setFatStr] = useState(() => lastAssessment?.massa_lemak != null ? String(lastAssessment.massa_lemak) : '')
   const [waistStr, setWaistStr] = useState(() => lastAssessment?.lingkar_pinggang != null ? String(lastAssessment.lingkar_pinggang) : '')
@@ -106,7 +114,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Anthropometric Section */}
       <section>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Pengukuran Antropometri</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4 md:text-white">Pengukuran Antropometri</h2>
         <Card className="p-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1.5">
@@ -196,7 +204,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
 
       {/* Clinical Assessment Section */}
       <section>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Asesmen Klinis (Harris–Benedict)</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4 md:text-white">Asesmen Klinis (Harris–Benedict)</h2>
         <Card className="p-5 space-y-4">
           <div className="space-y-2">
             <Label>Jenis Kelamin</Label>
@@ -299,7 +307,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
 
       {/* Evaluation Notes Section */}
       <section>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Catatan Asesmen</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4 md:text-white">Catatan Asesmen</h2>
         <Card className="p-5">
           <div className="space-y-1.5">
             <Label htmlFor="catatan">Catatan Evaluasi</Label>

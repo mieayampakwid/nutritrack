@@ -22,10 +22,10 @@ function generateRange(min, max) {
 }
 
 const STEPPER_BTN =
-  'flex h-7 w-10 items-center justify-center rounded-md border border-border/60 bg-muted/30 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'
+  'flex h-8 w-12 items-center justify-center rounded-md border border-border/60 bg-muted/30 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'
 
 const NUMBER_TRIGGER =
-  'flex h-10 min-h-[44px] w-14 items-center justify-center rounded-md border border-input bg-background/80 text-base font-mono font-semibold tabular-nums shadow-sm transition-[color,box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:h-9 md:min-h-0 md:w-12 md:text-sm'
+  'flex h-11 min-h-[44px] w-16 items-center justify-center rounded-md border border-input bg-background/80 text-lg font-mono font-semibold tabular-nums shadow-sm transition-[color,box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:h-10 md:min-h-0 md:w-14 md:text-base'
 
 const SCROLLER_ITEM =
   'flex h-12 w-full items-center justify-center rounded-lg text-lg font-mono tabular-nums transition-colors duration-150 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset'
@@ -78,7 +78,7 @@ export function TimeScroller({ min, max, padLength = 2, value, onChange, ariaLab
   }, [open, numeric, reduceMotion])
 
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    <div className="flex flex-col items-center gap-1">
       {/* Increment stepper */}
       <button
         type="button"

@@ -18,12 +18,6 @@ const ApprovalPendingPage = lazy(() =>
 const AdminDashboard = lazy(() =>
   import('@/pages/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
 )
-const UserManagement = lazy(() =>
-  import('@/pages/admin/UserManagement').then((m) => ({ default: m.UserManagement })),
-)
-const AdminUserDetail = lazy(() =>
-  import('@/pages/admin/AdminUserDetail').then((m) => ({ default: m.AdminUserDetail })),
-)
 const FoodUnitMaster = lazy(() =>
   import('@/pages/admin/FoodUnitMaster').then((m) => ({ default: m.FoodUnitMaster })),
 )
@@ -33,14 +27,11 @@ const ClientProgress = lazy(() =>
 const AdminClientDetail = lazy(() =>
   import('@/pages/admin/ClientDetail').then((m) => ({ default: m.ClientDetail })),
 )
-const ImportData = lazy(() =>
-  import('@/pages/admin/ImportData').then((m) => ({ default: m.ImportData })),
-)
-const AllClients = lazy(() =>
-  import('@/pages/admin/AllClients').then((m) => ({ default: m.AllClients })),
-)
 const AdminGroups = lazy(() =>
   import('@/pages/admin/AdminGroups').then((m) => ({ default: m.AdminGroups })),
+)
+const AdminUsers = lazy(() =>
+  import('@/pages/admin/AdminUsers').then((m) => ({ default: m.AdminUsers })),
 )
 const FoodLogMonitor = lazy(() =>
   import('@/pages/staff/FoodLogMonitor').then((m) => ({ default: m.FoodLogMonitor })),
@@ -146,22 +137,6 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/admin/users"
-          element={
-            <RequireAuth roles={['admin']}>
-              <UserManagement />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin/users/:id"
-          element={
-            <RequireAuth roles={['admin']}>
-              <AdminUserDetail />
-            </RequireAuth>
-          }
-        />
-        <Route
           path="/admin/food-units"
           element={
             <RequireAuth roles={['admin']}>
@@ -174,14 +149,6 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['admin']}>
               <ClientProgress />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin/all-clients"
-          element={
-            <RequireAuth roles={['admin']}>
-              <AllClients />
             </RequireAuth>
           }
         />
@@ -218,14 +185,6 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/admin/import"
-          element={
-            <RequireAuth roles={['admin']}>
-              <ImportData />
-            </RequireAuth>
-          }
-        />
-        <Route
           path="/admin/food-logs"
           element={
             <RequireAuth roles={['admin']}>
@@ -246,6 +205,14 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['admin']}>
               <AdminGroups />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <RequireAuth roles={['admin']}>
+              <AdminUsers />
             </RequireAuth>
           }
         />
@@ -323,9 +290,25 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/participants/:id/assessment"
+          element={
+            <RequireAuth roles={['ahli_gizi', 'admin']}>
+              <ParticipantAssessment />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/participants/:id"
+          element={
+            <RequireAuth roles={['ahli_gizi', 'admin']}>
+              <ParticipantDetail />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/gizi/participants/:id"
           element={
-            <RequireAuth roles={['ahli_gizi']}>
+            <RequireAuth roles={['ahli_gizi', 'admin']}>
               <ParticipantDetail />
             </RequireAuth>
           }
@@ -333,7 +316,7 @@ function AppRoutes() {
         <Route
           path="/gizi/participants/:id/assessment"
           element={
-            <RequireAuth roles={['ahli_gizi']}>
+            <RequireAuth roles={['ahli_gizi', 'admin']}>
               <ParticipantAssessment />
             </RequireAuth>
           }

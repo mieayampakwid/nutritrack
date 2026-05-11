@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowLeft, Plus, TrendingUp, Calendar, Activity, Utensils, Circle } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter'
 import { useMeasurements } from '@/hooks/useMeasurement'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
+import { useAuth } from '@/hooks/useAuth'
 import { getBMICategoryAsiaPacific } from '@/lib/bmiCalculator'
 import { toIsoDateLocal } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
@@ -18,6 +19,13 @@ import { differenceInYears, format, subDays } from 'date-fns'
 
 export function ParticipantDetail() {
   const { id } = useParams()
+  const location = useLocation()
+  const { profile } = useAuth()
+  const isAdmin = profile?.role === 'admin'
+  const participantBase = location.pathname.startsWith('/participants/')
+    ? '/participants'
+    : '/gizi/participants'
+  const backPath = isAdmin ? '/admin/clients' : '/gizi/my-group'
   const [selectedMetric, setSelectedMetric] = useState('berat_badan')
   const [dateFrom, setDateFrom] = useState(() => toIsoDateLocal(subDays(new Date(), 13)))
   const [dateTo, setDateTo] = useState(() => toIsoDateLocal(new Date()))
@@ -78,7 +86,7 @@ export function ParticipantDetail() {
           <p className="text-center text-muted-foreground">Peserta tidak ditemukan.</p>
           <div className="mt-4 text-center">
             <Button variant="outline" asChild>
-              <Link to="/gizi/my-group">Kembali</Link>
+              <Link to={isAdmin ? '/admin/clients' : '/gizi/my-group'}>Kembali</Link>
             </Button>
           </div>
         </div>
@@ -91,22 +99,22 @@ export function ParticipantDetail() {
       {/* Back Navigation */}
       <div className="mb-6">
         <Link
-          to="/gizi/my-group"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          to={backPath}
+          className="inline-flex items-center gap-2 text-sm text-white/85 transition-colors hover:text-white max-md:drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
         >
           <ArrowLeft className="h-4 w-4" />
-          Kembali ke kelompok
+          {isAdmin ? 'Kembali ke daftar klien' : 'Kembali ke kelompok'}
         </Link>
       </div>
 
       {/* Client Hero */}
-      <div className="mb-8 border-b border-border/60 pb-8">
+      <div className="mb-8 border-b border-white/20 pb-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            <h1 className="text-3xl font-black tracking-tight text-white max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)] sm:text-4xl lg:text-5xl">
               {client.nama}
             </h1>
-            <p className="mt-2 text-sm text-foreground/70 sm:text-base">
+            <p className="mt-2 text-sm text-white/85 max-md:drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] sm:text-base">
               {ageYears != null ? `${ageYears} tahun` : ''} • {sexLabel}
               {lastMeasurement?.tanggal && (
                 <span> • Terakhir diperbarui {format(new Date(lastMeasurement.tanggal), 'd MMM yyyy')}</span>
@@ -120,7 +128,7 @@ export function ParticipantDetail() {
             ) : null}
           </div>
           <Button asChild className="shrink-0">
-            <Link to={`/gizi/participants/${id}/assessment`}>
+            <Link to={`${participantBase}/${id}/assessment`}>
               <Plus className="mr-2 h-4 w-4" />
               Buat Asesmen
             </Link>
