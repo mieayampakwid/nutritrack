@@ -101,7 +101,7 @@ export function ParticipantAssessment() {
       <div className="mb-6">
         <Link
           to={`${participantBase}/${id}`}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground md:text-white/70 md:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
           Kembali ke detail peserta
@@ -109,10 +109,10 @@ export function ParticipantAssessment() {
       </div>
 
       <div className="mb-8 border-b border-border/60 pb-8">
-        <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+        <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl lg:text-5xl md:text-white">
           Asesmen Klien
         </h1>
-        <p className="mt-2 text-sm text-foreground/70 sm:text-base">
+        <p className="mt-2 text-sm text-foreground/70 sm:text-base md:text-white/85">
           {client.nama} • {client.jenis_kelamin === 'male' ? 'Laki-laki' : 'Perempuan'}
         </p>
       </div>
