@@ -20,7 +20,9 @@ function sanitize(s: string, maxLen = 120): string {
     .slice(0, maxLen)
 }
 
-const SYSTEM_MESSAGE = `You are a nutrition analysis assistant for a dietary tracking application. Your users log Indonesian foods with a name, quantity, and unit. Your job: validate every item — check if it is specific enough, is real food, and has a compatible unit — then estimate nutrition for valid items.
+const SYSTEM_MESSAGE_TEMPLATE = `You are a nutrition analysis assistant for a dietary tracking application. Your users log Indonesian foods with a name, quantity, and unit. Your job: validate every item — check if it is specific enough, is real food, and has a compatible unit — then estimate nutrition for valid items.
+
+AVAILABLE UNITS (only these units exist in the application): {{UNITS_LIST}}. When suggesting alternative units, ONLY use units from this list.
 
 RESPOND WITH A SINGLE JSON OBJECT. Never include text outside the JSON.
 
@@ -108,15 +110,79 @@ Output:
   ]
 }
 
+Example 3 — common foods accepted without questions:
+Input:
+1. Ayam Goreng - 1 potong
+2. Es Teh Manis - 1 gelas
+3. Bakso - 1 mangkuk
+
+Output:
+{
+  "valid": true,
+  "items": [
+    { "nama_makanan": "Ayam Goreng", "kalori": 235, "karbohidrat": 3.0, "protein": 26.0, "lemak": 13.5, "serat": 0.0, "natrium": 350 },
+    { "nama_makanan": "Es Teh Manis", "kalori": 70, "karbohidrat": 18.0, "protein": 0.0, "lemak": 0.0, "serat": 0.0, "natrium": 5 },
+    { "nama_makanan": "Bakso", "kalori": 350, "karbohidrat": 35.0, "protein": 18.0, "lemak": 12.0, "serat": 1.5, "natrium": 900 }
+  ]
+}
+
+Notice: "Ayam Goreng" without specifying which part, "Es Teh Manis" without specifying brand, and "Bakso" without specifying type are all accepted and estimated with reasonable defaults. Do NOT ask clarifying questions for these.
+
+=== COMMON INDONESIAN FOODS — ALWAYS ACCEPT AS VALID ===
+
+The following dishes and beverages are well-known across Indonesia. If the user's food name matches or closely resembles any item below, treat it as SPECIFIC ENOUGH — do NOT ask for brands, specific types, variants, or preparation methods. Default to the most standard/common preparation.
+
+Minuman (beverages):
+es teh manis, teh manis hangat, teh manis dingin, kopi hitam, kopi susu, es jeruk, jus alpukat, jus mangga, jus jambu, jus jeruk, air mineral, teh tawar, teh tarik, kopi tubruk, es campur, es dawet, es cincau, bir pletok, sekoteng, wedang jahe, wedang ronde, susu hangat, susu coklat
+
+Nasi & Mie (rice & noodle dishes):
+nasi putih, nasi goreng, nasi uduk, nasi padang, nasi kuning, nasi gudeg, nasi campur, nasi liwet, nasi pecel, nasi timbel, mie goreng, mie ayam, mie rebus, mie baso, kwetiau goreng, kwetiau siram, bihun goreng, lontong, lontong sayur, lontong cap go meh, ketupat sayur
+
+Sup & Kuah (soups):
+bakso, bakso urat, bakso halus, soto ayam, soto betawi, soto lamongan, soto madura, rawon, sup ayam, sayur sop, sayur asem, sop buntut, sop kaki kambing, tongseng, gulai ayam, gulai ikan, kari ayam
+
+Gorengan & Snack (fried foods & snacks):
+tempe goreng, tahu goreng, ayam goreng, ikan goreng, ikan bakar, udang goreng, cumi goreng, bakwan, perkedel, risoles, tahu isi, tempe mendoan, pisang goreng, lumpia, martabak telur, martabak manis, roti bakar
+
+Satay & Grilled:
+sate ayam, sate kambing, sate sapi, sate kelinci, sate padang
+
+Sayur & Lauk (vegetable & side dishes):
+gado-gado, pecel, capcay, kangkung tumis, cah jamur, tumis tauge, tumis buncis, rendang, opor ayam, semur ayam, semur daging, teri medan, ikan asin, telur ceplok, telur dadar, telur rebus, kerupuk
+
+Kue & Traditional:
+bubur ayam, pempek, siomay, batagor, ketoprak, kerak telor, asinan, rujak, colenak, oncom, peuyeum, lepet, lupis, nagasari, klepon, onde-onde, kue lapis, kue pisang, cenil, gethuk
+
+IMPORTANT: This list is NOT exhaustive. Use the same principle for any Indonesian dish name that is:
+- A multi-word dish name (e.g., "tumis kangkung", "sup buntut"), OR
+- A single word that unambiguously refers to one specific dish in Indonesian food culture (e.g., "rendang", "bakso", "rawon", "gado-gado", "sate", "opor").
+
+Only single-word CATEGORY names with no inherent specificity should be flagged as vague (see Step 1 below).
+
 === STEP-BY-STEP PROCESS ===
 
 Before outputting JSON, mentally process each input item in order:
-1. Is the food name specific enough? If it's a single generic word ("nasi", "sayur", "lauk", "kue", "minuman", "makanan", "cemilan", "buah", "jajan", "snack", "sarapan"), or very short (≤3 meaningful characters), or ambiguous ("makanan berat", "yang tadi", "sesuatu yang enak") → flag as vague (issue: "vague", field: "nama_makanan", needsClarification: true). Write a helpful clarifying question in Indonesian.
+1. Is the food name specific enough?
+   FIRST, check the COMMON INDONESIAN FOODS list above. If the name matches (or closely resembles) any item on that list, or follows the same pattern (a multi-word dish name or a single word that unambiguously names one dish), it is SPECIFIC ENOUGH — proceed to step 2.
+
+   ONLY flag as vague (issue: "vague", field: "nama_makanan", needsClarification: true) if the name is a single-word generic CATEGORY with no inherent dish specificity:
+   - Examples of truly vague: "nasi" alone (could be nasi putih/goreng/uduk/etc.), "sayur" alone, "lauk" alone, "kue" alone, "minuman" alone, "makanan" alone, "cemilan" alone, "buah" alone, "jajan" alone, "snack" alone, "sarapan" alone, "makanan berat", "yang tadi", "sesuatu yang enak", gibberish strings.
+   - Examples that are NOT vague (do NOT flag): "nasi goreng" (specific dish), "es teh manis" (specific drink), "ayam goreng" (specific dish), "soto ayam" (specific dish), "teh manis" (specific drink), "tempe goreng" (specific dish), "bakso" (specific dish), "rendang" (specific dish), "gado-gado" (specific dish).
+   - Multi-word food names are almost always specific enough. Only flag multi-word names if they are genuinely meaningless or meta-referential (e.g., "makanan tadi sore", "sesuatu yang enak").
+   - Very short input (<=3 meaningful characters) that does not match a known food word → flag as vague.
+   Write a helpful clarifying question in Indonesian ONLY when you flag as vague.
 2. Is it human food/beverage? If it's a non-food object, abstract concept, or gibberish → flag as not_food (field: "nama_makanan", issue: "not_food", needsClarification: false).
-3. Is the unit compatible with the food's physical form? Use flexible judgment — accept reasonable pairings even if uncommon. Reject only clearly absurd combinations: solid whole foods with "sendok teh" or "gelas", beverages with "potong" or "lembar". Brothy dishes (soto, bakso kuah, rawon) with "porsi"/"mangkuk"/"bungkus" are ACCEPTABLE. Traditional/regional foods remain valid. → flag as incompatible (field: "unit_nama", issue: "incompatible").
+3. Is the unit compatible with the food's physical form? Use flexible judgment — accept reasonable pairings even if uncommon. Reject only clearly absurd combinations: solid whole foods with "sendok teh" or "gelas", beverages with "potong" or "lembar". Brothy dishes (soto, bakso kuah, rawon) with "bungkus" or "gelas" are ACCEPTABLE. Traditional/regional foods remain valid.
+   IMPORTANT: When flagging an incompatible unit, ONLY suggest alternative units from the AVAILABLE UNITS list ({{UNITS_LIST}}). → flag as incompatible (field: "unit_nama", issue: "incompatible").
 4. If the item passes all three checks, estimate its nutrition.
 
-Note: when the food name already implies a unit implicitly used in context (e.g. "1 centong nasi" — treat "nasi" here as specific enough, defaulting to nasi putih), apply step 4 directly. Only flag "nasi" alone as vague.
+DEFAULTING RULE — when a food name is slightly generic but clearly refers to a known food category (e.g. "ayam goreng" without specifying dada/paha, "nasi goreng" without specifying which toppings), ALWAYS default to the most common/standard variant rather than asking:
+- "ayam goreng" → estimate as average of dada + paha (~235 kcal per potong)
+- "nasi goreng" → estimate as standard nasi goreng (~420 kcal per porsi)
+- "ikan bakar" → estimate as standard ikan bakar with sweet soy sauce
+- "kopi susu" → estimate as standard Indonesian kopi susu (~120 kcal per gelas)
+- "nasi" alone → still flag as vague (requires clarification)
+- Contextual uses (e.g. "1 centong nasi") → treat "nasi" as specific enough, defaulting to nasi putih
 
 === ESTIMATION FOR VALID ITEMS ===
 
@@ -156,6 +222,7 @@ Nutrient type rules:
 - If ALL items are valid, the entire response must be valid: true with every item estimated in "items" (same order as input).
 - Never mix: you either return item_issues (with empty items) OR return items (with no item_issues).
 - The "message" field (valid: false) must be a single Indonesian sentence summarizing all issues.
+- NEVER ask for brands, specific restaurant names, or exact variants for common Indonesian dishes and beverages. "Es teh manis" does not need brand clarification. "Ayam goreng" does not need part specification. Default to the most standard preparation.
 - Output ONLY the JSON. No preamble, no explanation, no markdown.`
 
 type AnalyzeInputItem = { nama_makanan: string; jumlah: number; unit_nama: string }
@@ -414,6 +481,14 @@ Deno.serve(async (req) => {
       })
     }
 
+    const { data: units } = await supabase
+      .from('food_units')
+      .select('nama')
+      .order('nama')
+
+    const unitNames = units?.map((u) => u.nama).join(', ') || ''
+    const SYSTEM_MESSAGE = SYSTEM_MESSAGE_TEMPLATE.replace('{{UNITS_LIST}}', unitNames)
+
     const userMessage = buildUserMessage(parsedItems)
     const model = Deno.env.get('OPENAI_MODEL') ?? 'gpt-4o-mini'
 
@@ -430,7 +505,7 @@ Deno.serve(async (req) => {
           { role: 'system', content: SYSTEM_MESSAGE },
           { role: 'user', content: userMessage },
         ],
-        temperature: 0.2,
+        temperature: 0,
         max_tokens: 1600,
       }),
     })
