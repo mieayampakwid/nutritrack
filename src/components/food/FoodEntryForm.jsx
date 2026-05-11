@@ -25,7 +25,6 @@ import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { APP_ACRONYM } from '@/lib/appMeta'
 import { formatDateId, formatNumberId, toIsoDateLocal, parseIsoDateLocal } from '@/lib/format'
-import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { foodEntrySchema } from '@/lib/validators'
@@ -70,7 +69,6 @@ const MEAL_RECEIPT_BADGE = {
 }
 
 const typeLabel = 'text-sm font-medium leading-none text-foreground'
-const typeMuted = 'text-sm leading-normal text-muted-foreground'
 
 const ANALYZE_STATUS_LINES = [
   'Memetakan bahan dan porsi ke basis data gizi…',
@@ -705,33 +703,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const isPending = Boolean(pendingResult)
 
   return (
-    <div className="space-y-2 sm:space-y-3">
-      <Card
-        className={cn(
-          'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:delay-75 motion-safe:fill-mode-both',
-          'relative overflow-hidden p-4 shadow-sm sm:p-5',
-          'border-border/70 bg-white/90 text-neutral-900 ring-1 ring-black/5 backdrop-blur-sm',
-          'max-md:shadow-md md:shadow-[0_1px_0_rgba(255,255,255,0.55)_inset,0_18px_48px_-18px_rgba(0,0,0,0.22)]',
-          MOBILE_DASHBOARD_CARD_SHELL,
-        )}
-      >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.035]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          }}
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute -left-8 -top-10 h-28 w-28 rounded-full bg-primary/12 blur-2xl"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-teal-500/10 blur-2xl"
-          aria-hidden
-        />
-        <div className="relative">
-          {displayResult ? (
+    <div className="space-y-2 sm:space-y-3 p-4 sm:p-5">
+      {displayResult ? (
             <div
               ref={resultRef}
               id="food-entry-result"
@@ -940,55 +913,41 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
           {!pendingResult && (
             <>
               <section className="space-y-2">
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                  <div className="min-w-0 space-y-0.5">
-                    <h2 className="text-sm font-semibold leading-tight tracking-tight">Log makanan</h2>
-                    <p className={typeMuted}>
-                      Pilih waktu makan, isi menu & porsi, lalu Analisa.
-                    </p>
-                  </div>
-                  <Badge
-                    variant="secondary"
-                    className="w-fit shrink-0 text-sm font-medium tabular-nums transition-colors duration-200"
-                  >
-                    {filledCount}/{rows.length} lengkap
-                  </Badge>
-                </div>
 
                 <section className="space-y-2">
-                  <Label className={cn(typeLabel, 'text-xs uppercase tracking-wider text-muted-foreground')}>
-                    Waktu makan
-                  </Label>
+                  <div
+                    className="grid grid-cols-4 gap-1.5"
+                    role="radiogroup"
+                    aria-label="Waktu makan"
+                  >
+                    {WAKTU.map((w) => {
+                      const Icon = w.icon
+                      const isActive = mealKey === w.key
+                      return (
+                        <button
+                          key={w.key}
+                          type="button"
+                          role="radio"
+                          aria-checked={isActive}
+                          onClick={() => handleMealSelect(w.key)}
+                          className={cn(
+                            'group relative flex flex-row items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-center transition-all duration-200',
+                            'min-h-[40px]',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                            'motion-safe:active:scale-[0.97]',
+                            isActive ? w.active : w.pill,
+                          )}
+                        >
+                          <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                          <span className="text-[11px] font-semibold leading-tight">{w.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
                   <div className="flex items-center gap-2">
-                    <div
-                      className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4"
-                      role="radiogroup"
-                      aria-label="Waktu makan"
-                    >
-                      {WAKTU.map((w) => {
-                        const Icon = w.icon
-                        const isActive = mealKey === w.key
-                        return (
-                          <button
-                            key={w.key}
-                            type="button"
-                            role="radio"
-                            aria-checked={isActive}
-                            onClick={() => handleMealSelect(w.key)}
-                            className={cn(
-                              'group relative flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-center transition-all duration-200',
-                              'min-h-[56px] sm:min-h-[52px] sm:flex-row sm:gap-2 sm:py-2',
-                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                              'motion-safe:active:scale-[0.97]',
-                              isActive ? w.active : w.pill,
-                            )}
-                          >
-                            <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
-                            <span className="text-xs font-semibold leading-tight sm:text-[11px]">{w.label}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
+                    <Label className={cn(typeLabel, 'text-[11px] uppercase tracking-wider text-muted-foreground')}>
+                      Jam
+                    </Label>
                     <Popover open={jamCustomOpen} onOpenChange={(open) => { setJamCustomOpen(open); if (open) setJamError(false) }}>
                       <PopoverTrigger asChild>
                         <button
@@ -1039,16 +998,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                     <p className="text-xs leading-relaxed text-destructive" role="alert">Pilih jam makan.</p>
                   )}
                 </section>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:w-auto"
-                  onClick={addRow}
-                >
-                  <Plus className="h-4 w-4" />
-                  Tambah makanan
-                </Button>
 
                 <AnimatePresence initial={false}>
                   <div className="space-y-2.5">
@@ -1222,6 +1171,16 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                     })}
                   </div>
                 </AnimatePresence>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99]"
+                  onClick={addRow}
+                >
+                  <Plus className="h-4 w-4" />
+                  Tambah makanan
+                </Button>
               </section>
 
               <div ref={analyzingAnchorRef} className="mt-3 scroll-mt-4">
@@ -1265,8 +1224,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
               </div>
             </>
           )}
-        </div>
-      </Card>
     </div>
   )
 }

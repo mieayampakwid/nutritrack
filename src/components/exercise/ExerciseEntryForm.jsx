@@ -11,7 +11,6 @@ import { toIsoDateLocal } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import { estimateExerciseCalories } from '@/lib/openai'
 import { logError } from '@/lib/logger'
-import { KLIEN_DASHBOARD_LOG_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 
 function sanitizeText(s) {
@@ -305,33 +304,8 @@ export function ExerciseEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const isPending = Boolean(analysisResult)
 
   return (
-    <Card
-      className={cn(
-        'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:delay-75 motion-safe:fill-mode-both',
-        'relative overflow-hidden p-4 shadow-sm sm:p-5',
-        'border-border/70 bg-white/90 text-neutral-900 ring-1 ring-black/5 backdrop-blur-sm',
-        'max-md:shadow-md md:shadow-[0_1px_0_rgba(255,255,255,0.55)_inset,0_18px_48px_-18px_rgba(0,0,0,0.22)]',
-        KLIEN_DASHBOARD_LOG_CARD_SHELL,
-      )}
-    >
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.035]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-        }}
-        aria-hidden
-      />
-      <div className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-orange-500/10 blur-2xl" aria-hidden />
-      <div className="pointer-events-none absolute -bottom-8 -left-6 h-28 w-28 rounded-full bg-primary/10 blur-2xl" aria-hidden />
-      <div className="relative space-y-3">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-          <div className="min-w-0 space-y-0.5">
-            <h2 className="text-sm font-semibold leading-tight tracking-tight">Log olahraga</h2>
-            <p className="text-xs text-muted-foreground">Isi jenis dan durasi, lalu Analisa dengan AI.</p>
-          </div>
-        </div>
-
-        {displayResult ? (
+    <div className="space-y-3 p-4 sm:p-5">
+      {displayResult ? (
           <div className="rounded-xl border border-dashed border-stone-400/55 bg-[linear-gradient(168deg,#faf7f2_0%,#f7f4ee_100%)] p-4">
             {isPending ? (
               <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-teal-700/85 mb-3">Estimasi kalori</p>
@@ -447,7 +421,6 @@ export function ExerciseEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
             </Button>
           </>
         )}
-      </div>
-    </Card>
+    </div>
   )
 }
