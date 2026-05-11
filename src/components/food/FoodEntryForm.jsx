@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import { AnimatePresence, motion as Motion, useReducedMotion } from 'framer-motion'
 import { Check, ChevronDown, Clock, Cookie, Loader2, Moon, Pencil, Plus, Sparkles, Sunrise, Sun, Trash2, X } from 'lucide-react'
@@ -965,7 +966,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                         <span className="text-[10px] text-muted-foreground/50">—:—</span>
                       )}
                     </button>
-                    {jamCustomOpen && (
+                    {jamCustomOpen && createPortal(
                       <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setJamCustomOpen(false)}>
                         <div
                           className="w-64 rounded-xl border bg-popover p-0 text-popover-foreground shadow-lg animate-in fade-in-0 zoom-in-95 duration-200"
@@ -993,7 +994,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                           </div>
                         </div>
                       </div>
-                    )}
+                    , document.body)
+                    }
                   </div>
                   {jamError && (
                     <p className="text-xs leading-relaxed text-destructive" role="alert">Pilih jam makan.</p>
