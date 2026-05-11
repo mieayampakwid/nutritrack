@@ -100,7 +100,7 @@ export function ParticipantDetail() {
       <div className="mb-6">
         <Link
           to={backPath}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex items-center gap-2 text-sm text-white/85 transition-colors hover:text-white max-md:drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
         >
           <ArrowLeft className="h-4 w-4" />
           {isAdmin ? 'Kembali ke daftar klien' : 'Kembali ke kelompok'}
@@ -108,13 +108,13 @@ export function ParticipantDetail() {
       </div>
 
       {/* Client Hero */}
-      <div className="mb-8 border-b border-border/60 pb-8">
+      <div className="mb-8 border-b border-white/20 pb-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            <h1 className="text-3xl font-black tracking-tight text-white max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)] sm:text-4xl lg:text-5xl">
               {client.nama}
             </h1>
-            <p className="mt-2 text-sm text-foreground/70 sm:text-base">
+            <p className="mt-2 text-sm text-white/85 max-md:drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] sm:text-base">
               {ageYears != null ? `${ageYears} tahun` : ''} • {sexLabel}
               {lastMeasurement?.tanggal && (
                 <span> • Terakhir diperbarui {format(new Date(lastMeasurement.tanggal), 'd MMM yyyy')}</span>
