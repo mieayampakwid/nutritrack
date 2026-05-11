@@ -944,10 +944,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                       )
                     })}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Label className={cn(typeLabel, 'text-[11px] uppercase tracking-wider text-muted-foreground')}>
-                      Jam
-                    </Label>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-[11px] text-muted-foreground">Sesuaikan waktu makan</span>
                     <Popover open={jamCustomOpen} onOpenChange={(open) => { setJamCustomOpen(open); if (open) setJamError(false) }}>
                       <PopoverTrigger asChild>
                         <button
@@ -970,7 +968,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                           )}
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-64 p-0" align="end" sideOffset={16}>
+                      <PopoverContent className="w-64 p-0 z-50" align="center" sideOffset={8}>
                         <div className="space-y-4 p-5">
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-muted-foreground/60" />
@@ -1140,7 +1138,13 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                         onFocus={(e) => e.target.select()}
                                       />
                                       <button type="button" className={foodQtyStepperBtnClass} onClick={() => adjustRowJumlah(i, 1)} aria-label="Tambah jumlah">+</button>
-                                    </div>
+                  </div>
+                  {jamCustomOpen && (
+                    <div
+                      className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm animate-in fade-in-0 duration-200"
+                      onClick={() => setJamCustomOpen(false)}
+                    />
+                  )}
                                   </div>
                                   <div className="grid min-w-0 gap-1.5">
                                     <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-unit-${r.id}`}>
