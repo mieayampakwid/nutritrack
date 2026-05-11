@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
 import { TimeScroller } from '@/components/food/TimeScroller'
 import { useFoodNameSuggestions, useFoodUnits } from '@/hooks/useFoodLog'
@@ -946,51 +945,55 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                   </div>
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-[11px] text-muted-foreground">Sesuaikan waktu makan</span>
-                    <Popover open={jamCustomOpen} onOpenChange={(open) => { setJamCustomOpen(open); if (open) setJamError(false) }}>
-                      <PopoverTrigger asChild>
-                        <button
-                          type="button"
-                          className={cn(
-                            'flex h-10 min-h-[44px] w-14 shrink-0 items-center justify-center gap-1 rounded-xl border px-2 text-xs font-semibold tabular-nums transition-all duration-200',
-                            'md:h-9 md:min-h-0 md:w-16',
-                            mealKey
-                              ? 'border-primary/30 bg-primary/5 text-primary hover:bg-primary/10'
-                              : 'border-border bg-muted/30 text-muted-foreground',
-                            jamError && 'border-destructive/55 ring-1 ring-destructive/25',
-                          )}
-                          aria-label="Atur jam makan"
+                    <button
+                      type="button"
+                      className={cn(
+                        'flex h-10 min-h-[44px] w-14 shrink-0 items-center justify-center gap-1 rounded-xl border px-2 text-xs font-semibold tabular-nums transition-all duration-200',
+                        'md:h-9 md:min-h-0 md:w-16',
+                        mealKey
+                          ? 'border-primary/30 bg-primary/5 text-primary hover:bg-primary/10'
+                          : 'border-border bg-muted/30 text-muted-foreground',
+                        jamError && 'border-destructive/55 ring-1 ring-destructive/25',
+                      )}
+                      aria-label="Atur jam makan"
+                      onClick={() => { setJamCustomOpen(true); setJamError(false) }}
+                    >
+                      <Clock className="h-3.5 w-3.5 shrink-0" />
+                      {jamMakan ? (
+                        <span>{jamMakan.slice(0, 5)}</span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground/50">—:—</span>
+                      )}
+                    </button>
+                    {jamCustomOpen && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setJamCustomOpen(false)}>
+                        <div
+                          className="w-64 rounded-xl border bg-popover p-0 text-popover-foreground shadow-lg animate-in fade-in-0 zoom-in-95 duration-200"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <Clock className="h-3.5 w-3.5 shrink-0" />
-                          {jamMakan ? (
-                            <span>{jamMakan.slice(0, 5)}</span>
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground/50">—:—</span>
-                          )}
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 p-0 z-50" align="center" sideOffset={8}>
-                        <div className="space-y-4 p-5">
-                          <div className="flex items-center justify-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground/60" />
-                            <span className="text-sm font-semibold tracking-tight text-foreground">Jam makan</span>
+                          <div className="space-y-4 p-5">
+                            <div className="flex items-center justify-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground/60" />
+                              <span className="text-sm font-semibold tracking-tight text-foreground">Jam makan</span>
+                            </div>
+                            <div className="flex items-center justify-center gap-4">
+                              <TimeScroller min={0} max={23} value={jamHour} onChange={setJamHour} ariaLabel="Jam" />
+                              <span className="text-lg font-light text-muted-foreground/60 md:text-base">:</span>
+                              <TimeScroller min={0} max={59} value={jamMinute} onChange={setJamMinute} ariaLabel="Menit" />
+                            </div>
                           </div>
-                          <div className="flex items-center justify-center gap-4">
-                            <TimeScroller min={0} max={23} value={jamHour} onChange={setJamHour} ariaLabel="Jam" />
-                            <span className="text-lg font-light text-muted-foreground/60 md:text-base">:</span>
-                            <TimeScroller min={0} max={59} value={jamMinute} onChange={setJamMinute} ariaLabel="Menit" />
+                          <div className="border-t border-border/60 px-5 py-3">
+                            <Button
+                              type="button"
+                              className="w-full text-sm"
+                              onClick={handleJamConfirm}
+                            >
+                              Simpan
+                            </Button>
                           </div>
                         </div>
-                        <div className="border-t border-border/60 px-5 py-3">
-                          <Button
-                            type="button"
-                            className="w-full text-sm"
-                            onClick={handleJamConfirm}
-                          >
-                            Simpan
-                          </Button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                      </div>
+                    )}
                   </div>
                   {jamError && (
                     <p className="text-xs leading-relaxed text-destructive" role="alert">Pilih jam makan.</p>

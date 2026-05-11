@@ -138,26 +138,19 @@ describe('FoodEntryForm', () => {
   })
 
   async function setJamMakan(user, hour, minute) {
-    // Open the jam makan popover
-    await user.click(screen.getByLabelText(/jam makan/i))
+    await user.click(screen.getByLabelText(/atur jam makan/i))
 
-    const popover = screen.getAllByTestId('popover-content').find(
-      (el) => within(el).queryByLabelText(/tambah jam/i),
-    )
-
-    // Click hour stepper to reach target
-    const tambahJam = within(popover).getByLabelText(/tambah jam/i)
+    const tambahJam = screen.getByLabelText(/tambah jam/i)
     for (let i = 0; i < Number(hour); i++) {
       await user.click(tambahJam)
     }
 
-    // Click minute stepper to reach target
-    const tambahMenit = within(popover).getByLabelText(/tambah menit/i)
+    const tambahMenit = screen.getByLabelText(/tambah menit/i)
     for (let i = 0; i < Number(minute); i++) {
       await user.click(tambahMenit)
     }
 
-    await user.click(within(popover).getByRole('button', { name: /simpan/i }))
+    await user.click(screen.getByRole('button', { name: /simpan/i }))
   }
 
   it('renders the food list header and a single initial food row', () => {
