@@ -193,10 +193,6 @@ export function FoodEntry() {
               )}
             </div>
 
-            <div className="px-4 py-2">
-              <DailyFoodSummary userId={profile.id} tanggal={selectedDate} />
-            </div>
-
             <div className="border-t border-border/60" />
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -227,6 +223,8 @@ export function FoodEntry() {
             </Tabs>
           </CardContent>
         </Card>
+
+        <DailyFoodSummary userId={profile.id} tanggal={selectedDate} />
       </div>
     </AppShell>
   )
