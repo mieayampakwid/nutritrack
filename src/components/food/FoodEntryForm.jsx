@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import { AnimatePresence, motion as Motion, useReducedMotion } from 'framer-motion'
 import { Check, ChevronDown, Clock, Cookie, Loader2, Moon, Pencil, Plus, Sparkles, Sunrise, Sun, Trash2, X } from 'lucide-react'
@@ -15,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
 import { TimeScroller } from '@/components/food/TimeScroller'
 import { useFoodNameSuggestions, useFoodUnits } from '@/hooks/useFoodLog'
@@ -25,7 +25,6 @@ import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { APP_ACRONYM } from '@/lib/appMeta'
 import { formatDateId, formatNumberId, toIsoDateLocal, parseIsoDateLocal } from '@/lib/format'
-import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { foodEntrySchema } from '@/lib/validators'
@@ -70,7 +69,6 @@ const MEAL_RECEIPT_BADGE = {
 }
 
 const typeLabel = 'text-sm font-medium leading-none text-foreground'
-const typeMuted = 'text-sm leading-normal text-muted-foreground'
 
 const ANALYZE_STATUS_LINES = [
   'Memetakan bahan dan porsi ke basis data gizi…',
@@ -228,7 +226,7 @@ const foodQtyStepperShellClass =
   'flex h-10 min-h-[44px] w-full min-w-0 items-center overflow-hidden rounded-md border border-input bg-background/80 md:h-9 md:min-h-0'
 
 const foodQtyStepperInnerInputClass =
-  'food-entry-compact-input h-full min-h-0 min-w-0 w-12 flex-1 rounded-none border-0 bg-transparent px-0 text-center text-base tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-14 sm:flex-none md:text-sm'
+  'food-entry-compact-input h-full min-h-0 min-w-0 w-12 flex-1 rounded-none border-0 bg-transparent px-0 text-center text-base tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-14 sm:flex-none md:text-sm placeholder:text-[13.25px]'
 
 const foodQtyStepperBtnClass =
   'flex h-full w-9 shrink-0 items-center justify-center text-sm font-medium text-muted-foreground transition-colors hover:bg-accent sm:w-10 md:w-8 md:text-xs'
@@ -260,7 +258,7 @@ function FoodNameSuggestField({
         id={inputId}
         placeholder="Nama makanan"
         autoComplete="off"
-        className="food-entry-compact-input bg-background/80 text-base leading-tight transition-shadow duration-200 md:text-sm"
+        className="food-entry-compact-input bg-background/80 text-base leading-tight transition-shadow duration-200 md:text-sm placeholder:text-[13.25px]"
         value={value}
         onChange={(e) => {
           const v = e.target.value
@@ -705,33 +703,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const isPending = Boolean(pendingResult)
 
   return (
-    <div className="space-y-2 sm:space-y-3">
-      <Card
-        className={cn(
-          'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:delay-75 motion-safe:fill-mode-both',
-          'relative overflow-hidden p-4 shadow-sm sm:p-5',
-          'border-border/70 bg-white/90 text-neutral-900 ring-1 ring-black/5 backdrop-blur-sm',
-          'max-md:shadow-md md:shadow-[0_1px_0_rgba(255,255,255,0.55)_inset,0_18px_48px_-18px_rgba(0,0,0,0.22)]',
-          MOBILE_DASHBOARD_CARD_SHELL,
-        )}
-      >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.035]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          }}
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute -left-8 -top-10 h-28 w-28 rounded-full bg-primary/12 blur-2xl"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-teal-500/10 blur-2xl"
-          aria-hidden
-        />
-        <div className="relative">
-          {displayResult ? (
+    <div className="space-y-2 sm:space-y-3 p-4 sm:p-5">
+      {displayResult ? (
             <div
               ref={resultRef}
               id="food-entry-result"
@@ -940,115 +913,94 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
           {!pendingResult && (
             <>
               <section className="space-y-2">
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                  <div className="min-w-0 space-y-0.5">
-                    <h2 className="text-sm font-semibold leading-tight tracking-tight">Log makanan</h2>
-                    <p className={typeMuted}>
-                      Pilih waktu makan, isi menu & porsi, lalu Analisa.
-                    </p>
-                  </div>
-                  <Badge
-                    variant="secondary"
-                    className="w-fit shrink-0 text-sm font-medium tabular-nums transition-colors duration-200"
-                  >
-                    {filledCount}/{rows.length} lengkap
-                  </Badge>
-                </div>
 
                 <section className="space-y-2">
-                  <Label className={cn(typeLabel, 'text-xs uppercase tracking-wider text-muted-foreground')}>
-                    Waktu makan
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4"
-                      role="radiogroup"
-                      aria-label="Waktu makan"
-                    >
-                      {WAKTU.map((w) => {
-                        const Icon = w.icon
-                        const isActive = mealKey === w.key
-                        return (
-                          <button
-                            key={w.key}
-                            type="button"
-                            role="radio"
-                            aria-checked={isActive}
-                            onClick={() => handleMealSelect(w.key)}
-                            className={cn(
-                              'group relative flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-center transition-all duration-200',
-                              'min-h-[56px] sm:min-h-[52px] sm:flex-row sm:gap-2 sm:py-2',
-                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                              'motion-safe:active:scale-[0.97]',
-                              isActive ? w.active : w.pill,
-                            )}
-                          >
-                            <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
-                            <span className="text-xs font-semibold leading-tight sm:text-[11px]">{w.label}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                    <Popover open={jamCustomOpen} onOpenChange={(open) => { setJamCustomOpen(open); if (open) setJamError(false) }}>
-                      <PopoverTrigger asChild>
+                  <div
+                    className="grid grid-cols-4 gap-1.5"
+                    role="radiogroup"
+                    aria-label="Waktu makan"
+                  >
+                    {WAKTU.map((w) => {
+                      const Icon = w.icon
+                      const isActive = mealKey === w.key
+                      return (
                         <button
+                          key={w.key}
                           type="button"
+                          role="radio"
+                          aria-checked={isActive}
+                          onClick={() => handleMealSelect(w.key)}
                           className={cn(
-                            'flex h-10 min-h-[44px] w-14 shrink-0 items-center justify-center gap-1 rounded-xl border px-2 text-xs font-semibold tabular-nums transition-all duration-200',
-                            'md:h-9 md:min-h-0 md:w-16',
-                            mealKey
-                              ? 'border-primary/30 bg-primary/5 text-primary hover:bg-primary/10'
-                              : 'border-border bg-muted/30 text-muted-foreground',
-                            jamError && 'border-destructive/55 ring-1 ring-destructive/25',
+                            'group relative flex flex-col items-center justify-center gap-0.5 rounded-lg border px-1.5 py-1.5 text-center transition-all duration-200',
+                            'min-h-[52px]',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                            'motion-safe:active:scale-[0.97]',
+                            isActive ? w.active : w.pill,
                           )}
-                          aria-label="Atur jam makan"
                         >
-                          <Clock className="h-3.5 w-3.5 shrink-0" />
-                          {jamMakan ? (
-                            <span>{jamMakan.slice(0, 5)}</span>
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground/50">—:—</span>
-                          )}
+                          <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                          <span className="text-[10px] font-semibold leading-tight">{w.label}</span>
                         </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 p-0" align="end" sideOffset={16}>
-                        <div className="space-y-4 p-5">
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground/60" />
-                            <span className="text-sm font-semibold tracking-tight text-foreground">Jam makan</span>
+                      )
+                    })}
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-[11px] text-muted-foreground">Sesuaikan waktu makan</span>
+                    <button
+                      type="button"
+                      className={cn(
+                        'flex h-10 min-h-[44px] w-14 shrink-0 items-center justify-center gap-1 rounded-xl border px-2 text-xs font-semibold tabular-nums transition-all duration-200',
+                        'md:h-9 md:min-h-0 md:w-16',
+                        mealKey
+                          ? 'border-primary/30 bg-primary/5 text-primary hover:bg-primary/10'
+                          : 'border-border bg-muted/30 text-muted-foreground',
+                        jamError && 'border-destructive/55 ring-1 ring-destructive/25',
+                      )}
+                      aria-label="Atur jam makan"
+                      onClick={() => { setJamCustomOpen(true); setJamError(false) }}
+                    >
+                      <Clock className="h-3.5 w-3.5 shrink-0" />
+                      {jamMakan ? (
+                        <span>{jamMakan.slice(0, 5)}</span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground/50">—:—</span>
+                      )}
+                    </button>
+                    {jamCustomOpen && createPortal(
+                      <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setJamCustomOpen(false)}>
+                        <div
+                          className="w-64 rounded-xl border bg-popover p-0 text-popover-foreground shadow-lg animate-in fade-in-0 zoom-in-95 duration-200"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="space-y-4 p-5">
+                            <div className="flex items-center justify-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground/60" />
+                              <span className="text-sm font-semibold tracking-tight text-foreground">Jam makan</span>
+                            </div>
+                            <div className="flex items-center justify-center gap-4">
+                              <TimeScroller min={0} max={23} value={jamHour} onChange={setJamHour} ariaLabel="Jam" />
+                              <span className="text-lg font-light text-muted-foreground/60 md:text-base">:</span>
+                              <TimeScroller min={0} max={59} value={jamMinute} onChange={setJamMinute} ariaLabel="Menit" />
+                            </div>
                           </div>
-                          <div className="flex items-center justify-center gap-4">
-                            <TimeScroller min={0} max={23} value={jamHour} onChange={setJamHour} ariaLabel="Jam" />
-                            <span className="text-lg font-light text-muted-foreground/60 md:text-base">:</span>
-                            <TimeScroller min={0} max={59} value={jamMinute} onChange={setJamMinute} ariaLabel="Menit" />
+                          <div className="border-t border-border/60 px-5 py-3">
+                            <Button
+                              type="button"
+                              className="w-full text-sm"
+                              onClick={handleJamConfirm}
+                            >
+                              Simpan
+                            </Button>
                           </div>
                         </div>
-                        <div className="border-t border-border/60 px-5 py-3">
-                          <Button
-                            type="button"
-                            className="w-full text-sm"
-                            onClick={handleJamConfirm}
-                          >
-                            Simpan
-                          </Button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                      </div>
+                    , document.body)
+                    }
                   </div>
                   {jamError && (
                     <p className="text-xs leading-relaxed text-destructive" role="alert">Pilih jam makan.</p>
                   )}
                 </section>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:w-auto"
-                  onClick={addRow}
-                >
-                  <Plus className="h-4 w-4" />
-                  Tambah makanan
-                </Button>
 
                 <AnimatePresence initial={false}>
                   <div className="space-y-2.5">
@@ -1191,7 +1143,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                         onFocus={(e) => e.target.select()}
                                       />
                                       <button type="button" className={foodQtyStepperBtnClass} onClick={() => adjustRowJumlah(i, 1)} aria-label="Tambah jumlah">+</button>
-                                    </div>
+                  </div>
                                   </div>
                                   <div className="grid min-w-0 gap-1.5">
                                     <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-unit-${r.id}`}>
@@ -1200,7 +1152,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                     <Select value={r.unitId || undefined} onValueChange={(v) => setRow(i, { unitId: v })}>
                                       <SelectTrigger
                                         id={`food-unit-${r.id}`}
-                                        className={cn(foodRowControlShell, foodRowSelectFocus, foodRowSelectMobileType, 'min-w-0 w-full')}
+                                        className={cn(foodRowControlShell, foodRowSelectFocus, foodRowSelectMobileType, 'min-w-0 w-full placeholder:text-[13.25px]')}
                                       >
                                         <SelectValue placeholder="Satuan" />
                                       </SelectTrigger>
@@ -1222,6 +1174,16 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                     })}
                   </div>
                 </AnimatePresence>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99]"
+                  onClick={addRow}
+                >
+                  <Plus className="h-4 w-4" />
+                  Tambah makanan
+                </Button>
               </section>
 
               <div ref={analyzingAnchorRef} className="mt-3 scroll-mt-4">
@@ -1265,8 +1227,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
               </div>
             </>
           )}
-        </div>
-      </Card>
     </div>
   )
 }

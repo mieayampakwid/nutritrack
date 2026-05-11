@@ -138,31 +138,24 @@ describe('FoodEntryForm', () => {
   })
 
   async function setJamMakan(user, hour, minute) {
-    // Open the jam makan popover
-    await user.click(screen.getByLabelText(/jam makan/i))
+    await user.click(screen.getByLabelText(/atur jam makan/i))
 
-    const popover = screen.getAllByTestId('popover-content').find(
-      (el) => within(el).queryByLabelText(/tambah jam/i),
-    )
-
-    // Click hour stepper to reach target
-    const tambahJam = within(popover).getByLabelText(/tambah jam/i)
+    const tambahJam = screen.getByLabelText(/tambah jam/i)
     for (let i = 0; i < Number(hour); i++) {
       await user.click(tambahJam)
     }
 
-    // Click minute stepper to reach target
-    const tambahMenit = within(popover).getByLabelText(/tambah menit/i)
+    const tambahMenit = screen.getByLabelText(/tambah menit/i)
     for (let i = 0; i < Number(minute); i++) {
       await user.click(tambahMenit)
     }
 
-    await user.click(within(popover).getByRole('button', { name: /simpan/i }))
+    await user.click(screen.getByRole('button', { name: /simpan/i }))
   }
 
   it('renders the food list header and a single initial food row', () => {
     renderWithProviders(<FoodEntryForm userId="u1" />)
-    expect(screen.getByText('Log makanan')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /sarapan/i })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: /diary makanan ke-1/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /analisa/i })).toBeInTheDocument()
   })
