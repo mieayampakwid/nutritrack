@@ -114,7 +114,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Anthropometric Section */}
       <section>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Pengukuran Antropometri</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4 md:text-white">Pengukuran Antropometri</h2>
         <Card className="p-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1.5">
@@ -204,7 +204,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
 
       {/* Clinical Assessment Section */}
       <section>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Asesmen Klinis (Harris–Benedict)</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4 md:text-white">Asesmen Klinis (Harris–Benedict)</h2>
         <Card className="p-5 space-y-4">
           <div className="space-y-2">
             <Label>Jenis Kelamin</Label>
@@ -307,7 +307,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
 
       {/* Evaluation Notes Section */}
       <section>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Catatan Asesmen</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4 md:text-white">Catatan Asesmen</h2>
         <Card className="p-5">
           <div className="space-y-1.5">
             <Label htmlFor="catatan">Catatan Evaluasi</Label>
