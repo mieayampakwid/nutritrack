@@ -970,7 +970,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                       </PopoverTrigger>
                       <PopoverContent className="w-64 p-0 z-50" align="center" sideOffset={8}>
                         <div className="space-y-4 p-5">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-center gap-2">
                             <Clock className="h-4 w-4 text-muted-foreground/60" />
                             <span className="text-sm font-semibold tracking-tight text-foreground">Jam makan</span>
                           </div>
@@ -1139,12 +1139,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                       />
                                       <button type="button" className={foodQtyStepperBtnClass} onClick={() => adjustRowJumlah(i, 1)} aria-label="Tambah jumlah">+</button>
                   </div>
-                  {jamCustomOpen && (
-                    <div
-                      className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm animate-in fade-in-0 duration-200"
-                      onClick={() => setJamCustomOpen(false)}
-                    />
-                  )}
                                   </div>
                                   <div className="grid min-w-0 gap-1.5">
                                     <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-unit-${r.id}`}>
