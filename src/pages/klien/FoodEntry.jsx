@@ -141,7 +141,7 @@ export function FoodEntry() {
 
         <Card className={CARD_CLASS}>
           <CardContent className="p-0">
-            <div className="flex items-center gap-2 px-4 py-2.5">
+            <div className="flex items-center gap-2 px-4 py-3">
               <div className="flex flex-1 items-center justify-between">
                 <button
                   onClick={prevDay}
