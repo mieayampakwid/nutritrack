@@ -226,7 +226,7 @@ const foodQtyStepperShellClass =
   'flex h-10 min-h-[44px] w-full min-w-0 items-center overflow-hidden rounded-md border border-input bg-background/80 md:h-9 md:min-h-0'
 
 const foodQtyStepperInnerInputClass =
-  'food-entry-compact-input h-full min-h-0 min-w-0 w-12 flex-1 rounded-none border-0 bg-transparent px-0 text-center text-base tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-14 sm:flex-none md:text-sm'
+  'food-entry-compact-input h-full min-h-0 min-w-0 w-12 flex-1 rounded-none border-0 bg-transparent px-0 text-center text-base tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-14 sm:flex-none md:text-sm placeholder:text-[13.25px]'
 
 const foodQtyStepperBtnClass =
   'flex h-full w-9 shrink-0 items-center justify-center text-sm font-medium text-muted-foreground transition-colors hover:bg-accent sm:w-10 md:w-8 md:text-xs'
@@ -258,7 +258,7 @@ function FoodNameSuggestField({
         id={inputId}
         placeholder="Nama makanan"
         autoComplete="off"
-        className="food-entry-compact-input bg-background/80 text-base leading-tight transition-shadow duration-200 md:text-sm"
+        className="food-entry-compact-input bg-background/80 text-base leading-tight transition-shadow duration-200 md:text-sm placeholder:text-[13.25px]"
         value={value}
         onChange={(e) => {
           const v = e.target.value
@@ -1149,7 +1149,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                     <Select value={r.unitId || undefined} onValueChange={(v) => setRow(i, { unitId: v })}>
                                       <SelectTrigger
                                         id={`food-unit-${r.id}`}
-                                        className={cn(foodRowControlShell, foodRowSelectFocus, foodRowSelectMobileType, 'min-w-0 w-full')}
+                                        className={cn(foodRowControlShell, foodRowSelectFocus, foodRowSelectMobileType, 'min-w-0 w-full placeholder:text-[13.25px]')}
                                       >
                                         <SelectValue placeholder="Satuan" />
                                       </SelectTrigger>

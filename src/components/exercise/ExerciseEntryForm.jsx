@@ -383,7 +383,7 @@ export function ExerciseEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                   placeholder="Jenis olahraga"
                   aria-label="Jenis olahraga"
                   aria-invalid={jenisError ? 'true' : undefined}
-                  className={cn('bg-background/80', jenisError && 'border-destructive ring-1 ring-destructive/20')}
+                  className={cn('bg-background/80 placeholder:text-[13.25px]', jenisError && 'border-destructive ring-1 ring-destructive/20')}
                   disabled={analyzing}
                 />
                 {jenisError ? (
@@ -401,7 +401,7 @@ export function ExerciseEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                   placeholder="Durasi (mis. 30 menit, 1 jam)"
                   aria-label="Durasi"
                   aria-invalid={durasiError ? 'true' : undefined}
-                  className={cn('bg-background/80', durasiError && 'border-destructive ring-1 ring-destructive/20')}
+                  className={cn('bg-background/80 placeholder:text-[13.25px]', durasiError && 'border-destructive ring-1 ring-destructive/20')}
                   disabled={analyzing}
                 />
                 {durasiError ? (

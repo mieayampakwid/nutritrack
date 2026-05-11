@@ -205,7 +205,7 @@ export function FoodEntry() {
                   Makanan
                 </TabsTrigger>
                 <TabsTrigger value="olahraga" className="flex-1 rounded-none py-2.5 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent">
-                  Olahraga
+                  Aktivitas
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="makanan" className="mt-0">

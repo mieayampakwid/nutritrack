@@ -30,6 +30,6 @@ describe('FoodEntry page', () => {
     expect(screen.getByRole('heading', { name: /catat aktivitas harian/i })).toBeInTheDocument()
     expect(screen.getByTestId('food-entry-form')).toHaveAttribute('data-userid', 'u1')
     expect(screen.getByRole('tab', { name: 'Makanan' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Olahraga' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Aktivitas' })).toBeInTheDocument()
   })
 })
