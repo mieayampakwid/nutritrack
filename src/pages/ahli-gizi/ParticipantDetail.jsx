@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowLeft, Plus, TrendingUp, Calendar, Activity, Utensils, Circle } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter'
 import { useMeasurements } from '@/hooks/useMeasurement'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
+import { useAuth } from '@/hooks/useAuth'
 import { getBMICategoryAsiaPacific } from '@/lib/bmiCalculator'
 import { toIsoDateLocal } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
@@ -18,6 +19,13 @@ import { differenceInYears, format, subDays } from 'date-fns'
 
 export function ParticipantDetail() {
   const { id } = useParams()
+  const location = useLocation()
+  const { profile } = useAuth()
+  const isAdmin = profile?.role === 'admin'
+  const participantBase = location.pathname.startsWith('/participants/')
+    ? '/participants'
+    : '/gizi/participants'
+  const backPath = isAdmin ? '/admin/clients' : '/gizi/my-group'
   const [selectedMetric, setSelectedMetric] = useState('berat_badan')
   const [dateFrom, setDateFrom] = useState(() => toIsoDateLocal(subDays(new Date(), 13)))
   const [dateTo, setDateTo] = useState(() => toIsoDateLocal(new Date()))
@@ -78,7 +86,7 @@ export function ParticipantDetail() {
           <p className="text-center text-muted-foreground">Peserta tidak ditemukan.</p>
           <div className="mt-4 text-center">
             <Button variant="outline" asChild>
-              <Link to="/gizi/my-group">Kembali</Link>
+              <Link to={isAdmin ? '/admin/clients' : '/gizi/my-group'}>Kembali</Link>
             </Button>
           </div>
         </div>
@@ -91,11 +99,11 @@ export function ParticipantDetail() {
       {/* Back Navigation */}
       <div className="mb-6">
         <Link
-          to="/gizi/my-group"
+          to={backPath}
           className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Kembali ke kelompok
+          {isAdmin ? 'Kembali ke daftar klien' : 'Kembali ke kelompok'}
         </Link>
       </div>
 
@@ -114,7 +122,7 @@ export function ParticipantDetail() {
             </p>
           </div>
           <Button asChild className="shrink-0">
-            <Link to={`/gizi/participants/${id}/assessment`}>
+            <Link to={`${participantBase}/${id}/assessment`}>
               <Plus className="mr-2 h-4 w-4" />
               Buat Asesmen
             </Link>

@@ -8,6 +8,7 @@ import {
   LogOut,
   Ruler,
   Settings2,
+  UserCircle,
   Users,
 } from 'lucide-react'
 /* eslint-disable-next-line no-unused-vars -- motionPrimitive.span used in JSX below */
@@ -27,6 +28,13 @@ function homePathForRole(role) {
 }
 
 function routeActive(pathname, to) {
+  if (to === '/admin/clients') {
+    return (
+      pathname === to ||
+      pathname.startsWith(`${to}/`) ||
+      pathname.startsWith('/participants/')
+    )
+  }
   if (to.endsWith('/dashboard')) {
     return pathname === to
   }
@@ -37,6 +45,7 @@ const ROLE_NAV = {
   admin: {
     primary: [
       { to: '/admin/dashboard', label: 'Dasbor', icon: LayoutDashboard },
+      { to: '/admin/clients', label: 'Klien', icon: UserCircle },
       { to: '/admin/groups', label: 'Kelompok', icon: Users },
       { to: '/admin/food-units', label: 'Master ukuran', icon: Settings2 },
     ],

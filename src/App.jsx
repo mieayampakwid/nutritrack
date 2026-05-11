@@ -279,9 +279,25 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/participants/:id/assessment"
+          element={
+            <RequireAuth roles={['ahli_gizi', 'admin']}>
+              <ParticipantAssessment />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/participants/:id"
+          element={
+            <RequireAuth roles={['ahli_gizi', 'admin']}>
+              <ParticipantDetail />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/gizi/participants/:id"
           element={
-            <RequireAuth roles={['ahli_gizi']}>
+            <RequireAuth roles={['ahli_gizi', 'admin']}>
               <ParticipantDetail />
             </RequireAuth>
           }
@@ -289,7 +305,7 @@ function AppRoutes() {
         <Route
           path="/gizi/participants/:id/assessment"
           element={
-            <RequireAuth roles={['ahli_gizi']}>
+            <RequireAuth roles={['ahli_gizi', 'admin']}>
               <ParticipantAssessment />
             </RequireAuth>
           }
