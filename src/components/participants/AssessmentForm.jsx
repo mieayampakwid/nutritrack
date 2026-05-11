@@ -43,8 +43,16 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
 
   // Form state
   const tanggal = today
-  const [bbStr, setBbStr] = useState(() => lastAssessment?.berat_badan != null ? String(lastAssessment.berat_badan) : '')
-  const [tbStr, setTbStr] = useState(() => lastAssessment?.tinggi_badan != null ? String(lastAssessment.tinggi_badan) : '')
+  const [bbStr, setBbStr] = useState(() => {
+    if (lastAssessment?.berat_badan != null) return String(lastAssessment.berat_badan)
+    if (client?.berat_badan != null) return String(client.berat_badan)
+    return ''
+  })
+  const [tbStr, setTbStr] = useState(() => {
+    if (lastAssessment?.tinggi_badan != null) return String(lastAssessment.tinggi_badan)
+    if (client?.tinggi_badan != null) return String(client.tinggi_badan)
+    return ''
+  })
   const [muscleStr, setMuscleStr] = useState(() => lastAssessment?.massa_otot != null ? String(lastAssessment.massa_otot) : '')
   const [fatStr, setFatStr] = useState(() => lastAssessment?.massa_lemak != null ? String(lastAssessment.massa_lemak) : '')
   const [waistStr, setWaistStr] = useState(() => lastAssessment?.lingkar_pinggang != null ? String(lastAssessment.lingkar_pinggang) : '')
