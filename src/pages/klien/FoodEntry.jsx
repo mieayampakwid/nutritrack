@@ -1,20 +1,100 @@
-import { useState } from 'react'
-import { ChevronLeft, ChevronRight, CalendarIcon } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Button } from '@/components/ui/button'
 import { AppShell } from '@/components/layout/AppShell'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FoodEntryForm } from '@/components/food/FoodEntryForm'
-import { ExerciseLogEntryCard } from '@/components/exercise/ExerciseLogEntryCard'
-import { Card } from '@/components/ui/card'
+import { ExerciseEntryForm } from '@/components/exercise/ExerciseEntryForm'
+import { DailyFoodSummary } from '@/components/food/DailyFoodSummary'
 import { useAuth } from '@/hooks/useAuth'
-import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { toIsoDateLocal, parseIsoDateLocal, formatDateId } from '@/lib/format'
-import { cn } from '@/lib/utils'
+import { supabase } from '@/lib/supabase'
+
+function useMonthEntryDates(userId, selectedDate) {
+  const { monthStart, monthEnd } = useMemo(() => {
+    const d = parseIsoDateLocal(selectedDate)
+    const start = new Date(d.getFullYear(), d.getMonth(), 1)
+    const end = new Date(d.getFullYear(), d.getMonth() + 1, 0)
+    return {
+      monthStart: toIsoDateLocal(start),
+      monthEnd: toIsoDateLocal(end),
+    }
+  }, [selectedDate])
+
+  const { data: foodDates = [] } = useQuery({
+    queryKey: ['food_entry_dates', userId, monthStart, monthEnd],
+    enabled: Boolean(userId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('food_logs')
+        .select('tanggal')
+        .eq('user_id', userId)
+        .gte('tanggal', monthStart)
+        .lte('tanggal', monthEnd)
+      if (error) throw error
+      return [...new Set((data ?? []).map((r) => r.tanggal))]
+    },
+  })
+
+  const { data: exerciseDates = [] } = useQuery({
+    queryKey: ['exercise_entry_dates', userId, monthStart, monthEnd],
+    enabled: Boolean(userId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('exercise_logs')
+        .select('tanggal')
+        .eq('user_id', userId)
+        .gte('tanggal', monthStart)
+        .lte('tanggal', monthEnd)
+      if (error) throw error
+      return [...new Set((data ?? []).map((r) => r.tanggal))]
+    },
+  })
+
+  const entriesByDate = useMemo(() => {
+    const map = {}
+    for (const d of foodDates) map[d] = (map[d] || 0) | 1
+    for (const d of exerciseDates) map[d] = (map[d] || 0) | 2
+    return map
+  }, [foodDates, exerciseDates])
+
+  return entriesByDate
+}
+
+const INDICATOR_DOT =
+  "after:absolute after:bottom-[3px] after:left-1/2 after:-translate-x-1/2 after:h-[5px] after:w-[5px] after:rounded-full after:bg-primary/70 after:content-['']"
+
+const INDICATOR_DOT_EXERCISE =
+  "after:absolute after:bottom-[3px] after:left-1/2 after:-translate-x-1/2 after:h-[5px] after:w-[5px] after:rounded-full after:bg-orange-400/70 after:content-['']"
+
+const calendarModifierClass = {
+  hasFood: INDICATOR_DOT,
+  hasExercise: INDICATOR_DOT_EXERCISE,
+}
 
 export function FoodEntry() {
   const { profile } = useAuth()
+  const qc = useQueryClient()
   const [selectedDate, setSelectedDate] = useState(() => toIsoDateLocal(new Date()))
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState('makanan')
+  const [formKey, setFormKey] = useState(0)
+  const [exerciseKey, setExerciseKey] = useState(0)
+
+  const entriesByDate = useMonthEntryDates(profile?.id, selectedDate)
+
+  const calendarModifiers = useMemo(() => {
+    const hasFood = []
+    const hasExercise = []
+    for (const [dateStr, flag] of Object.entries(entriesByDate)) {
+      if (flag & 1) hasFood.push(parseIsoDateLocal(dateStr))
+      if (flag & 2) hasExercise.push(parseIsoDateLocal(dateStr))
+    }
+    return { hasFood, hasExercise }
+  }, [entriesByDate])
 
   const prevDay = () => {
     const date = parseIsoDateLocal(selectedDate)
@@ -28,6 +108,21 @@ export function FoodEntry() {
     setSelectedDate(toIsoDateLocal(date))
   }
 
+  const goToday = () => {
+    setSelectedDate(toIsoDateLocal(new Date()))
+  }
+
+  const isToday = selectedDate === toIsoDateLocal(new Date())
+
+  const handleSaved = () => {
+    setFormKey((k) => k + 1)
+    setExerciseKey((k) => k + 1)
+    qc.invalidateQueries({ queryKey: ['food_entry_dates'] })
+    qc.invalidateQueries({ queryKey: ['exercise_entry_dates'] })
+  }
+
+  if (!profile?.id) return null
+
   return (
     <AppShell>
       <div className="mx-auto max-w-2xl space-y-3 pb-1 sm:space-y-4">
@@ -36,85 +131,86 @@ export function FoodEntry() {
             Catat aktivitas harian
           </h1>
           <p className="mx-auto max-w-md text-sm leading-relaxed text-white/85 max-md:drop-shadow-[0_1px_3px_rgba(0,0,0,0.28)]">
-            Catat makanan dan olahraga hari ini. Untuk makanan, isi menu & porsi lalu biarkan AI mengestimasi
-            kalori sebelum disimpan.
+            Catat makanan dan olahraga harian. AI akan mengestimasi kalori sebelum disimpan.
           </p>
         </header>
 
-        {profile?.id ? (
-          <>
-            {/* Date picker bar */}
-            <div className="flex items-center justify-between rounded-2xl bg-white/90 px-4 py-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur-sm">
-              <button
-                onClick={prevDay}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-neutral-600 hover:bg-black/5 active:bg-black/10 transition-colors"
-                aria-label="Hari sebelumnya"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <button className="flex-1 px-4 text-sm font-medium text-neutral-800 tabular-nums hover:bg-black/5 rounded-md transition-colors">
-                    {formatDateId(parseIsoDateLocal(selectedDate))}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="center" sideOffset={8}>
-                  <Calendar
-                    mode="single"
-                    selected={parseIsoDateLocal(selectedDate)}
-                    onSelect={(d) => {
-                      if (d) {
-                        setSelectedDate(toIsoDateLocal(d))
-                        setCalendarOpen(false)
-                      }
-                    }}
-                    defaultMonth={parseIsoDateLocal(selectedDate)}
-                    autoFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <button
-                onClick={nextDay}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-neutral-600 hover:bg-black/5 active:bg-black/10 transition-colors"
-                aria-label="Hari berikutnya"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-
-            <Card
-              className={cn(
-                'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:delay-75 motion-safe:fill-mode-both',
-                'relative overflow-hidden p-4 shadow-sm sm:p-5',
-                'border-border/70 bg-white/90 text-neutral-900 ring-1 ring-black/5 backdrop-blur-sm',
-                'max-md:shadow-md md:shadow-[0_1px_0_rgba(255,255,255,0.55)_inset,0_18px_48px_-18px_rgba(0,0,0,0.22)]',
-                MOBILE_DASHBOARD_CARD_SHELL,
-              )}
+        <div className="flex items-center gap-2">
+          <div className="flex flex-1 items-center justify-between rounded-2xl bg-white/90 px-4 py-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur-sm">
+            <button
+              onClick={prevDay}
+              className="h-8 w-8 rounded-full flex items-center justify-center text-neutral-600 hover:bg-black/5 active:bg-black/10 transition-colors"
+              aria-label="Hari sebelumnya"
             >
-              <div
-                className="pointer-events-none absolute inset-0 opacity-[0.035]"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-                }}
-                aria-hidden
-              />
-              <div
-                className="pointer-events-none absolute -left-8 -top-10 h-28 w-28 rounded-full bg-primary/12 blur-2xl"
-                aria-hidden
-              />
-              <div
-                className="pointer-events-none absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-teal-500/10 blur-2xl"
-                aria-hidden
-              />
-              <div className="relative">
-                <FoodEntryForm userId={profile.id} tanggal={selectedDate} />
-              </div>
-            </Card>
-            <section aria-label="Log olahraga">
-              <ExerciseLogEntryCard userId={profile.id} tanggal={selectedDate} />
-            </section>
-          </>
-        ) : null}
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <button className="flex-1 px-4 text-sm font-medium text-neutral-800 tabular-nums hover:bg-black/5 rounded-md transition-colors">
+                  {formatDateId(parseIsoDateLocal(selectedDate))}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center" sideOffset={8}>
+                <Calendar
+                  mode="single"
+                  selected={parseIsoDateLocal(selectedDate)}
+                  onSelect={(d) => {
+                    if (d) {
+                      setSelectedDate(toIsoDateLocal(d))
+                      setCalendarOpen(false)
+                    }
+                  }}
+                  defaultMonth={parseIsoDateLocal(selectedDate)}
+                  modifiers={calendarModifiers}
+                  modifiersClassNames={calendarModifierClass}
+                  autoFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <button
+              onClick={nextDay}
+              className="h-8 w-8 rounded-full flex items-center justify-center text-neutral-600 hover:bg-black/5 active:bg-black/10 transition-colors"
+              aria-label="Hari berikutnya"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          {!isToday && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 rounded-2xl bg-white/90 text-xs backdrop-blur-sm"
+              onClick={goToday}
+            >
+              Hari ini
+            </Button>
+          )}
+        </div>
+
+        <DailyFoodSummary userId={profile.id} tanggal={selectedDate} />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full">
+            <TabsTrigger value="makanan" className="flex-1">Makanan</TabsTrigger>
+            <TabsTrigger value="olahraga" className="flex-1">Olahraga</TabsTrigger>
+          </TabsList>
+          <TabsContent value="makanan">
+            <FoodEntryForm
+              key={formKey}
+              userId={profile.id}
+              tanggal={selectedDate}
+              onSaved={handleSaved}
+            />
+          </TabsContent>
+          <TabsContent value="olahraga">
+            <ExerciseEntryForm
+              key={exerciseKey}
+              userId={profile.id}
+              tanggal={selectedDate}
+              onSaved={handleSaved}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </AppShell>
   )
