@@ -8,7 +8,6 @@ import {
   LogOut,
   Ruler,
   Settings2,
-  Upload,
   Users,
 } from 'lucide-react'
 /* eslint-disable-next-line no-unused-vars -- motionPrimitive.span used in JSX below */
@@ -38,14 +37,10 @@ const ROLE_NAV = {
   admin: {
     primary: [
       { to: '/admin/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-      { to: '/admin/all-clients', label: 'Klien', icon: Users },
-      { to: '/admin/users', label: 'User', icon: Users },
-    ],
-    more: [
       { to: '/admin/groups', label: 'Kelompok', icon: Users },
-      { to: '/admin/import', label: 'Impor', icon: Upload },
       { to: '/admin/food-units', label: 'Master ukuran', icon: Settings2 },
     ],
+    more: [],
   },
   ahli_gizi: {
     primary: [

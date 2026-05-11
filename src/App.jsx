@@ -18,12 +18,6 @@ const ApprovalPendingPage = lazy(() =>
 const AdminDashboard = lazy(() =>
   import('@/pages/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
 )
-const UserManagement = lazy(() =>
-  import('@/pages/admin/UserManagement').then((m) => ({ default: m.UserManagement })),
-)
-const AdminUserDetail = lazy(() =>
-  import('@/pages/admin/AdminUserDetail').then((m) => ({ default: m.AdminUserDetail })),
-)
 const FoodUnitMaster = lazy(() =>
   import('@/pages/admin/FoodUnitMaster').then((m) => ({ default: m.FoodUnitMaster })),
 )
@@ -32,12 +26,6 @@ const ClientProgress = lazy(() =>
 )
 const AdminClientDetail = lazy(() =>
   import('@/pages/admin/ClientDetail').then((m) => ({ default: m.ClientDetail })),
-)
-const ImportData = lazy(() =>
-  import('@/pages/admin/ImportData').then((m) => ({ default: m.ImportData })),
-)
-const AllClients = lazy(() =>
-  import('@/pages/admin/AllClients').then((m) => ({ default: m.AllClients })),
 )
 const AdminGroups = lazy(() =>
   import('@/pages/admin/AdminGroups').then((m) => ({ default: m.AdminGroups })),
@@ -146,22 +134,6 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/admin/users"
-          element={
-            <RequireAuth roles={['admin']}>
-              <UserManagement />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin/users/:id"
-          element={
-            <RequireAuth roles={['admin']}>
-              <AdminUserDetail />
-            </RequireAuth>
-          }
-        />
-        <Route
           path="/admin/food-units"
           element={
             <RequireAuth roles={['admin']}>
@@ -174,14 +146,6 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['admin']}>
               <ClientProgress />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin/all-clients"
-          element={
-            <RequireAuth roles={['admin']}>
-              <AllClients />
             </RequireAuth>
           }
         />
@@ -214,14 +178,6 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['admin']}>
               <ClientDataEntryPicker />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin/import"
-          element={
-            <RequireAuth roles={['admin']}>
-              <ImportData />
             </RequireAuth>
           }
         />
