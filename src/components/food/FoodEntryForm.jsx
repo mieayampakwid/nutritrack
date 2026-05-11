@@ -931,15 +931,15 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                           aria-checked={isActive}
                           onClick={() => handleMealSelect(w.key)}
                           className={cn(
-                            'group relative flex flex-row items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-center transition-all duration-200',
-                            'min-h-[40px]',
+                            'group relative flex flex-col items-center justify-center gap-0.5 rounded-lg border px-1.5 py-1.5 text-center transition-all duration-200',
+                            'min-h-[52px]',
                             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                             'motion-safe:active:scale-[0.97]',
                             isActive ? w.active : w.pill,
                           )}
                         >
-                          <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-                          <span className="text-[11px] font-semibold leading-tight">{w.label}</span>
+                          <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                          <span className="text-[10px] font-semibold leading-tight">{w.label}</span>
                         </button>
                       )
                     })}
