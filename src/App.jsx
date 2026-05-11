@@ -30,6 +30,9 @@ const AdminClientDetail = lazy(() =>
 const AdminGroups = lazy(() =>
   import('@/pages/admin/AdminGroups').then((m) => ({ default: m.AdminGroups })),
 )
+const AdminUsers = lazy(() =>
+  import('@/pages/admin/AdminUsers').then((m) => ({ default: m.AdminUsers })),
+)
 const FoodLogMonitor = lazy(() =>
   import('@/pages/staff/FoodLogMonitor').then((m) => ({ default: m.FoodLogMonitor })),
 )
@@ -202,6 +205,14 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['admin']}>
               <AdminGroups />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <RequireAuth roles={['admin']}>
+              <AdminUsers />
             </RequireAuth>
           }
         />

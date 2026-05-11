@@ -46,6 +46,7 @@ const ROLE_NAV = {
     primary: [
       { to: '/admin/dashboard', label: 'Dasbor', icon: LayoutDashboard },
       { to: '/admin/clients', label: 'Klien', icon: UserCircle },
+      { to: '/admin/users', label: 'Pengguna', icon: Users },
       { to: '/admin/groups', label: 'Kelompok', icon: Users },
       { to: '/admin/food-units', label: 'Master ukuran', icon: Settings2 },
     ],
