@@ -194,9 +194,11 @@ export function FoodEntry() {
             </div>
 
             <DailyFoodSummary userId={profile.id} tanggal={selectedDate} />
+          </CardContent>
+        </Card>
 
-            <div className="border-t border-border/60" />
-
+        <Card className={CARD_CLASS}>
+          <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full rounded-none border-b border-border/60 bg-transparent p-0 h-auto">
                 <TabsTrigger value="makanan" className="flex-1 rounded-none py-2.5 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent">
