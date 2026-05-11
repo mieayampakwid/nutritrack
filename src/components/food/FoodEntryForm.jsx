@@ -969,10 +969,10 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                     {jamCustomOpen && createPortal(
                       <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setJamCustomOpen(false)}>
                         <div
-                          className="w-64 rounded-xl border bg-popover p-0 text-popover-foreground shadow-lg animate-in fade-in-0 zoom-in-95 duration-200"
+                          className="w-72 rounded-xl border bg-popover p-0 text-popover-foreground shadow-lg animate-in fade-in-0 zoom-in-95 duration-200"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <div className="space-y-4 p-5">
+                          <div className="space-y-5 p-6">
                             <div className="flex items-center justify-center gap-2">
                               <Clock className="h-4 w-4 text-muted-foreground/60" />
                               <span className="text-sm font-semibold tracking-tight text-foreground">Jam makan</span>
@@ -983,7 +983,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                               <TimeScroller min={0} max={59} value={jamMinute} onChange={setJamMinute} ariaLabel="Menit" />
                             </div>
                           </div>
-                          <div className="border-t border-border/60 px-5 py-3">
+                          <div className="border-t border-border/60 px-6 py-3">
                             <Button
                               type="button"
                               className="w-full text-sm"
