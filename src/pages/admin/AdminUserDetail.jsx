@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -76,6 +77,7 @@ export function AdminUserDetail() {
           tgl_lahir: tgl && /^\d{4}-\d{2}-\d{2}$/.test(tgl) ? tgl : null,
           instalasi: editRow.instalasi || null,
           role: editRow.role,
+          riwayat_penyakit: (editRow.riwayat_penyakit ?? '').trim() || null,
         })
         .eq('id', editRow.id)
       if (e) throw e
@@ -197,6 +199,12 @@ export function AdminUserDetail() {
                 </dd>
               </div>
               <div>
+                <dt className="font-medium text-muted-foreground">Riwayat penyakit</dt>
+                <dd className="mt-0.5 whitespace-pre-wrap text-foreground">
+                  {profile.riwayat_penyakit || '—'}
+                </dd>
+              </div>
+              <div>
                 <dt className="font-medium text-muted-foreground">Terdaftar</dt>
                 <dd className="mt-0.5 text-foreground">
                   {formatDateId(profile.created_at?.slice(0, 10))}
@@ -288,6 +296,15 @@ export function AdminUserDetail() {
                 <Input
                   value={editRow.instalasi ?? ''}
                   onChange={(e) => setEditRow((r) => ({ ...r, instalasi: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Riwayat penyakit</Label>
+                <Textarea
+                  value={editRow.riwayat_penyakit ?? ''}
+                  onChange={(e) => setEditRow((r) => ({ ...r, riwayat_penyakit: e.target.value }))}
+                  placeholder="Isi riwayat penyakit jika ada"
+                  rows={3}
                 />
               </div>
               <div className="space-y-1">

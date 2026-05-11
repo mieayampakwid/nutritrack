@@ -252,6 +252,14 @@ export function ParticipantEvaluation() {
                   {formatDateId(dateFrom)} — {formatDateId(dateTo)}
                 </p>
               </div>
+              {client?.riwayat_penyakit ? (
+                <div className="sm:col-span-2">
+                  <p className="text-muted-foreground">Riwayat penyakit</p>
+                  <p className="mt-0.5 whitespace-pre-wrap font-medium text-amber-700">
+                    {client.riwayat_penyakit}
+                  </p>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         ) : null}

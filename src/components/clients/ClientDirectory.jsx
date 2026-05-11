@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, AlertTriangle } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -30,7 +30,7 @@ export function ClientDirectory({ linkPrefix, title }) {
     queryFn: async () => {
       const { data: profiles, error: e1 } = await supabase
         .from('profiles')
-        .select('id, nama, instalasi, role, is_active')
+        .select('id, nama, instalasi, role, is_active, riwayat_penyakit')
         .eq('role', 'klien')
         .eq('is_active', true)
       if (e1) throw e1
@@ -127,6 +127,12 @@ export function ClientDirectory({ linkPrefix, title }) {
                       {displayName}
                     </h3>
                     <p className="mt-0.5 truncate text-sm text-muted-foreground">{p.instalasi ?? '—'}</p>
+                    {p.riwayat_penyakit ? (
+                      <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-700">
+                        <AlertTriangle className="h-3 w-3 shrink-0" />
+                        Ada riwayat penyakit
+                      </p>
+                    ) : null}
                   </div>
                   <ChevronRight
                     className="mt-1 h-5 w-5 shrink-0 text-muted-foreground/70"

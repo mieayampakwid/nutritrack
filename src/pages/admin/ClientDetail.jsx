@@ -140,6 +140,14 @@ export function ClientDetail() {
                   : '—'}
               </dd>
             </div>
+            {client?.riwayat_penyakit ? (
+              <div className="flex justify-between gap-2 sm:col-span-2">
+                <dt className="text-muted-foreground">Riwayat penyakit</dt>
+                <dd className="max-w-xs whitespace-pre-wrap text-right text-sm font-medium text-amber-700">
+                  {client.riwayat_penyakit}
+                </dd>
+              </div>
+            ) : null}
           </dl>
         </CardContent>
       </Card>
