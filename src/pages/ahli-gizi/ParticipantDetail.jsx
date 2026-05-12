@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus, TrendingUp, Calendar, Activity, Utensils, Circle } from 'lucide-react'
+import { ArrowLeft, Plus, TrendingUp, Calendar, Activity, Utensils, Circle, AlertTriangle } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
 import { VitalMetricCard } from '@/components/participants/VitalMetricCard'
@@ -121,10 +121,13 @@ export function ParticipantDetail() {
               )}
             </p>
             {client?.riwayat_penyakit ? (
-              <p className="mt-1.5 flex items-start gap-1.5 text-sm font-medium text-white/90">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                Riwayat: {client.riwayat_penyakit}
-              </p>
+              <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+                <div>
+                  <p className="font-semibold text-white">Riwayat Penyakit</p>
+                  <p className="text-white/85">{client.riwayat_penyakit}</p>
+                </div>
+              </div>
             ) : null}
           </div>
           <Button asChild className="shrink-0">

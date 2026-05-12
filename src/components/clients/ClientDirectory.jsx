@@ -165,9 +165,9 @@ export function ClientDirectory({ linkPrefix, title }) {
                     </h3>
                     <p className="mt-0.5 truncate text-sm text-muted-foreground">{p.instalasi ?? '—'}</p>
                     {p.riwayat_penyakit ? (
-                      <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-700">
+                      <p className="mt-1 flex items-center gap-1 rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
                         <AlertTriangle className="h-3 w-3 shrink-0" />
-                        Ada riwayat penyakit
+                        Riwayat Penyakit
                       </p>
                     ) : null}
                   </div>

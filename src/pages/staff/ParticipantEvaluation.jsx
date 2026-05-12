@@ -253,9 +253,9 @@ export function ParticipantEvaluation() {
                 </p>
               </div>
               {client?.riwayat_penyakit ? (
-                <div className="sm:col-span-2">
-                  <p className="text-muted-foreground">Riwayat penyakit</p>
-                  <p className="mt-0.5 whitespace-pre-wrap font-medium text-amber-700">
+                <div className="sm:col-span-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Riwayat Penyakit</p>
+                  <p className="mt-0.5 whitespace-pre-wrap text-sm font-medium text-amber-700">
                     {client.riwayat_penyakit}
                   </p>
                 </div>
