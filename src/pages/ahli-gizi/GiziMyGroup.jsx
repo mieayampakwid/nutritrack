@@ -1,13 +1,36 @@
 import { Link } from 'react-router-dom'
-import { Users, AlertCircle } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Users, AlertCircle, AlertTriangle } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { useMyGroup } from '@/hooks/useMyGroup'
+import { supabase } from '@/lib/supabase'
+import { useMemo } from 'react'
 
 export function GiziMyGroup() {
   const { data: group, isLoading, error } = useMyGroup()
+
+  const memberIds = useMemo(
+    () => (group?.members ?? []).map((m) => m.klien_id).filter(Boolean),
+    [group],
+  )
+
+  const { data: riwayatMap = {} } = useQuery({
+    queryKey: ['my_group_riwayat', memberIds],
+    enabled: memberIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, riwayat_penyakit')
+        .in('id', memberIds)
+      if (error) throw error
+      const map = {}
+      for (const p of data ?? []) map[p.id] = p.riwayat_penyakit
+      return map
+    },
+  })
 
   if (isLoading) {
     return (
@@ -79,23 +102,32 @@ export function GiziMyGroup() {
               </div>
             ) : (
               <div className="divide-y divide-border/60">
-                {members.map((member) => (
-                  <Link
-                    key={member.id}
-                    to={`/gizi/participants/${member.klien_id}`}
-                    className="block hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 px-6 py-4">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-foreground">{member.klien_nama}</p>
-                        <p className="text-sm text-muted-foreground truncate">{member.klien_email}</p>
+                {members.map((member) => {
+                  const riwayat = riwayatMap[member.klien_id]
+                  return (
+                    <Link
+                      key={member.id}
+                      to={`/gizi/participants/${member.klien_id}`}
+                      className="block hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 px-6 py-4">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-foreground">{member.klien_nama}</p>
+                          <p className="text-sm text-muted-foreground truncate">{member.klien_email}</p>
+                          {riwayat ? (
+                            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-700">
+                              <AlertTriangle className="h-3 w-3 shrink-0" />
+                              Riwayat Penyakit
+                            </p>
+                          ) : null}
+                        </div>
+                        <Badge variant="secondary" className="shrink-0">
+                          Klien
+                        </Badge>
                       </div>
-                      <Badge variant="secondary" className="shrink-0">
-                        Klien
-                      </Badge>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  )
+                })}
               </div>
             )}
           </CardContent>
