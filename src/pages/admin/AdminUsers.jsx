@@ -79,7 +79,7 @@ export function AdminUsers() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, nama, email, role, is_active, created_at, tgl_lahir, jenis_kelamin, riwayat_penyakit')
+        .select('id, nama, email, role, is_active, created_at, tgl_lahir, jenis_kelamin')
         .order('created_at', { ascending: false })
       if (error) throw error
       return data ?? []
