@@ -115,6 +115,11 @@ export function ParticipantAssessment() {
         <p className="mt-2 text-sm text-foreground/70 sm:text-base md:text-white/85">
           {client.nama} • {client.jenis_kelamin === 'male' ? 'Laki-laki' : 'Perempuan'}
         </p>
+        {client?.riwayat_penyakit ? (
+          <p className="mt-1.5 text-sm font-medium md:text-white/90">
+            Riwayat penyakit: {client.riwayat_penyakit}
+          </p>
+        ) : null}
       </div>
 
       <AssessmentForm

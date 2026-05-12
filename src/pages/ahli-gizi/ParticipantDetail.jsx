@@ -121,8 +121,8 @@ export function ParticipantDetail() {
               )}
             </p>
             {client?.riwayat_penyakit ? (
-              <p className="mt-1.5 flex items-start gap-1.5 text-sm font-medium text-amber-600">
-                <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+              <p className="mt-1.5 flex items-start gap-1.5 text-sm font-medium text-white/90">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
                 Riwayat: {client.riwayat_penyakit}
               </p>
             ) : null}
