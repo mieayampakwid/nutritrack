@@ -32,7 +32,7 @@ export function ClientDirectory({ linkPrefix, title }) {
     queryFn: async () => {
       const { data: profiles, error: e1 } = await supabase
         .from('profiles')
-        .select('id, nama, instalasi, role, is_active')
+        .select('id, nama, instalasi, role, is_active, riwayat_penyakit')
         .eq('role', 'klien')
         .eq('is_active', true)
       if (e1) throw e1
