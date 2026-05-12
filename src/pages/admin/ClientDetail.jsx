@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, AlertTriangle } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -140,6 +140,14 @@ export function ClientDetail() {
                   : '—'}
               </dd>
             </div>
+            {client?.riwayat_penyakit ? (
+              <div className="flex justify-between gap-2 sm:col-span-2">
+                <dt className="text-muted-foreground">Riwayat penyakit</dt>
+                <dd className="max-w-xs whitespace-pre-wrap rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-right text-sm font-medium text-amber-800">
+                  {client.riwayat_penyakit}
+                </dd>
+              </div>
+            ) : null}
           </dl>
         </CardContent>
       </Card>

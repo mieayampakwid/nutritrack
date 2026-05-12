@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, AlertTriangle } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AssessmentForm } from '@/components/participants/AssessmentForm'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -115,6 +115,15 @@ export function ParticipantAssessment() {
         <p className="mt-2 text-sm text-foreground/70 sm:text-base md:text-white/85">
           {client.nama} • {client.jenis_kelamin === 'male' ? 'Laki-laki' : 'Perempuan'}
         </p>
+        {client?.riwayat_penyakit ? (
+          <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300 md:text-amber-300" />
+            <div>
+              <p className="font-semibold md:text-white">Riwayat Penyakit</p>
+              <p className="text-foreground/80 md:text-white/85">{client.riwayat_penyakit}</p>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <AssessmentForm

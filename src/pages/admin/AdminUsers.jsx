@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -78,7 +79,7 @@ export function AdminUsers() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, nama, email, role, is_active, created_at, tgl_lahir, jenis_kelamin')
+        .select('id, nama, email, role, is_active, created_at, tgl_lahir, jenis_kelamin, riwayat_penyakit')
         .order('created_at', { ascending: false })
       if (error) throw error
       return data ?? []
@@ -153,7 +154,7 @@ export function AdminUsers() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, nama, tgl_lahir, jenis_kelamin, role }) => {
+    mutationFn: async ({ id, nama, tgl_lahir, jenis_kelamin, role, riwayat_penyakit }) => {
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -161,6 +162,7 @@ export function AdminUsers() {
           tgl_lahir: tgl_lahir || null,
           jenis_kelamin: jenis_kelamin || null,
           role,
+          riwayat_penyakit: (riwayat_penyakit ?? '').trim() || null,
         })
         .eq('id', id)
       if (error) throw error
@@ -180,6 +182,7 @@ export function AdminUsers() {
       email: u.email || '',
       tgl_lahir: isoToDateInput(u.tgl_lahir),
       jenis_kelamin: u.jenis_kelamin || '',
+      riwayat_penyakit: u.riwayat_penyakit || '',
       role: u.role,
     })
   }
@@ -513,6 +516,15 @@ export function AdminUsers() {
                 </div>
               </div>
               <div className="space-y-1">
+                <Label>Riwayat penyakit</Label>
+                <Textarea
+                  value={editUser.riwayat_penyakit ?? ''}
+                  onChange={(e) => setEditUser((f) => ({ ...f, riwayat_penyakit: e.target.value }))}
+                  placeholder="Isi riwayat penyakit jika ada"
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-1">
                 <Label>Peran</Label>
                 <Select
                   value={editUser.role}
@@ -547,6 +559,7 @@ export function AdminUsers() {
                   tgl_lahir: editUser.tgl_lahir || null,
                   jenis_kelamin: editUser.jenis_kelamin || null,
                   role: editUser.role,
+                  riwayat_penyakit: editUser.riwayat_penyakit,
                 })
               }
             >

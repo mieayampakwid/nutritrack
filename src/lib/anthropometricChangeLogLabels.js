@@ -7,6 +7,7 @@ export const ANTHROPOMETRIC_FIELD_LABELS = {
   lingkar_pinggang: 'Lingkar pinggang (cm)',
   bmi: 'BMI',
   energi_total: 'Kebutuhan energi (kkal)',
+  riwayat_penyakit: 'Riwayat penyakit',
 }
 
 export function anthropometricFieldLabel(field) {
