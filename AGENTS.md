@@ -2,6 +2,8 @@
 
 Coding conventions and project context for AI coding agents (Cursor, Copilot, etc.).
 
+**For setup, environment configuration, and deployment, see [README.md](README.md).**
+
 ---
 
 ## 1. Project Overview

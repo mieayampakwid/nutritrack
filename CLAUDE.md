@@ -1,26 +1,86 @@
 # CLAUDE.md — NutriTrack / LAPER
 
-## Project Overview
+**START HERE** — Read this first for essentials. For comprehensive conventions, architecture, and testing rules, see [AGENTS.md](AGENTS.md).
 
-NutriTrack (LAPER) is a web-based nutritional tracking platform for Indonesian dietitians (ahli gizi) and their clients (klien). It provides food logging, anthropometric tracking, calorie estimation via AI, and progress monitoring.
+This document is your onboarding ramp: what you need to know immediately to work effectively, and how to avoid common mistakes.
 
-## Tech Stack
+---
 
-- JavaScript/JSX (React 19.2.4, Vite 8.0.1)
-- Tailwind CSS 4.2.2 (no tailwind.config — theme in `src/index.css` via `@theme {}`)
-- TanStack React Query 5.95.2 for server state
-- React Router DOM 7.13.2
-- Supabase 2.100.1 (auth, Postgres, RLS, Edge Functions, Storage)
-- Vitest 4.1.5 + @testing-library/react for testing
-- TypeScript only in `supabase/functions/` (Deno edge functions)
+## What This Project Is
 
-## Where to look first
+NutriTrack (LAPER) is a nutritional tracking platform for Indonesian dietitians and their clients. Role-based workflows with three user types: admin, ahli_gizi, klien.
 
-- `README.md` — setup, env vars, Supabase + Edge Function notes
-- `AGENTS.md` — coding conventions, architecture map, testing rules (authoritative)
-- `tasks/current.md` — current work handoff (update before ending a session)
+**Stack:** React 19, Vite 8, Tailwind 4, React Query 5, Supabase 2 (auth + Postgres + Edge Functions)
+**Language:** All user-facing text is Indonesian
+**Test:** Vitest 4 + React Testing Library
 
-## Common commands
+---
+
+## Testing — When & What
+
+**REQUIRED:** `src/lib/**`, `src/hooks/**`, any component with non-trivial behavior (forms, role gates, state transitions, bug fixes with regression test)
+
+**NOT REQUIRED:** Pure style/markup tweaks, copy changes, doc edits
+
+**What to test:**
+- Components: rendered output, user interactions, conditional rendering
+- Hooks: query/mutation behavior using `renderHook`
+- Lib/utils: pure function input/output, edge cases
+
+**Helpers:** Always use `src/test/renderWithProviders.jsx`, `src/test/queryWrapper.jsx`, `src/test/supabaseMock.js` — see [AGENTS.md](AGENTS.md#9-testing) for details.
+
+**Pre-commit:** `npm run lint` and `npm test` must both pass.
+
+---
+
+## Avoid These Common Mistakes
+
+| ❌ Don't | ✅ Do |
+|---------|-------|
+| `supabase.auth.*` in components | `useAuth()` hook from `src/hooks/useAuth.jsx` |
+| `supabase.from('...').select()` in components | React Query hooks from `src/hooks/` |
+| English UI text | Indonesian — `format.js` has helpers for dates/numbers |
+| `VITE_OPENAI_API_KEY` | Server-side only — Supabase secrets, never `VITE_*` |
+| Editing saved calorie estimates | Immutable after save — from Edge Function |
+| Hardcoded BMI thresholds | `src/lib/bmiCalculator.js` (WHO Asia-Pacific) |
+
+See [AGENTS.md](AGENTS.md#4-key-conventions) for full conventions.
+
+---
+
+## Project Structure
+
+```
+src/pages/{admin,ahli-gizi,klien,staff,auth}/  # Route pages by role
+src/components/ui/                              # Radix primitives (shadcn)
+src/components/{food,measurement,dashboard}/    # Feature components
+src/hooks/                                      # React Query + useAuth
+src/lib/                                        # Supabase client, formatters, helpers
+src/test/                                       # Shared test helpers
+supabase/functions/                             # Edge Functions (TypeScript)
+supabase/schema.sql                             # Canonical DB schema
+```
+
+**Key pattern:** `@/` alias resolves to `src/` — always use for imports.
+
+Full architecture: [AGENTS.md](AGENTS.md#3-architecture)
+
+---
+
+## Task Handoff
+
+**START:** Read `tasks/current.md` to resume previous work
+
+**FINISH:** Update `tasks/current.md` with:
+- Status (in-progress / blocked / done)
+- Decisions made and why
+- Next steps for the next agent
+
+This keeps work continuous across sessions.
+
+---
+
+## Common Commands
 
 ```bash
 npm install
@@ -29,15 +89,4 @@ npm run lint           # ESLint (must be clean before commit)
 npm test               # Vitest run (CI equivalent)
 ```
 
-## Gotchas (high impact)
-
-- Use `@/` alias for imports within `src/` (configured in `vite.config.js`).
-- Do not call `supabase.auth` directly in components; use the project’s `useAuth` + Query hooks (see `AGENTS.md`).
-- Never expose `OPENAI_API_KEY` in frontend env (`VITE_*`).
-
-## Task Handoff
-
-Read `tasks/current.md` at session start to resume where the previous agent left off. Before ending any task or when context is running low, update `tasks/current.md` with:
-- Status of current work (in-progress / blocked / done)
-- Decisions made and why
-- Next steps for the next agent
+Full command reference: [README.md](README.md)
