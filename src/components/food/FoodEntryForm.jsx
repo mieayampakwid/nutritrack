@@ -321,6 +321,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const [rowErrorsById, setRowErrorsById] = useState(() => ({}))
   const [pendingResult, setPendingResult] = useState(null)
   const [result, setResult] = useState(null)
+  const idempotencyKeyRef = useRef(null)
   const resultRef = useRef(null)
   const analyzingAnchorRef = useRef(null)
   const rowErrorAnchorRef = useRef(null)
@@ -536,6 +537,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
         const totalSerat = itemsWithKal.reduce((a, x) => a + (x.serat || 0), 0)
         const totalNatrium = itemsWithKal.reduce((a, x) => a + (x.natrium || 0), 0)
 
+        idempotencyKeyRef.current = crypto.randomUUID()
         setPendingResult({
           items: itemsWithKal,
           total,
@@ -632,9 +634,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   async function handleConfirmSave() {
     if (!pendingResult) return
     setSaving(true)
+    const { items, total, totalKarbohidrat, totalProtein, totalLemak, totalSerat, totalNatrium, waktuMakan, tanggal } = pendingResult
     try {
-      const { items, total, totalKarbohidrat, totalProtein, totalLemak, totalSerat, totalNatrium, waktuMakan, tanggal } = pendingResult
-
       const { data: logRow, error: logErr } = await supabase
         .from('food_logs')
         .insert({
@@ -648,6 +649,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
           total_lemak: totalLemak ?? 0,
           total_serat: totalSerat ?? 0,
           total_natrium: totalNatrium ?? 0,
+          idempotency_key: idempotencyKeyRef.current,
           status: 'saved',
         })
         .select()
@@ -674,22 +676,75 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
 
       setResult(pendingResult)
       setPendingResult(null)
+      idempotencyKeyRef.current = null
       qc.invalidateQueries({ queryKey: ['food_logs', userId] })
       qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
       toast.success('Data tersimpan.')
     } catch (e) {
       logError('FoodEntryForm.handleConfirmSave', e)
-      toast.error('Gagal menyimpan data.')
+
+      // Idempotency key collision: a previous attempt partially succeeded on the server.
+      // Try to recover by fetching the existing row and inserting items against it.
+      if (e?.code === '23505' && idempotencyKeyRef.current) {
+        try {
+          const { data: existing, error: fetchErr } = await supabase
+            .from('food_logs')
+            .select('id')
+            .eq('idempotency_key', idempotencyKeyRef.current)
+            .single()
+
+          if (fetchErr) throw fetchErr
+
+          const inserts = items.map((x) => ({
+            food_log_id: existing.id,
+            nama_makanan: x.nama_makanan,
+            jumlah: x.jumlah,
+            unit_id: x.unit_id,
+            unit_nama: x.unit_nama,
+            kalori_estimasi: x.kalori_estimasi,
+            karbohidrat: x.karbohidrat ?? 0,
+            protein: x.protein ?? 0,
+            lemak: x.lemak ?? 0,
+            serat: x.serat ?? 0,
+            natrium: x.natrium ?? 0,
+          }))
+
+          const { error: itemErr } = await supabase.from('food_log_items').insert(inserts)
+
+          if (itemErr) {
+            // Items may also already exist (full previous success). Treat as success.
+            if (itemErr.code === '23505') {
+              // No-op, treat as success below
+            } else {
+              throw itemErr
+            }
+          }
+
+          setResult(pendingResult)
+          setPendingResult(null)
+          idempotencyKeyRef.current = null
+          qc.invalidateQueries({ queryKey: ['food_logs', userId] })
+          qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
+          toast.success('Data tersimpan.')
+        } catch (recoveryErr) {
+          logError('FoodEntryForm.handleConfirmSave recovery', recoveryErr)
+          toast.error('Gagal menyimpan data. Silakan coba kembali.')
+        }
+      } else {
+        toast.error('Gagal menyimpan data. Silakan coba kembali.')
+      }
     } finally {
       setSaving(false)
     }
   }
 
   function handleDiscard() {
+    idempotencyKeyRef.current = null
     setPendingResult(null)
   }
 
   function handleSelesai() {
+    idempotencyKeyRef.current = null
     setResult(null)
     const nextRow = emptyRow()
     setRows([nextRow])
