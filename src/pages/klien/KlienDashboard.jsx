@@ -113,7 +113,7 @@ export function KlienDashboard() {
               <div className="h-10 w-full animate-pulse rounded-lg bg-muted/50" />
             </div>
           ) : (
-            <ActivityLogTable type="food" data={logs} tanggal={selectedDate} />
+            <ActivityLogTable type="food" data={logs} tanggal={selectedDate} userId={profile?.id} />
           )}
         </section>
 

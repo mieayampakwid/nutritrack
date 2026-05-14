@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { toIsoDateLocal } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 
@@ -92,6 +93,31 @@ export function useFoodLogItems(logIds, enabled = true) {
         .in('food_log_id', logIds)
       if (error) throw error
       return data ?? []
+    },
+  })
+}
+
+export function useDeleteFoodLog() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ logId, userId, foodName }) => {
+      const { error: logError } = await supabase
+        .from('food_log_deletions')
+        .insert({ user_id: userId, food_log_id: logId, food_name: foodName })
+      if (logError) throw logError
+      const { error } = await supabase
+        .from('food_logs')
+        .delete()
+        .eq('id', logId)
+      if (error) throw error
+    },
+    onSuccess: (_, { userId }) => {
+      qc.invalidateQueries({ queryKey: ['food_logs', userId] })
+      qc.invalidateQueries({ queryKey: ['food_entry_dates'] })
+      toast.success('Entri log berhasil dihapus.')
+    },
+    onError: (error) => {
+      toast.error(error.message ?? 'Gagal menghapus entri.')
     },
   })
 }

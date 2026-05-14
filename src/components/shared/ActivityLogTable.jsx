@@ -67,6 +67,7 @@ export function ActivityLogTable({
   tanggal,
   dateFrom,
   dateTo,
+  userId,
 }) {
   const theme = THEMES[type]
   const Icon = theme.icon
@@ -448,6 +449,7 @@ export function ActivityLogTable({
           tanggal={modalDate}
           logsForDay={dataByDate.get(modalDate) ?? []}
           itemsByLogId={itemsByLogId}
+          userId={userId}
         />
       )}
     </div>

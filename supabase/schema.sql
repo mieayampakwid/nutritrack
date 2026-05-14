@@ -65,6 +65,14 @@ create table if not exists public.food_logs (
 create index if not exists food_logs_user_tanggal_idx on public.food_logs (user_id, tanggal desc);
 create index if not exists food_logs_user_tanggal_created_idx on public.food_logs (user_id, tanggal desc, created_at desc);
 
+create table if not exists public.food_log_deletions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  food_log_id uuid not null,
+  food_name text not null,
+  deleted_at timestamptz default now()
+);
+
 create table if not exists public.food_log_items (
   id uuid primary key default gen_random_uuid(),
   food_log_id uuid references public.food_logs(id) on delete cascade,
@@ -441,6 +449,15 @@ create policy "food_items_klien" on public.food_log_items
 
 drop policy if exists "food_items_staff_read" on public.food_log_items;
 create policy "food_items_staff_read" on public.food_log_items
+  for select using (public.jwt_is_staff());
+
+-- food_log_deletions: klien can insert for own deletions; staff can select.
+drop policy if exists "deletions_klien_insert" on public.food_log_deletions;
+create policy "deletions_klien_insert" on public.food_log_deletions
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "deletions_staff_select" on public.food_log_deletions;
+create policy "deletions_staff_select" on public.food_log_deletions
   for select using (public.jwt_is_staff());
 
 drop policy if exists "food_units_read" on public.food_units;
