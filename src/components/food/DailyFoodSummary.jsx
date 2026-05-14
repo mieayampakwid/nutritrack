@@ -164,11 +164,18 @@ export function DailyFoodSummary({ userId, tanggal }) {
               disabled={deleteMutation.isPending || !confirmLogId}
               onClick={() => {
                 if (!confirmLogId || !userId) return
-                deleteMutation.mutate({
-                  logId: confirmLogId,
-                  userId,
-                  foodName: confirmFoodName,
-                })
+                deleteMutation.mutate(
+                  {
+                    logId: confirmLogId,
+                    userId,
+                    foodName: confirmFoodName,
+                  },
+                  {
+                    onSuccess: () => {
+                      setConfirmLogId(null)
+                    },
+                  },
+                )
               }}
             >
               {deleteMutation.isPending ? 'Menghapus…' : 'Hapus'}

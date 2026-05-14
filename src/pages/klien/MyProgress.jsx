@@ -126,9 +126,7 @@ export function MyProgress() {
     enabled: creatorIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, nama')
-        .in('id', creatorIds)
+        .rpc('get_profile_names', { profile_ids: creatorIds })
       if (error) throw error
       const map = {}
       for (const p of data ?? []) map[p.id] = p.nama
@@ -350,7 +348,7 @@ export function MyProgress() {
             <div className="space-y-5 text-sm">
               <div className="rounded-xl border border-border/60 bg-muted/20 p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pasien</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nama</span>
                   <span className="font-semibold text-foreground">{profile?.nama || '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -358,7 +356,7 @@ export function MyProgress() {
                   <span className="font-medium tabular-nums">{formatDateId(detailAssessment.tanggal)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Diasuh oleh</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dievaluasi oleh</span>
                   <span className="font-medium">{detailCreator || '—'}</span>
                 </div>
               </div>

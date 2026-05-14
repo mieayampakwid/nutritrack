@@ -262,11 +262,18 @@ export function FoodLogMealDetailDialog({ open, onOpenChange, tanggal, logsForDa
               disabled={deleteMutation.isPending || !confirmLogId}
               onClick={() => {
                 if (!confirmLogId || !userId) return
-                deleteMutation.mutate({
-                  logId: confirmLogId,
-                  userId,
-                  foodName: confirmFoodName,
-                })
+                deleteMutation.mutate(
+                  {
+                    logId: confirmLogId,
+                    userId,
+                    foodName: confirmFoodName,
+                  },
+                  {
+                    onSuccess: () => {
+                      setConfirmLogId(null)
+                    },
+                  },
+                )
               }}
             >
               {deleteMutation.isPending ? 'Menghapus…' : 'Hapus'}

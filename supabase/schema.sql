@@ -508,3 +508,16 @@ grant execute on function public.jwt_is_staff() to authenticated;
 
 revoke all on function public.food_log_owned_by_me(uuid) from public;
 grant execute on function public.food_log_owned_by_me(uuid) to authenticated;
+
+-- Security definer: read profile names bypassing RLS (for showing creator/evaluator names)
+create or replace function public.get_profile_names(profile_ids uuid[])
+returns table(id uuid, nama text)
+language sql
+security definer
+set search_path = ''
+as $$
+  select p.id, p.nama from public.profiles p where p.id = any(profile_ids);
+$$;
+
+revoke all on function public.get_profile_names(uuid[]) from public;
+grant execute on function public.get_profile_names(uuid[]) to authenticated;
