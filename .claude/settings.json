@@ -1,9 +1,50 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run lint *)",
+      "Bash(npm test)",
+      "Bash(npm run test:*)",
+      "Bash(npm run test:coverage)",
+      "Bash(npm run test:related)",
+      "Bash(npm run test:watch)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint -- --fix ${file}"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "The user is trying to edit ${file}. If this is a .env file, confirm with the user before proceeding as it contains sensitive credentials.",
+            "if": "Edit(*.env)|Write(*.env)"
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "context7@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
-    "supabase@claude-plugins-official": true
+    "supabase@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true
   }
 }
