@@ -58,10 +58,12 @@ create table if not exists public.food_logs (
   total_lemak numeric(8,2) default 0,
   total_serat numeric(8,2) default 0,
   total_natrium numeric(8,2) default 0,
+  idempotency_key uuid,
   status text check (status in ('saved')) default 'saved',
   created_at timestamptz default now()
 );
 
+create unique index if not exists food_logs_user_idempotency_idx on public.food_logs (user_id, idempotency_key);
 create index if not exists food_logs_user_tanggal_idx on public.food_logs (user_id, tanggal desc);
 create index if not exists food_logs_user_tanggal_created_idx on public.food_logs (user_id, tanggal desc, created_at desc);
 

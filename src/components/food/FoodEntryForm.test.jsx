@@ -275,4 +275,77 @@ describe('FoodEntryForm', () => {
       { nama_makanan: 'Bakso', jumlah: 1, unit_nama: 'gram' },
     ])
   }, 15000)
+
+  it('recovers from idempotency key collision (network retry)', async () => {
+    const user = userEvent.setup()
+    const { toast } = await import('sonner')
+
+    // Phase 1: successful AI analysis
+    openaiMock.analyzeFood.mockResolvedValueOnce([
+      { nama_makanan: 'Nasi Goreng', kalori: 350, karbohidrat: 50, protein: 10, lemak: 12, serat: 2, natrium: 400 },
+    ])
+
+    // Replace supabase mock entirely for this test to control the save flow precisely.
+    const originalFrom = supabaseMock.from.getMockImplementation()
+    const foodLogItemsInsertSpy = vi.fn()
+    let logInsertAttempt = 0
+
+    supabaseMock.from.mockImplementation((table) => {
+      if (table === 'food_logs') {
+        return {
+          insert: vi.fn().mockImplementation((payload) => {
+            logInsertAttempt++
+            if (logInsertAttempt === 1 && payload?.idempotency_key) {
+              // Simulate unique violation — previous request partially succeeded on server
+              return {
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({ data: null, error: { code: '23505', message: 'duplicate key' } }),
+                }),
+              }
+            }
+            // Fallback for any other food_logs call
+            return {
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({ data: null, error: null }),
+              }),
+            }
+          }),
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { id: 'existing-log-id' }, error: null }),
+            }),
+          }),
+        }
+      }
+      if (table === 'food_log_items') {
+        return {
+          insert: foodLogItemsInsertSpy.mockResolvedValue({ data: null, error: null }),
+        }
+      }
+      // All other tables use the original mock
+      return originalFrom(table)
+    })
+
+    renderWithProviders(<FoodEntryForm userId="u1" />)
+
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
+    await setJamMakan(user, '7', '5')
+    await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Nasi Goreng')
+    await user.type(screen.getByPlaceholderText('0'), '1')
+    await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
+
+    // Click Analisa → shows "Simpan" button
+    await user.click(screen.getByRole('button', { name: /analisa/i }))
+    const simpanBtn = await screen.findByRole('button', { name: /simpan/i })
+    await user.click(simpanBtn)
+
+    // Should succeed via recovery path
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Data tersimpan.'))
+
+    // Verify food_log_items were inserted against the existing log row
+    expect(foodLogItemsInsertSpy).toHaveBeenCalled()
+    const insertArgs = foodLogItemsInsertSpy.mock.calls[0][0]
+    expect(insertArgs[0].food_log_id).toBe('existing-log-id')
+    expect(insertArgs[0].nama_makanan).toBe('Nasi Goreng')
+  }, 15000)
 })
