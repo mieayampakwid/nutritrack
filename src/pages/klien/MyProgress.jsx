@@ -126,9 +126,7 @@ export function MyProgress() {
     enabled: creatorIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, nama')
-        .in('id', creatorIds)
+        .rpc('get_profile_names', { profile_ids: creatorIds })
       if (error) throw error
       const map = {}
       for (const p of data ?? []) map[p.id] = p.nama
