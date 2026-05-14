@@ -37,3 +37,4 @@ coverage/
 
 # Local agent/IDE config
 .claude/settings.local.json
+.cursor/mcp.json
