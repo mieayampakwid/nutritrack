@@ -58,7 +58,7 @@ export function FoodLogMealDetailDialog({ open, onOpenChange, tanggal, logsForDa
 
   const hasAnyLogs = MEAL_ORDER.some((key) => groups[key].length > 0)
 
-  const showDelete = profile?.role === 'klien' && userId === profile?.id
+  const showDelete = (profile?.role === 'klien' || profile?.role === 'ahli_gizi') && userId === profile?.id
 
   const confirmLog = confirmLogId ? (logsForDay ?? []).find((l) => l.id === confirmLogId) : null
   const confirmItems = confirmLog ? (itemsByLogId[confirmLog.id] ?? []) : []
