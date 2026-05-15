@@ -1,43 +1,45 @@
-import { useMemo } from 'react'
-import { CalendarRange, ClipboardList, Users, Apple } from 'lucide-react'
+import { useState } from 'react'
+import { ChevronLeft, ChevronRight, CalendarRange, ClipboardList, Users, Apple } from 'lucide-react'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { PopularFoodsTrendCard } from '@/components/dashboard/PopularFoodsTrendCard'
 import { DashboardActionCard } from '@/components/dashboard/DashboardActionCard'
 import { DailyCalorieChart } from '@/components/dashboard/DailyCalorieChart'
-import { DailyFoodSummary } from '@/components/food/DailyFoodSummary'
 import { ActivityLogTable } from '@/components/shared/ActivityLogTable'
 import { ClientNutritionSummaryCard } from '@/components/clients/ClientNutritionSummaryCard'
 import { AppShell } from '@/components/layout/AppShell'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
-import { toIsoDateLocal, formatNumberId } from '@/lib/format'
-import { cn } from '@/lib/utils'
+import { toIsoDateLocal, parseIsoDateLocal, formatDateId } from '@/lib/format'
 
 export function GiziDashboard() {
   const { profile } = useAuth()
-  const today = toIsoDateLocal(new Date())
+  const [selectedDate, setSelectedDate] = useState(() => toIsoDateLocal(new Date()))
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
-  const { data: foodLogs = [], isLoading: foodLoading } = useFoodLogsForUser(profile?.id, {
+  const prevDay = () => {
+    const date = parseIsoDateLocal(selectedDate)
+    date.setDate(date.getDate() - 1)
+    setSelectedDate(toIsoDateLocal(date))
+  }
+
+  const nextDay = () => {
+    const date = parseIsoDateLocal(selectedDate)
+    date.setDate(date.getDate() + 1)
+    setSelectedDate(toIsoDateLocal(date))
+  }
+
+  const { data: logs = [], isLoading: foodLoading } = useFoodLogsForUser(profile?.id, {
     enabled: Boolean(profile?.id),
-    dateFrom: today,
-    dateTo: today,
+    dateFrom: selectedDate,
+    dateTo: selectedDate,
   })
-
-  const todayMacros = useMemo(() => {
-    const totals = { kalori: 0, karbohidrat: 0, protein: 0, lemak: 0 }
-    for (const log of foodLogs) {
-      totals.kalori += Number(log.total_kalori) || 0
-      totals.karbohidrat += Number(log.total_karbohidrat) || 0
-      totals.protein += Number(log.total_protein) || 0
-      totals.lemak += Number(log.total_lemak) || 0
-    }
-    return totals
-  }, [foodLogs])
 
   const { data: exerciseLogs = [], isLoading: exerciseLoading } = useExerciseLogsForUser(profile?.id, {
     enabled: Boolean(profile?.id),
-    recentDays: 14,
+    dateFrom: selectedDate,
+    dateTo: selectedDate,
   })
 
   return (
@@ -46,59 +48,6 @@ export function GiziDashboard() {
         {/* Ringkasan gizi pribadi */}
         <section aria-label="Ringkasan gizi pribadi" className="mt-4">
           <ClientNutritionSummaryCard profile={profile} />
-        </section>
-
-        {/* Makanan hari ini */}
-        <section aria-label="Makanan hari ini">
-          <h2 className="mb-4 text-base font-semibold tracking-tight text-foreground sm:mb-3 sm:text-sm">
-            Makanan hari ini
-          </h2>
-          {foodLoading ? (
-            <div className="space-y-2.5">
-              <div className="h-14 w-full animate-pulse rounded-xl bg-muted/70" />
-              <div className="h-12 w-full animate-pulse rounded-xl bg-muted/60" />
-            </div>
-          ) : (
-            <>
-              <DailyFoodSummary userId={profile?.id} tanggal={today} />
-              <Card className="mt-3 border-border/60">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold">Total nutrisi hari ini</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <MacroItem label="Kalori" value={todayMacros.kalori} unit="kkal" color="text-amber-600" />
-                    <MacroItem label="Karbohidrat" value={todayMacros.karbohidrat} unit="g" color="text-blue-600" />
-                    <MacroItem label="Protein" value={todayMacros.protein} unit="g" color="text-emerald-600" />
-                    <MacroItem label="Lemak" value={todayMacros.lemak} unit="g" color="text-purple-600" />
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </section>
-
-        {/* Grafik kalori mingguan */}
-        <section aria-label="Grafik kalori mingguan">
-          <h2 className="mb-4 text-base font-semibold tracking-tight text-foreground sm:mb-3 sm:text-sm">
-            Grafik kalori 7 hari terakhir
-          </h2>
-          <DailyCalorieChart userId={profile?.id} days={7} />
-        </section>
-
-        {/* Log olahraga 14 hari */}
-        <section aria-label="Log olahraga 14 hari">
-          <h2 className="mb-4 text-base font-semibold tracking-tight text-foreground sm:mb-3 sm:text-sm">
-            Log olahraga (14 hari)
-          </h2>
-          {exerciseLoading ? (
-            <div className="space-y-2.5">
-              <div className="h-10 w-full animate-pulse rounded-lg bg-muted/70" />
-              <div className="h-10 w-full animate-pulse rounded-lg bg-muted/60" />
-            </div>
-          ) : (
-            <ActivityLogTable type="exercise" data={exerciseLogs} userId={profile?.id} />
-          )}
         </section>
 
         {/* Aksi cepat */}
@@ -120,6 +69,77 @@ export function GiziDashboard() {
               icon={Users}
             />
           </div>
+        </section>
+
+        {/* Grafik kalori mingguan */}
+        <section aria-label="Grafik kalori mingguan">
+          <h2 className="mb-4 text-base font-semibold tracking-tight text-foreground sm:mb-3 sm:text-sm">
+            Grafik kalori 7 hari terakhir
+          </h2>
+          <DailyCalorieChart userId={profile?.id} days={7} />
+        </section>
+
+        {/* Date navigation + food & exercise log */}
+        <div className="flex items-center justify-between rounded-2xl bg-white/90 px-4 py-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur-sm">
+          <button
+            onClick={prevDay}
+            className="h-8 w-8 rounded-full flex items-center justify-center text-neutral-600 hover:bg-black/5 active:bg-black/10 transition-colors"
+            aria-label="Hari sebelumnya"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <button className="flex-1 px-4 text-sm font-medium text-neutral-800 tabular-nums hover:bg-black/5 rounded-md transition-colors">
+                {formatDateId(parseIsoDateLocal(selectedDate))}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center" sideOffset={8}>
+              <Calendar
+                mode="single"
+                selected={parseIsoDateLocal(selectedDate)}
+                onSelect={(d) => {
+                  if (d) {
+                    setSelectedDate(toIsoDateLocal(d))
+                    setCalendarOpen(false)
+                  }
+                }}
+                defaultMonth={parseIsoDateLocal(selectedDate)}
+                autoFocus
+              />
+            </PopoverContent>
+          </Popover>
+          <button
+            onClick={nextDay}
+            className="h-8 w-8 rounded-full flex items-center justify-center text-neutral-600 hover:bg-black/5 active:bg-black/10 transition-colors"
+            aria-label="Hari berikutnya"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        <section aria-label="Log makanan">
+          {foodLoading ? (
+            <div className="space-y-2.5 py-1">
+              <div className="h-10 w-full animate-pulse rounded-lg bg-muted/70" />
+              <div className="h-10 w-full animate-pulse rounded-lg bg-muted/60" />
+              <div className="h-10 w-full animate-pulse rounded-lg bg-muted/50" />
+            </div>
+          ) : (
+            <ActivityLogTable type="food" data={logs} tanggal={selectedDate} userId={profile?.id} />
+          )}
+        </section>
+
+        <section aria-label="Log olahraga">
+          {exerciseLoading ? (
+            <div className="space-y-2.5 py-1">
+              <div className="h-10 w-full animate-pulse rounded-lg bg-muted/70" />
+              <div className="h-10 w-full animate-pulse rounded-lg bg-muted/60" />
+              <div className="h-10 w-full animate-pulse rounded-lg bg-muted/50" />
+            </div>
+          ) : (
+            <ActivityLogTable type="exercise" data={exerciseLogs} tanggal={selectedDate} />
+          )}
         </section>
 
         {/* Makanan populer */}
@@ -152,17 +172,5 @@ export function GiziDashboard() {
         </section>
       </div>
     </AppShell>
-  )
-}
-
-function MacroItem({ label, value, unit, color }) {
-  return (
-    <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className={cn('mt-0.5 text-lg font-bold tabular-nums leading-tight', color)}>
-        {formatNumberId(value)}
-        <span className="ml-0.5 text-xs font-normal text-muted-foreground">{unit}</span>
-      </p>
-    </div>
   )
 }
