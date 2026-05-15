@@ -55,6 +55,7 @@ const ROLE_NAV = {
   ahli_gizi: {
     primary: [
       { to: '/gizi/dashboard', label: 'Dasbor', icon: LayoutDashboard },
+      { to: '/klien/food-entry', label: 'Diary', icon: Apple },
       { to: '/gizi/my-group', label: 'Kelompok Saya', icon: Users },
     ],
     more: [],
