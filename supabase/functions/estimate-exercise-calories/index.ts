@@ -161,9 +161,9 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
       .maybeSingle()
 
-    if (!profile || profile.is_active === false || profile.role !== 'klien') {
+    if (!profile || profile.is_active === false || (profile.role !== 'klien' && profile.role !== 'ahli_gizi')) {
       return new Response(
-        JSON.stringify({ error: 'Only active clients can estimate exercise calories.' }),
+        JSON.stringify({ error: 'Only active clients or nutritionists can estimate exercise calories.' }),
         {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
