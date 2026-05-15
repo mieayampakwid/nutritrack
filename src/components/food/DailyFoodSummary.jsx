@@ -65,7 +65,7 @@ export function DailyFoodSummary({ userId, tanggal }) {
     return map
   }, [foodItems])
 
-  const showDelete = profile?.role === 'klien'
+  const showDelete = profile?.role === 'klien' || profile?.role === 'ahli_gizi'
 
   const confirmLog = confirmLogId ? foodLogs.find((l) => l.id === confirmLogId) : null
   const confirmItems = confirmLog ? (itemsByLogId[confirmLog.id] ?? []) : []

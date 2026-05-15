@@ -412,9 +412,9 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
       .maybeSingle()
 
-    if (!profile || profile.is_active === false || profile.role !== 'klien') {
+    if (!profile || profile.is_active === false || (profile.role !== 'klien' && profile.role !== 'ahli_gizi')) {
       return new Response(
-        JSON.stringify({ error: 'Hanya klien aktif yang dapat menganalisa makanan.' }),
+        JSON.stringify({ error: 'Hanya klien atau ahli gizi aktif yang dapat menganalisa makanan.' }),
         {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
