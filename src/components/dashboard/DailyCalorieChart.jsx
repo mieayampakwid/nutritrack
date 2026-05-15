@@ -91,14 +91,14 @@ function ChartLegend({ hasTarget, isAnjuran }) {
 }
 
 /**
- * @param {{ userId: string | undefined; className?: string }} props
+ * @param {{ userId: string | undefined; days?: number; className?: string }} props
  */
-export function DailyCalorieChart({ userId, className }) {
+export function DailyCalorieChart({ userId, days = CHART_DAY_COUNT, className }) {
   const enabled = Boolean(userId)
 
   const { data: logs = [], isLoading: logsLoading } = useFoodLogsForUser(userId, {
     enabled,
-    recentDays: CHART_DAY_COUNT,
+    recentDays: days,
   })
 
   const { data: latestAssessment, isLoading: assessmentLoading } = useQuery({
@@ -121,8 +121,8 @@ export function DailyCalorieChart({ userId, className }) {
   const isAnjuran = latestAssessment?.anjuran_kalori_harian != null
 
   const chartData = useMemo(
-    () => buildDailySeries(logs, hasTarget ? targetKcal : null, CHART_DAY_COUNT),
-    [logs, targetKcal, hasTarget],
+    () => buildDailySeries(logs, hasTarget ? targetKcal : null, days),
+    [logs, targetKcal, hasTarget, days],
   )
 
   const yMax = useMemo(() => {

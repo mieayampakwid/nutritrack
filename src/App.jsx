@@ -333,7 +333,7 @@ function AppRoutes() {
         <Route
           path="/klien/food-entry"
           element={
-            <RequireAuth roles={['klien']}>
+            <RequireAuth roles={['klien', 'ahli_gizi']}>
               <FoodEntry />
             </RequireAuth>
           }
