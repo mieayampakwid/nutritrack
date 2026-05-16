@@ -10,220 +10,88 @@ const corsHeaders: Record<string, string> = {
 }
 
 const MAX_ITEMS = 40
+const MIN_JUMLAH = 0.001  // Accept any quantity > 0, no matter how small
 const MAX_JUMLAH = 10000
+// FIX #1: Dynamic max_tokens based on item count
+const BASE_TOKENS = 500
+const TOKENS_PER_ITEM = 120
+const MAX_TOKENS_CEILING = 4096
+
+// FIX #6: Retry config
+const MAX_RETRIES = 2
+const RETRY_DELAY_MS = 800
 
 function sanitize(s: string, maxLen = 120): string {
   return s
     .replace(/[\n\r\t\x00-\x1f]/g, ' ')
-    .replace(/[^\p{L}\p{N}\s.,&()\-/]/gu, '')
+    // FIX #3: Added apostrophe (') and percent (%) to whitelist
+    .replace(/[^\p{L}\p{N}\s.,&()\-/'%]/gu, '')
     .trim()
     .slice(0, maxLen)
 }
 
-const SYSTEM_MESSAGE_TEMPLATE = `You are a nutrition analysis assistant for a dietary tracking application. Your users log Indonesian foods with a name, quantity, and unit. Your job: validate every item — check if it is specific enough, is real food, and has a compatible unit — then estimate nutrition for valid items.
+const SYSTEM_MESSAGE_TEMPLATE = `You are a nutrition analysis assistant for a dietary tracking application. Users log food items with a name, quantity, and unit. Validate each item then estimate nutrition for valid ones.
 
-AVAILABLE UNITS (only these units exist in the application): {{UNITS_LIST}}. When suggesting alternative units, ONLY use units from this list.
+AVAILABLE UNITS (only suggest these when flagging incompatible units): {{UNITS_LIST}}
 
-RESPOND WITH A SINGLE JSON OBJECT. Never include text outside the JSON.
+=== OUTPUT FORMAT ===
 
-=== RESPONSE FORMAT ===
+All items valid:
+{"valid":true,"items":[{"nama_makanan":"...","kalori":400,"karbohidrat":55.5,"protein":12.3,"lemak":15.2,"serat":2.1,"natrium":800}]}
 
-When ALL items are valid (specific food, compatible unit):
-{
-  "valid": true,
-  "items": [
-    {
-      "nama_makanan": "Nasi Goreng",
-      "kalori": 400,
-      "karbohidrat": 55.5,
-      "protein": 12.3,
-      "lemak": 15.2,
-      "serat": 2.1,
-      "natrium": 800
-    }
-  ]
-}
+Any item has a problem:
+{"valid":false,"needsClarification":true,"message":"ringkasan semua masalah dalam satu kalimat bahasa Indonesia","invalid_inputs":["..."],"invalid_indices":[0],"item_issues":[{"index":0,"fields":[{"field":"nama_makanan","issue":"vague","message":"pertanyaan klarifikasi dalam bahasa Indonesia"}]}],"items":[]}
 
-When ANY item has a problem:
-{
-  "valid": false,
-  "needsClarification": true,
-  "message": "one-sentence summary of all issues in Indonesian",
-  "invalid_inputs": ["problem text 1", "problem text 2"],
-  "invalid_indices": [0, 2],
-  "item_issues": [
-    {
-      "index": 0,
-      "fields": [
-        {
-          "field": "nama_makanan",
-          "issue": "vague",
-          "message": "clarifying question in Indonesian"
-        }
-      ]
-    }
-  ]
-}
+=== EXAMPLES ===
 
-=== FEW-SHOT EXAMPLES ===
+Input: 1. Nasi Goreng Spesial - 1 piring / 2. Es Teh Manis - 1 gelas
+Output: {"valid":true,"items":[{"nama_makanan":"Nasi Goreng Spesial","kalori":420,"karbohidrat":56.0,"protein":14.0,"lemak":16.0,"serat":2.5,"natrium":850},{"nama_makanan":"Es Teh Manis","kalori":70,"karbohidrat":18.0,"protein":0.0,"lemak":0.0,"serat":0.0,"natrium":5}]}
 
-Example 1 — all valid:
-Input:
-1. Nasi Goreng Spesial - 1 piring
-2. Es Teh Manis - 1 gelas
+Input: 1. nasi - 1 piring / 2. keyboard - 1 buah / 3. Teh Botol - 1 potong
+Output: {"valid":false,"needsClarification":true,"message":"1 item perlu klarifikasi, 1 item bukan makanan, 1 item memiliki satuan tidak cocok.","invalid_inputs":["nasi","keyboard","Teh Botol"],"invalid_indices":[0,1,2],"item_issues":[{"index":0,"fields":[{"field":"nama_makanan","issue":"vague","message":"Nasi apa yang dimaksud? Nasi putih, nasi goreng, atau nasi uduk?"}]},{"index":1,"fields":[{"field":"nama_makanan","issue":"not_food"}]},{"index":2,"fields":[{"field":"unit_nama","issue":"incompatible"}]}],"items":[]}
 
-Output:
-{
-  "valid": true,
-  "items": [
-    { "nama_makanan": "Nasi Goreng Spesial", "kalori": 420, "karbohidrat": 56.0, "protein": 14.0, "lemak": 16.0, "serat": 2.5, "natrium": 850 },
-    { "nama_makanan": "Es Teh Manis", "kalori": 70, "karbohidrat": 18.0, "protein": 0.0, "lemak": 0.0, "serat": 0.0, "natrium": 5 }
-  ]
-}
+=== VALIDATION RULES ===
 
-Example 2 — mixed issues:
-Input:
-1. nasi - 1 piring
-2. keyboard - 1 buah
-3. Teh Botol - 1 potong
+For each item, check in order:
 
-Output:
-{
-  "valid": false,
-  "needsClarification": true,
-  "message": "1 item perlu klarifikasi, 1 item bukan makanan, 1 item memiliki satuan tidak cocok.",
-  "invalid_inputs": ["nasi", "keyboard", "Teh Botol"],
-  "invalid_indices": [0, 1, 2],
-  "item_issues": [
-    {
-      "index": 0,
-      "fields": [{ "field": "nama_makanan", "issue": "vague", "message": "Nasi apa yang dimaksud? Nasi putih, nasi goreng, nasi uduk?" }]
-    },
-    {
-      "index": 1,
-      "fields": [{ "field": "nama_makanan", "issue": "not_food" }]
-    },
-    {
-      "index": 2,
-      "fields": [{ "field": "unit_nama", "issue": "incompatible" }]
-    }
-  ]
-}
+1. SPECIFICITY — Is the food name specific enough?
+   - Multi-word dish names in ANY language → ALWAYS accept if they refer to a recognizable food (e.g. "nasi goreng", "spaghetti bolognese", "fried chicken", "cheese omelette").
+   - Single word that unambiguously names one food item in any language (e.g. "bakso", "rendang", "pizza", "oreo", "sushi", "croissant", "tofu", "salt", "cheese") → accept.
+   - Brand-name snacks and packaged foods are valid (e.g. "Oreo", "SoyJoy", "Indomie", "Pocky", "KitKat") → accept, estimate based on standard package serving.
+   - Single-word generic CATEGORY with no inherent dish identity → flag as vague: "makanan", "minuman", "snack", "cemilan", "buah", "sayur", "lauk", "kue", "food", "drink", "stuff". Write a clarifying question in Indonesian.
+   - Exception: if context makes a generic word specific (e.g. "1 centong nasi" → treat as nasi putih, "1 slice pizza" → accept), accept it.
 
-Example 3 — common foods accepted without questions:
-Input:
-1. Ayam Goreng - 1 potong
-2. Es Teh Manis - 1 gelas
-3. Bakso - 1 mangkuk
+2. IS IT FOOD? — The item must be a real food or beverage consumed by humans, in any cuisine or language. Water and plain beverages (air putih, air mineral, air minum) are ALWAYS valid — they simply have 0 kcal. If the item is a non-food object, abstract concept, or gibberish → flag as not_food (no message needed).
 
-Output:
-{
-  "valid": true,
-  "items": [
-    { "nama_makanan": "Ayam Goreng", "kalori": 235, "karbohidrat": 3.0, "protein": 26.0, "lemak": 13.5, "serat": 0.0, "natrium": 350 },
-    { "nama_makanan": "Es Teh Manis", "kalori": 70, "karbohidrat": 18.0, "protein": 0.0, "lemak": 0.0, "serat": 0.0, "natrium": 5 },
-    { "nama_makanan": "Bakso", "kalori": 350, "karbohidrat": 35.0, "protein": 18.0, "lemak": 12.0, "serat": 1.5, "natrium": 900 }
-  ]
-}
+3. UNIT COMPATIBILITY — Reject only clearly absurd pairings:
+   - Solid whole foods paired with "sendok teh" or "gelas" → incompatible
+   - Beverages or liquids (including air putih, air mineral, jus, teh, kopi, susu) paired with "potong" or "lembar" → incompatible
+   - Brothy dishes (bakso, soto, rawon, ramen, soup) with "bungkus" or "gelas" → ACCEPTABLE
+   - Water and plain beverages with "gelas", "ml", "liter", "botol" → ALWAYS ACCEPTABLE
+   - When flagging, suggest an alternative unit from AVAILABLE UNITS only.
 
-Notice: "Ayam Goreng" without specifying which part, "Es Teh Manis" without specifying brand, and "Bakso" without specifying type are all accepted and estimated with reasonable defaults. Do NOT ask clarifying questions for these.
+=== ESTIMATION ===
 
-=== COMMON INDONESIAN FOODS — ALWAYS ACCEPT AS VALID ===
+If all items pass validation, estimate nutrition using standard food composition data (Indonesian TKPI for local foods, USDA or manufacturer data for international/packaged foods) and realistic portion sizes.
 
-The following dishes and beverages are well-known across Indonesia. If the user's food name matches or closely resembles any item below, treat it as SPECIFIC ENOUGH — do NOT ask for brands, specific types, variants, or preparation methods. Default to the most standard/common preparation.
+QUANTITY SCALING — always scale proportionally, no matter how small or large:
+- quantity > 1 → multiply base nutrition by quantity
+- quantity < 1 (e.g. 0.5, 0.25, 0.1) → multiply base nutrition by quantity
+- Examples: 0.5 centong nasi = half a ladle of rice = ~65 kcal; 0.5 sendok makan minyak = ~60 kcal; 0.25 potong ayam goreng = ~59 kcal
+- NEVER reject or flag an item solely because the quantity is small. Any quantity > 0 is valid.
+- kalori of 0 is only acceptable for items that are genuinely calorie-free (e.g. plain water, unsweetened black tea with no sugar). For all other foods, even tiny quantities must produce a kalori > 0.
 
-Minuman (beverages):
-es teh manis, teh manis hangat, teh manis dingin, kopi hitam, kopi susu, es jeruk, jus alpukat, jus mangga, jus jambu, jus jeruk, air mineral, teh tawar, teh tarik, kopi tubruk, es campur, es dawet, es cincau, bir pletok, sekoteng, wedang jahe, wedang ronde, susu hangat, susu coklat
-
-Nasi & Mie (rice & noodle dishes):
-nasi putih, nasi goreng, nasi uduk, nasi padang, nasi kuning, nasi gudeg, nasi campur, nasi liwet, nasi pecel, nasi timbel, mie goreng, mie ayam, mie rebus, mie baso, kwetiau goreng, kwetiau siram, bihun goreng, lontong, lontong sayur, lontong cap go meh, ketupat sayur
-
-Sup & Kuah (soups):
-bakso, bakso urat, bakso halus, soto ayam, soto betawi, soto lamongan, soto madura, rawon, sup ayam, sayur sop, sayur asem, sop buntut, sop kaki kambing, tongseng, gulai ayam, gulai ikan, kari ayam
-
-Gorengan & Snack (fried foods & snacks):
-tempe goreng, tahu goreng, ayam goreng, ikan goreng, ikan bakar, udang goreng, cumi goreng, bakwan, perkedel, risoles, tahu isi, tempe mendoan, pisang goreng, lumpia, martabak telur, martabak manis, roti bakar
-
-Satay & Grilled:
-sate ayam, sate kambing, sate sapi, sate kelinci, sate padang
-
-Sayur & Lauk (vegetable & side dishes):
-gado-gado, pecel, capcay, kangkung tumis, cah jamur, tumis tauge, tumis buncis, rendang, opor ayam, semur ayam, semur daging, teri medan, ikan asin, telur ceplok, telur dadar, telur rebus, kerupuk
-
-Kue & Traditional:
-bubur ayam, pempek, siomay, batagor, ketoprak, kerak telor, asinan, rujak, colenak, oncom, peuyeum, lepet, lupis, nagasari, klepon, onde-onde, kue lapis, kue pisang, cenil, gethuk
-
-IMPORTANT: This list is NOT exhaustive. Use the same principle for any Indonesian dish name that is:
-- A multi-word dish name (e.g., "tumis kangkung", "sup buntut"), OR
-- A single word that unambiguously refers to one specific dish in Indonesian food culture (e.g., "rendang", "bakso", "rawon", "gado-gado", "sate", "opor").
-
-Only single-word CATEGORY names with no inherent specificity should be flagged as vague (see Step 1 below).
-
-=== STEP-BY-STEP PROCESS ===
-
-Before outputting JSON, mentally process each input item in order:
-1. Is the food name specific enough?
-   FIRST, check the COMMON INDONESIAN FOODS list above. If the name matches (or closely resembles) any item on that list, or follows the same pattern (a multi-word dish name or a single word that unambiguously names one dish), it is SPECIFIC ENOUGH — proceed to step 2.
-
-   ONLY flag as vague (issue: "vague", field: "nama_makanan", needsClarification: true) if the name is a single-word generic CATEGORY with no inherent dish specificity:
-   - Examples of truly vague: "nasi" alone (could be nasi putih/goreng/uduk/etc.), "sayur" alone, "lauk" alone, "kue" alone, "minuman" alone, "makanan" alone, "cemilan" alone, "buah" alone, "jajan" alone, "snack" alone, "sarapan" alone, "makanan berat", "yang tadi", "sesuatu yang enak", gibberish strings.
-   - Examples that are NOT vague (do NOT flag): "nasi goreng" (specific dish), "es teh manis" (specific drink), "ayam goreng" (specific dish), "soto ayam" (specific dish), "teh manis" (specific drink), "tempe goreng" (specific dish), "bakso" (specific dish), "rendang" (specific dish), "gado-gado" (specific dish).
-   - Multi-word food names are almost always specific enough. Only flag multi-word names if they are genuinely meaningless or meta-referential (e.g., "makanan tadi sore", "sesuatu yang enak").
-   - Very short input (<=3 meaningful characters) that does not match a known food word → flag as vague.
-   Write a helpful clarifying question in Indonesian ONLY when you flag as vague.
-2. Is it human food/beverage? If it's a non-food object, abstract concept, or gibberish → flag as not_food (field: "nama_makanan", issue: "not_food", needsClarification: false).
-3. Is the unit compatible with the food's physical form? Use flexible judgment — accept reasonable pairings even if uncommon. Reject only clearly absurd combinations: solid whole foods with "sendok teh" or "gelas", beverages with "potong" or "lembar". Brothy dishes (soto, bakso kuah, rawon) with "bungkus" or "gelas" are ACCEPTABLE. Traditional/regional foods remain valid.
-   IMPORTANT: When flagging an incompatible unit, ONLY suggest alternative units from the AVAILABLE UNITS list ({{UNITS_LIST}}). → flag as incompatible (field: "unit_nama", issue: "incompatible").
-4. If the item passes all three checks, estimate its nutrition.
-
-DEFAULTING RULE — when a food name is slightly generic but clearly refers to a known food category (e.g. "ayam goreng" without specifying dada/paha, "nasi goreng" without specifying which toppings), ALWAYS default to the most common/standard variant rather than asking:
-- "ayam goreng" → estimate as average of dada + paha (~235 kcal per potong)
-- "nasi goreng" → estimate as standard nasi goreng (~420 kcal per porsi)
-- "ikan bakar" → estimate as standard ikan bakar with sweet soy sauce
-- "kopi susu" → estimate as standard Indonesian kopi susu (~120 kcal per gelas)
-- "nasi" alone → still flag as vague (requires clarification)
-- Contextual uses (e.g. "1 centong nasi") → treat "nasi" as specific enough, defaulting to nasi putih
-
-=== ESTIMATION FOR VALID ITEMS ===
-
-Base estimates on Indonesian food composition data (TKPI) and realistic portion sizes. Scale proportionally when quantity > 1.
-
-Realistic Indonesian portion baselines:
-- 1 centong nasi (white rice ladle, ~75g) = 130 kcal, carbs 28.0g, protein 2.5g, fat 0.3g
-- 1 piring nasi (~150g) = 260 kcal, carbs 56.0g, protein 5.0g, fat 0.6g
-- 1 porsi nasi goreng = 380–450 kcal (varies by toppings)
-- 1 potong ayam goreng (dada, ~100g) = 250 kcal, protein 30.0g, fat 14.0g
-- 1 potong ayam goreng (paha, ~80g) = 220 kcal, protein 22.0g, fat 13.0g
-- 1 potong tempe goreng (~50g) = 170 kcal, protein 10.0g, fat 10.0g, carbs 8.0g
-- 1 potong tahu goreng (~50g) = 120 kcal, protein 8.0g, fat 8.0g, carbs 4.0g
-- 1 gelas teh manis (250ml, 2 tsp sugar) = 70 kcal, carbs 18.0g
-- 1 bungkus nasi padang komplit = 650–800 kcal
-- 1 mangkuk bakso (5 meatballs + noodles + broth) = 350 kcal
-- 1 porsi soto ayam = 300 kcal
-- 1 potong pisang goreng = 120 kcal
-- 1 bungkus indomie goreng (cooked) = 450 kcal
-- 1 gelas susu (250ml) = 150 kcal, protein 8.0g, fat 7.0g, carbs 12.0g
-- 1 butir telur ceplok (fried egg) = 90 kcal, protein 6.5g, fat 7.0g
-- 1 potong ikan goreng (~80g) = 180 kcal, protein 20.0g, fat 10.0g
-- 1 buah pisang ambon (~100g) = 100 kcal, carbs 25.0g
-
-For fried foods: add ~8–15% weight as absorbed oil.
-For brothy dishes: estimate solids + broth separately, account for both.
-For packaged foods: estimate per standard Indonesian package size.
-
-Nutrient type rules:
-- kalori: whole number (kcal)
+Number format:
+- kalori: integer (kcal)
 - karbohidrat, protein, lemak, serat: 1 decimal place (grams)
-- natrium: whole number (milligrams)
+- natrium: integer (milligrams)
 
-=== CRITICAL RULES ===
-- Process EVERY item. Never skip or omit an item from the output.
-- If ANY item has a problem, the entire response must be valid: false with item_issues. In that case, items must be an empty array [].
-- If ALL items are valid, the entire response must be valid: true with every item estimated in "items" (same order as input).
-- Never mix: you either return item_issues (with empty items) OR return items (with no item_issues).
-- The "message" field (valid: false) must be a single Indonesian sentence summarizing all issues.
-- NEVER ask for brands, specific restaurant names, or exact variants for common Indonesian dishes and beverages. "Es teh manis" does not need brand clarification. "Ayam goreng" does not need part specification. Default to the most standard preparation.
-- Output ONLY the JSON. No preamble, no explanation, no markdown.`
+=== RULES ===
+- Process EVERY item. Never skip.
+- If ANY item fails: valid=false, item_issues populated, items=[].
+- If ALL items pass: valid=true, items populated, no item_issues.
+- invalid_indices MUST exactly match the set of index values present in item_issues. Never include an index in invalid_indices that does not have a corresponding entry in item_issues, and vice versa.
+- Output ONLY the JSON. No preamble, no markdown.`
 
 type AnalyzeInputItem = { nama_makanan: string; jumlah: number; unit_nama: string }
 
@@ -277,23 +145,47 @@ function isAnalyzeResult(x: unknown): x is AnalyzeResult {
     return true
   }
 
+  // FIX #2: Ensure items is empty array when valid=false
+  if (Array.isArray(obj.items) && obj.items.length > 0) return false
+
   if (typeof obj.message !== 'string' || !obj.message.trim()) return false
   if (obj.needsClarification !== undefined && typeof obj.needsClarification !== 'boolean')
     return false
 
   if (obj.invalid_inputs !== undefined) {
-    if (!Array.isArray(obj.invalid_inputs) || !obj.invalid_inputs.every((v: unknown) => typeof v === 'string'))
+    if (
+      !Array.isArray(obj.invalid_inputs) ||
+      !obj.invalid_inputs.every((v: unknown) => typeof v === 'string')
+    )
       return false
   }
 
   if (obj.invalid_indices !== undefined) {
-    if (!Array.isArray(obj.invalid_indices) || !obj.invalid_indices.every((v: unknown) => typeof v === 'number' && Number.isFinite(v)))
+    if (
+      !Array.isArray(obj.invalid_indices) ||
+      !obj.invalid_indices.every(
+        (v: unknown) => typeof v === 'number' && Number.isFinite(v),
+      )
+    )
       return false
   }
 
   if (obj.item_issues !== undefined) {
     if (!Array.isArray(obj.item_issues)) return false
     if (!obj.item_issues.every(isItemIssue)) return false
+  }
+
+  // FIX #4: Validate invalid_indices and item_issues are in sync
+  if (obj.invalid_indices !== undefined && obj.item_issues !== undefined) {
+    const issueIndexSet = new Set(
+      (obj.item_issues as ItemIssue[]).map((i) => i.index),
+    )
+    const invalidIndices = obj.invalid_indices as number[]
+    const allIndicesHaveIssues = invalidIndices.every((i) => issueIndexSet.has(i))
+    const allIssuesInIndices = [...issueIndexSet].every((i) =>
+      invalidIndices.includes(i),
+    )
+    if (!allIndicesHaveIssues || !allIssuesInIndices) return false
   }
 
   return true
@@ -361,6 +253,36 @@ function tryExtractJson(text: string): unknown | null {
   return null
 }
 
+// FIX #6: Retry helper with exponential-ish backoff
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries: number,
+): Promise<Response> {
+  let lastError: Error | null = null
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, options)
+      // Only retry on 5xx or network-level errors, not 4xx
+      if (res.status >= 500 && attempt < maxRetries) {
+        await sleep(RETRY_DELAY_MS * (attempt + 1))
+        continue
+      }
+      return res
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err))
+      if (attempt < maxRetries) {
+        await sleep(RETRY_DELAY_MS * (attempt + 1))
+      }
+    }
+  }
+  throw lastError ?? new Error('Request failed after retries')
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -412,9 +334,9 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
       .maybeSingle()
 
-    if (!profile || profile.is_active === false || (profile.role !== 'klien' && profile.role !== 'ahli_gizi')) {
+    if (!profile || profile.is_active === false || profile.role !== 'klien') {
       return new Response(
-        JSON.stringify({ error: 'Hanya klien atau ahli gizi aktif yang dapat menganalisa makanan.' }),
+        JSON.stringify({ error: 'Hanya klien aktif yang dapat menganalisa makanan.' }),
         {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -431,10 +353,13 @@ Deno.serve(async (req) => {
       })
     }
     if (rawItems.length > MAX_ITEMS) {
-      return new Response(JSON.stringify({ error: `Maksimal ${MAX_ITEMS} item per permintaan.` }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(
+        JSON.stringify({ error: `Maksimal ${MAX_ITEMS} item per permintaan.` }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
     }
 
     const parsedItems: AnalyzeInputItem[] = rawItems
@@ -446,7 +371,7 @@ Deno.serve(async (req) => {
         const nama_makanan = sanitize(String(rawName ?? ''))
         const unit_nama = sanitize(String(rawUnit ?? ''), 50)
         const jumlah = Number(obj.jumlah)
-        if (!nama_makanan || !unit_nama || !Number.isFinite(jumlah) || jumlah <= 0)
+        if (!nama_makanan || !unit_nama || !Number.isFinite(jumlah) || jumlah < MIN_JUMLAH)
           return null
         return { nama_makanan, jumlah: Math.min(jumlah, MAX_JUMLAH), unit_nama }
       })
@@ -487,28 +412,39 @@ Deno.serve(async (req) => {
       .order('nama')
 
     const unitNames = units?.map((u) => u.nama).join(', ') || ''
-    const SYSTEM_MESSAGE = SYSTEM_MESSAGE_TEMPLATE.replace('{{UNITS_LIST}}', unitNames)
+    const SYSTEM_MESSAGE = SYSTEM_MESSAGE_TEMPLATE.replace(/{{UNITS_LIST}}/g, unitNames)
 
     const userMessage = buildUserMessage(parsedItems)
     const model = Deno.env.get('OPENAI_MODEL') ?? 'gpt-4o-mini'
 
-    const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${openaiKey}`,
+    // FIX #1: Dynamic max_tokens based on item count
+    const maxTokens = Math.min(
+      BASE_TOKENS + parsedItems.length * TOKENS_PER_ITEM,
+      MAX_TOKENS_CEILING,
+    )
+
+    // FIX #6: Use fetchWithRetry instead of plain fetch
+    const oaiRes = await fetchWithRetry(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openaiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: SYSTEM_MESSAGE },
+            { role: 'user', content: userMessage },
+          ],
+          temperature: 0,
+          max_tokens: maxTokens,
+        }),
       },
-      body: JSON.stringify({
-        model,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: SYSTEM_MESSAGE },
-          { role: 'user', content: userMessage },
-        ],
-        temperature: 0,
-        max_tokens: 1600,
-      }),
-    })
+      MAX_RETRIES,
+    )
 
     const oaiData = await oaiRes.json()
     if (!oaiRes.ok) {
@@ -530,6 +466,18 @@ Deno.serve(async (req) => {
       })
     }
 
+    // FIX #1: Detect truncated response (finish_reason = 'length')
+    const finishReason = oaiData.choices?.[0]?.finish_reason
+    if (finishReason === 'length') {
+      return new Response(
+        JSON.stringify({ error: 'Respons AI terpotong. Coba kurangi jumlah item.' }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
     const parsed = tryExtractJson(raw)
     if (!parsed || !isAnalyzeResult(parsed)) {
       return new Response(JSON.stringify({ error: 'Format AI tidak dikenali' }), {
@@ -544,7 +492,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Return error object with item_issues
     const resp: Record<string, unknown> = {
       valid: false,
       message: parsed.message,
