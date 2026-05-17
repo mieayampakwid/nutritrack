@@ -89,9 +89,13 @@ Never expose `OPENAI_API_KEY` via a `VITE_*` variable. See `.env.example` for de
 | `npm run test:coverage` | Coverage report (HTML + lcov in `coverage/`) |
 | `npm run test:related`  | Only tests related to changed files          |
 
+## Coding conventions
+
+For comprehensive coding conventions, naming patterns, and architecture rules, see [AGENTS.md](AGENTS.md).
+
 ## Testing
 
-Vitest 4 + React Testing Library + jsdom. Tests colocate with source files (`*.test.js` / `*.test.jsx`). See [AGENTS.md](AGENTS.md) for when tests are required, shared helpers, and naming conventions.
+Vitest 4 + React Testing Library + jsdom. Tests colocate with source files (`*.test.js` / `*.test.jsx`). See [AGENTS.md](AGENTS.md#9-testing) for when tests are required, shared helpers, and naming conventions.
 
 Pre-commit gate: run `npm run lint` and `npm test` locally — both must pass before committing or pushing.
 
@@ -99,28 +103,17 @@ Pre-commit gate: run `npm run lint` and `npm test` locally — both must pass be
 
 ```
 src/
-  pages/
-    admin/          # Admin screens (dashboard, users, clients, import, food-logs)
-    ahli-gizi/      # Dietitian screens (dashboard, clients, food-logs)
-    klien/          # Client screens (dashboard, food-entry, progress)
-    staff/          # Shared staff screens (data-entry picker, food-log monitor)
-    auth/           # Login
-  components/
-    ui/             # Radix-based primitives (shadcn pattern)
-    layout/         # AppShell
-    food/           # Food entry and log components
-    measurement/    # Anthropometry form and chart
-    dashboard/      # Dashboard-specific cards and charts
-    clients/        # Client directory and summary components
-    staff/          # Staff-specific UI (large numeric keypad)
-    shared/         # CalorieDisclaimer, LoadingSpinner, ErrorBoundary, etc.
-  hooks/            # React Query data hooks (useAuth, useFoodLog, useMeasurement, …)
-  lib/              # Supabase client, OpenAI invoke wrapper, BMI, formatters, helpers
-  config/           # Static app config (e.g. ad banners)
+  pages/{admin,ahli-gizi,klien,staff,auth}/  # Route pages by role
+  components/{ui,food,measurement,dashboard}/  # UI components
+  hooks/                                      # React Query + useAuth
+  lib/                                        # Supabase client, formatters, helpers
+  test/                                       # Shared test helpers
 supabase/
-  schema.sql        # Canonical Postgres schema (tables, views, triggers, RLS)
-  functions/        # Edge Function source (estimate-calories)
+  schema.sql                                  # Canonical DB schema
+  functions/                                  # Edge Functions (estimate-calories, etc.)
 ```
+
+For detailed architecture and component breakdown, see [AGENTS.md](AGENTS.md#3-architecture).
 
 ## Roles
 

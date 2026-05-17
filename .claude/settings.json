@@ -1,9 +1,59 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run lint *)",
+      "Bash(npm test)",
+      "Bash(npm run test:*)",
+      "Bash(npm run test:coverage)",
+      "Bash(npm run test:related)",
+      "Bash(npm run test:watch)",
+      "mcp__plugin_context7_context7__query-docs",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_supabase_supabase__get_advisors",
+      "mcp__plugin_supabase_supabase__get_logs",
+      "mcp__plugin_supabase_supabase__get_project",
+      "mcp__plugin_supabase_supabase__list_migrations",
+      "mcp__plugin_supabase_supabase__list_projects",
+      "mcp__plugin_supabase_supabase__list_tables",
+      "mcp__plugin_typescript_lsp__documentSymbol",
+      "mcp__plugin_typescript_lsp__goToDefinition",
+      "mcp__plugin_typescript_lsp__hover"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint -- --fix ${file}"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "The user is trying to edit ${file}. If this is a .env file, confirm with the user before proceeding as it contains sensitive credentials.",
+            "if": "Edit(*.env)|Write(*.env)"
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "context7@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
-    "supabase@claude-plugins-official": true
+    "supabase@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true
   }
 }
