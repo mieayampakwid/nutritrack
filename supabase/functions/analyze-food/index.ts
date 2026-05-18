@@ -13,9 +13,9 @@ const MAX_ITEMS = 40
 const MIN_JUMLAH = 0.001  // Accept any quantity > 0, no matter how small
 const MAX_JUMLAH = 10000
 // FIX #1: Dynamic max_tokens based on item count
-const BASE_TOKENS = 500
-const TOKENS_PER_ITEM = 120
-const MAX_TOKENS_CEILING = 4096
+const BASE_TOKENS = 800
+const TOKENS_PER_ITEM = 150
+const MAX_TOKENS_CEILING = 8192
 
 // FIX #6: Retry config
 const MAX_RETRIES = 2
@@ -44,10 +44,29 @@ Any item has a problem:
 
 === EXAMPLES ===
 
-Input: 1. Nasi Goreng Spesial - 1 piring / 2. Es Teh Manis - 1 gelas
+Inputs:
+1. nasi putih - 0.5 centong
+Output: {"valid":true,"items":[{"nama_makanan":"nasi putih","kalori":65,"karbohidrat":16.0,"protein":1.3,"lemak":0.2,"serat":0.2,"natrium":2}]}
+
+Inputs:
+1. nasi putih - 1 centong
+Output: {"valid":true,"items":[{"nama_makanan":"nasi putih","kalori":130,"karbohidrat":32.0,"protein":2.6,"lemak":0.4,"serat":0.4,"natrium":5}]}
+
+Inputs:
+1. nasi putih - 0.5 centong
+2. ayam goreng - 100 gram
+3. es teh manis - 1 gelas
+Output: {"valid":true,"items":[{"nama_makanan":"nasi putih","kalori":65,"karbohidrat":16.0,"protein":1.3,"lemak":0.2,"serat":0.2,"natrium":2},{"nama_makanan":"ayam goreng","kalori":240,"karbohidrat":0,"protein":30,"lemak":12,"serat":0,"natrium":70},{"nama_makanan":"es teh manis","kalori":70,"karbohidrat":18.0,"protein":0.0,"lemak":0.0,"serat":0.0,"natrium":5}]}
+
+Inputs:
+1. Nasi Goreng Spesial - 1 piring
+2. Es Teh Manis - 1 gelas
 Output: {"valid":true,"items":[{"nama_makanan":"Nasi Goreng Spesial","kalori":420,"karbohidrat":56.0,"protein":14.0,"lemak":16.0,"serat":2.5,"natrium":850},{"nama_makanan":"Es Teh Manis","kalori":70,"karbohidrat":18.0,"protein":0.0,"lemak":0.0,"serat":0.0,"natrium":5}]}
 
-Input: 1. nasi - 1 piring / 2. keyboard - 1 buah / 3. Teh Botol - 1 potong
+Inputs:
+1. nasi - 1 piring
+2. keyboard - 1 buah
+3. Teh Botol - 1 potong
 Output: {"valid":false,"needsClarification":true,"message":"1 item perlu klarifikasi, 1 item bukan makanan, 1 item memiliki satuan tidak cocok.","invalid_inputs":["nasi","keyboard","Teh Botol"],"invalid_indices":[0,1,2],"item_issues":[{"index":0,"fields":[{"field":"nama_makanan","issue":"vague","message":"Nasi apa yang dimaksud? Nasi putih, nasi goreng, atau nasi uduk?"}]},{"index":1,"fields":[{"field":"nama_makanan","issue":"not_food"}]},{"index":2,"fields":[{"field":"unit_nama","issue":"incompatible"}]}],"items":[]}
 
 === VALIDATION RULES ===
@@ -55,19 +74,21 @@ Output: {"valid":false,"needsClarification":true,"message":"1 item perlu klarifi
 For each item, check in order:
 
 1. SPECIFICITY — Is the food name specific enough?
-   - Multi-word dish names in ANY language → ALWAYS accept if they refer to a recognizable food (e.g. "nasi goreng", "spaghetti bolognese", "fried chicken", "cheese omelette").
-   - Single word that unambiguously names one food item in any language (e.g. "bakso", "rendang", "pizza", "oreo", "sushi", "croissant", "tofu", "salt", "cheese") → accept.
-   - Brand-name snacks and packaged foods are valid (e.g. "Oreo", "SoyJoy", "Indomie", "Pocky", "KitKat") → accept, estimate based on standard package serving.
-   - Single-word generic CATEGORY with no inherent dish identity → flag as vague: "makanan", "minuman", "snack", "cemilan", "buah", "sayur", "lauk", "kue", "food", "drink", "stuff". Write a clarifying question in Indonesian.
-   - Exception: if context makes a generic word specific (e.g. "1 centong nasi" → treat as nasi putih, "1 slice pizza" → accept), accept it.
+   - Multi-word dish names in ANY language (2+ words) → ALWAYS ACCEPT. Never flag as vague. Examples: "soto ayam", "nasi goreng", "ayam bakar", "es teh manis", "spaghetti bolognese", "fried chicken", "cheese omelette", "gula pasir", "gula putih", "gula merah".
+   - Single word that names a specific food in any language → accept. Examples: "bakso", "rendang", "sate", "pizza", "burger", "sushi", "tofu", "tempe", "telur", "keju", "gandum", "gula", "nasi", "ayam", "ikan", "daging".
+   - Brand-name snacks and packaged foods → accept. Examples: "Oreo", "Indomie", "Pocky", "KitKat".
+   - Single-word generic CATEGORY → flag as vague: "makanan", "minuman", "snack", "cemilan", "buah", "sayur", "lauk", "kue", "food", "drink", "stuff".
+   - Exception: generic word + quantity makes it specific → accept (e.g. "1 centong nasi", "1 gelas air").
 
 2. IS IT FOOD? — The item must be a real food or beverage consumed by humans, in any cuisine or language. Water and plain beverages (air putih, air mineral, air minum) are ALWAYS valid — they simply have 0 kcal. If the item is a non-food object, abstract concept, or gibberish → flag as not_food (no message needed).
 
 3. UNIT COMPATIBILITY — Reject only clearly absurd pairings:
    - Solid whole foods paired with "sendok teh" or "gelas" → incompatible
+   - EXCEPTION: Powders and small quantites (gula, garam, merica, bumbu, minyak, madu, mayones) CAN use "sendok teh" or "sendok makan".
    - Beverages or liquids (including air putih, air mineral, jus, teh, kopi, susu) paired with "potong" or "lembar" → incompatible
+   - EXCEPTION: "gelas", "ml", "liter", "botol" are ALWAYS ACCEPTABLE for water and plain beverages.
    - Brothy dishes (bakso, soto, rawon, ramen, soup) with "bungkus" or "gelas" → ACCEPTABLE
-   - Water and plain beverages with "gelas", "ml", "liter", "botol" → ALWAYS ACCEPTABLE
+   - Skewered foods (sate, sate ayam, sate kambing, satay) CAN use "tusuk".
    - When flagging, suggest an alternative unit from AVAILABLE UNITS only.
 
 === ESTIMATION ===
@@ -80,6 +101,10 @@ QUANTITY SCALING — always scale proportionally, no matter how small or large:
 - Examples: 0.5 centong nasi = half a ladle of rice = ~65 kcal; 0.5 sendok makan minyak = ~60 kcal; 0.25 potong ayam goreng = ~59 kcal
 - NEVER reject or flag an item solely because the quantity is small. Any quantity > 0 is valid.
 - kalori of 0 is only acceptable for items that are genuinely calorie-free (e.g. plain water, unsweetened black tea with no sugar). For all other foods, even tiny quantities must produce a kalori > 0.
+
+CRITICAL — ITEM INDEPENDENCE:
+Treat each numbered line as a completely separate calculation. The quantity, calories, and nutrition of one item MUST NOT influence any other item. Calculate each item as if it were the only item in the prompt, then assemble all results into one array.
+Examples: "0.5 centong nasi" → ~65 kcal (always ~65, never scaled by other items), "1 piring nasi" → ~130 kcal. Each quantity is applied ONLY to its own item.
 
 Number format:
 - kalori: integer (kcal)
@@ -99,7 +124,6 @@ function buildUserMessage(items: AnalyzeInputItem[]) {
   const lines = items.map((x, i) => {
     return `${i + 1}. ${x.nama_makanan} - ${x.jumlah} ${x.unit_nama}`
   })
-  if (items.length === 1) return `Input:\n${lines[0]}`
   return `Inputs:\n${lines.join('\n')}`
 }
 
@@ -439,7 +463,7 @@ Deno.serve(async (req) => {
             { role: 'system', content: SYSTEM_MESSAGE },
             { role: 'user', content: userMessage },
           ],
-          temperature: 0,
+          temperature: 0.1,
           max_tokens: maxTokens,
         }),
       },
