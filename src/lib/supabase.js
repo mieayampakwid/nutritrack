@@ -25,7 +25,24 @@ export function isSupabaseConfigured() {
   )
 }
 
-const clientUrl = isSupabaseConfigured() ? rawUrl : 'https://configure-in-dotenv.invalid'
+// Use connection pooler for better scalability (transaction mode)
+// Replace '://db.' with '://pooler.' to use PgBouncer
+const poolerUrl = rawUrl.replace('://db.', '://pooler.')
+
+const clientUrl = isSupabaseConfigured() ? poolerUrl : 'https://configure-in-dotenv.invalid'
 const clientKey = isSupabaseConfigured() ? rawAnon : 'sb-placeholder-not-configured'
 
-export const supabase = createClient(clientUrl, clientKey)
+export const supabase = createClient(clientUrl, clientKey, {
+  db: { schema: 'public' },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+  },
+  global: {
+    fetch: (url, options) => {
+      return fetch(url, { ...options, timeout: 30000 })
+    },
+  },
+})
