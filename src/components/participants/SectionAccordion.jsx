@@ -50,23 +50,20 @@ export function SectionAccordion({
   })
 
   return (
-    <div>
-      <h2 className="mb-4 text-xl font-semibold tracking-tight text-foreground">Log Harian</h2>
-
-      <div className="space-y-4">
-        {SECTIONS.map((section) => (
-          <SectionCard
-            key={section.id}
-            section={section}
-            foodLogs={foodLogs}
-            exerciseLogs={exerciseLogs}
-            tanggal={tanggal}
-            dateFrom={effectiveFrom}
-            dateTo={effectiveTo}
-          />
-        ))}
-      </div>
-    </div>
+    <Card className="overflow-hidden shadow-md">
+      {SECTIONS.map((section, idx) => (
+        <SectionCard
+          key={section.id}
+          section={section}
+          foodLogs={foodLogs}
+          exerciseLogs={exerciseLogs}
+          tanggal={tanggal}
+          dateFrom={effectiveFrom}
+          dateTo={effectiveTo}
+          isLast={idx === SECTIONS.length - 1}
+        />
+      ))}
+    </Card>
   )
 }
 
@@ -77,12 +74,13 @@ function SectionCard({
   tanggal,
   dateFrom,
   dateTo,
+  isLast,
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const Icon = section.icon
 
   return (
-    <Card className="overflow-hidden">
+    <div>
       {/* Header - always visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -123,6 +121,7 @@ function SectionCard({
           )}
         </div>
       )}
-    </Card>
+      {!isLast && <div className="border-b border-border/60" />}
+    </div>
   )
 }

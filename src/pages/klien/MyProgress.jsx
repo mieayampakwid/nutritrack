@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { format } from 'date-fns'
+import { id as localeId } from 'date-fns/locale'
 import { FileText } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { MeasurementChart } from '@/components/measurement/MeasurementChart'
@@ -31,7 +33,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useMeasurements } from '@/hooks/useMeasurement'
 import { useUserEvaluations } from '@/hooks/useUserEvaluations'
 import { calculateBMI, getBMICategoryAsiaPacific } from '@/lib/bmiCalculator'
-import { formatDateId, formatNumberId } from '@/lib/format'
+import { formatDateId, formatNumberId, parseIsoDateLocal } from '@/lib/format'
 import { MOBILE_DASHBOARD_CARD_SHELL } from '@/lib/pageCard'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
@@ -206,11 +208,11 @@ export function MyProgress() {
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                      <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">Tanggal</TableHead>
-                      <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">Berat Badan</TableHead>
-                      <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">BMI</TableHead>
-                      <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">Anjuran Kalori</TableHead>
-                      <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">Detail</TableHead>
+                      <TableHead className="whitespace-nowrap px-1 text-center text-xs font-semibold uppercase tracking-wide sm:px-2">TGL</TableHead>
+                      <TableHead className="whitespace-nowrap px-1 text-center text-xs font-semibold uppercase tracking-wide sm:px-2">BB</TableHead>
+                      <TableHead className="whitespace-nowrap px-1 text-center text-xs font-semibold uppercase tracking-wide sm:px-2">BMI</TableHead>
+                      <TableHead className="px-1 text-center text-xs font-semibold uppercase tracking-wide sm:px-2 whitespace-normal">Anjuran<br />Kalori</TableHead>
+                      <TableHead className="whitespace-nowrap px-1 text-center text-xs font-semibold uppercase tracking-wide sm:px-2">Detail</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -219,23 +221,22 @@ export function MyProgress() {
                       const tb = a.tinggi_badan
                       const bmi = a.bmi ?? calculateBMI(bb, tb)
                       const bmiCat = getBMICategoryAsiaPacific(bmi)
+                      const d = parseIsoDateLocal(a.tanggal)
+                      const dateFormatted = d ? format(d, 'dd/MM/yy') : '—'
                       return (
                         <TableRow key={a.id} className="max-md:text-[0.8125rem]">
-                          <TableCell className="whitespace-nowrap px-2 text-center sm:px-3">
-                            {formatDateId(a.tanggal)}
+                          <TableCell className="whitespace-nowrap px-1 text-center sm:px-2">
+                            {dateFormatted}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">
+                          <TableCell className="whitespace-nowrap px-1 text-center tabular-nums sm:px-2">
                             {bb != null ? `${formatNumberId(bb)} kg` : '—'}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">
+                          <TableCell className="whitespace-nowrap px-1 text-center tabular-nums sm:px-2">
                             {bmi != null ? (
-                              <span>
-                                {formatNumberId(bmi)}{' '}
-                                <span className="text-muted-foreground">({bmiCat.label})</span>
-                              </span>
+                              <span>{formatNumberId(bmi)}</span>
                             ) : '—'}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">
+                          <TableCell className="px-1 text-center tabular-nums sm:px-2 whitespace-normal">
                             {a.anjuran_kalori_harian != null || a.energi_total != null ? (
                               <span>
                                 {formatNumberId(a.anjuran_kalori_harian ?? a.energi_total)}{' '}
@@ -243,7 +244,7 @@ export function MyProgress() {
                               </span>
                             ) : '—'}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap px-2 text-center sm:px-3">
+                          <TableCell className="whitespace-nowrap px-1 text-center sm:px-2">
                             <Button
                               variant="ghost"
                               size="sm"

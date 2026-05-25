@@ -1,21 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus, TrendingUp, Calendar, Activity, Utensils, Circle, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Plus, TrendingUp, Activity, Circle, AlertTriangle } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Button } from '@/components/ui/button'
 import { VitalMetricCard } from '@/components/participants/VitalMetricCard'
 import { ProgressTimeline } from '@/components/participants/ProgressTimeline'
-import { SectionAccordion } from '@/components/participants/SectionAccordion'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
-import { DateRangeFilter } from '@/components/shared/DateRangeFilter'
 import { useMeasurements } from '@/hooks/useMeasurement'
-import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { useAuth } from '@/hooks/useAuth'
 import { getBMICategoryAsiaPacific } from '@/lib/bmiCalculator'
-import { toIsoDateLocal } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import { useMemo, useState } from 'react'
-import { differenceInYears, format, subDays } from 'date-fns'
+import { differenceInYears, format } from 'date-fns'
 
 export function ParticipantDetail() {
   const { id } = useParams()
@@ -27,8 +23,6 @@ export function ParticipantDetail() {
     : '/gizi/participants'
   const backPath = isAdmin ? '/admin/clients' : '/gizi/my-group'
   const [selectedMetric, setSelectedMetric] = useState('berat_badan')
-  const [dateFrom, setDateFrom] = useState(() => toIsoDateLocal(subDays(new Date(), 13)))
-  const [dateTo, setDateTo] = useState(() => toIsoDateLocal(new Date()))
 
   const { data: client, isLoading: loadingClient } = useQuery({
     queryKey: ['profile', id],
@@ -44,8 +38,7 @@ export function ParticipantDetail() {
     },
   })
 
-  const { data: measurements = [] } = useMeasurements(id, { enabled: Boolean(id), dateFrom, dateTo })
-  const { data: logs = [] } = useFoodLogsForUser(id, { enabled: Boolean(id), dateFrom, dateTo })
+  const { data: measurements = [] } = useMeasurements(id, Boolean(id))
 
   const lastMeasurement = useMemo(() => {
     if (!measurements.length) return null
@@ -159,7 +152,7 @@ export function ParticipantDetail() {
         <VitalMetricCard
           label="Massa Otot"
           value={lastMeasurement?.massa_otot}
-          unit="kg"
+          unit="%"
           icon={<Activity className="h-5 w-5" />}
         />
         <VitalMetricCard
@@ -177,18 +170,6 @@ export function ParticipantDetail() {
         />
       </div>
 
-      {/* Date Range Filter */}
-      <div className="mb-4">
-        <DateRangeFilter
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          onChange={({ dateFrom: newFrom, dateTo: newTo }) => {
-            setDateFrom(newFrom)
-            setDateTo(newTo)
-          }}
-        />
-      </div>
-
       {/* Progress Timeline */}
       <div className="mb-8">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-foreground">Perkembangan</h2>
@@ -198,14 +179,6 @@ export function ParticipantDetail() {
           onMetricChange={setSelectedMetric}
         />
       </div>
-
-      {/* Section Cards */}
-      <SectionAccordion
-        participantId={id}
-        foodLogs={logs}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-      />
     </AppShell>
   )
 }
