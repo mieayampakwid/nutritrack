@@ -3,12 +3,17 @@ import { Link, useLocation, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { AssessmentForm } from '@/components/participants/AssessmentForm'
+import { SectionAccordion } from '@/components/participants/SectionAccordion'
+import { AssessmentCalorieChart } from '@/components/dashboard/AssessmentCalorieChart'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { useMeasurements } from '@/hooks/useMeasurement'
+import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
-import { useMemo } from 'react'
+import { formatNumberId, toIsoDateLocal } from '@/lib/format'
+import { useMemo, useState } from 'react'
+import { differenceInYears, subDays } from 'date-fns'
 
 export function ParticipantAssessment() {
   const { id } = useParams()
@@ -19,6 +24,9 @@ export function ParticipantAssessment() {
     : '/gizi/participants'
   const queryClient = useQueryClient()
   const { session } = useAuth()
+
+  const [dateFrom, setDateFrom] = useState(() => toIsoDateLocal(subDays(new Date(), 13)))
+  const [dateTo, setDateTo] = useState(() => toIsoDateLocal(new Date()))
 
   const { data: client, isLoading: loadingClient } = useQuery({
     queryKey: ['profile', id],
@@ -36,6 +44,8 @@ export function ParticipantAssessment() {
 
   const { data: measurements = [], isLoading: loadingMeasurements } = useMeasurements(id, Boolean(id))
 
+  const { data: logs = [] } = useFoodLogsForUser(id, { enabled: Boolean(id), dateFrom, dateTo })
+
   const lastAssessment = useMemo(() => {
     if (!measurements.length) return null
     return [...measurements].sort((a, b) => {
@@ -44,6 +54,13 @@ export function ParticipantAssessment() {
       return new Date(b.created_at || 0) - new Date(a.created_at || 0)
     })[0]
   }, [measurements])
+
+  const ageYears = useMemo(() => {
+    if (!client?.tgl_lahir) return null
+    const birth = new Date(String(client.tgl_lahir).slice(0, 10))
+    if (isNaN(birth.getTime())) return null
+    return differenceInYears(new Date(), birth)
+  }, [client])
 
   const saveMutation = useMutation({
     mutationFn: async (assessmentData) => {
@@ -110,10 +127,16 @@ export function ParticipantAssessment() {
 
       <div className="mb-8 border-b border-border/60 pb-8">
         <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl lg:text-5xl md:text-white">
-          Asesmen Klien
+          {client.nama}
         </h1>
         <p className="mt-2 text-sm text-foreground/70 sm:text-base md:text-white/85">
-          {client.nama} • {client.jenis_kelamin === 'male' ? 'Laki-laki' : 'Perempuan'}
+          {ageYears != null ? `${ageYears} tahun` : '—'} • {client.jenis_kelamin === 'male' ? 'Laki-laki' : client.jenis_kelamin === 'female' ? 'Perempuan' : '—'}
+          {lastAssessment?.berat_badan != null ? (
+            <span> • Terakhir: {formatNumberId(lastAssessment.berat_badan)} kg</span>
+          ) : null}
+          {lastAssessment?.bmi != null ? (
+            <span> • BMI {formatNumberId(lastAssessment.bmi)}</span>
+          ) : null}
         </p>
         {client?.riwayat_penyakit ? (
           <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm">
@@ -124,6 +147,26 @@ export function ParticipantAssessment() {
             </div>
           </div>
         ) : null}
+      </div>
+
+      {/* Log Harian Section */}
+      <div className="mb-8 space-y-4">
+        <AssessmentCalorieChart
+          userId={id}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onDateChange={({ dateFrom: newFrom, dateTo: newTo }) => {
+            setDateFrom(newFrom)
+            setDateTo(newTo)
+          }}
+        />
+
+        <SectionAccordion
+          participantId={id}
+          foodLogs={logs}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+        />
       </div>
 
       <AssessmentForm

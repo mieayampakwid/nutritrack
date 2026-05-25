@@ -114,8 +114,8 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Anthropometric Section */}
       <section>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4 md:text-white">Pengukuran Antropometri</h2>
-        <Card className="p-5">
+        <Card className="p-5 shadow-md">
+          <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Pengukuran Antropometri</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-1.5">
               <Label htmlFor="bb">Berat Badan (kg) *</Label>
@@ -128,7 +128,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
                 value={bbStr}
                 onChange={(e) => setBbStr(e.target.value)}
                 placeholder="0"
-                className="tabular-nums"
+                className="tabular-nums border-gray-300"
                 required
               />
             </div>
@@ -143,7 +143,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
                 value={tbStr}
                 onChange={(e) => setTbStr(e.target.value)}
                 placeholder="0"
-                className="tabular-nums"
+                className="tabular-nums border-gray-300"
                 required
               />
             </div>
@@ -158,7 +158,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
                 value={muscleStr}
                 onChange={(e) => setMuscleStr(e.target.value)}
                 placeholder="0"
-                className="tabular-nums"
+                className="tabular-nums border-gray-300"
               />
             </div>
             <div className="space-y-1.5">
@@ -172,7 +172,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
                 value={fatStr}
                 onChange={(e) => setFatStr(e.target.value)}
                 placeholder="0"
-                className="tabular-nums"
+                className="tabular-nums border-gray-300"
               />
             </div>
             <div className="space-y-1.5">
@@ -186,7 +186,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
                 value={waistStr}
                 onChange={(e) => setWaistStr(e.target.value)}
                 placeholder="0"
-                className="tabular-nums"
+                className="tabular-nums border-gray-300"
               />
             </div>
           </div>
@@ -204,8 +204,8 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
 
       {/* Clinical Assessment Section */}
       <section>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4 md:text-white">Asesmen Klinis (Harris–Benedict)</h2>
-        <Card className="p-5 space-y-4">
+        <Card className="p-5 space-y-4 shadow-md">
+          <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Asesmen Klinis (Harris–Benedict)</h2>
           <div className="space-y-2">
             <Label>Jenis Kelamin</Label>
             <div className="flex flex-wrap gap-3">
@@ -235,7 +235,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
           <div className="space-y-1.5">
             <Label htmlFor="activity">Faktor Aktivitas</Label>
             <Select value={activity} onValueChange={setActivity}>
-              <SelectTrigger id="activity">
+              <SelectTrigger id="activity" className="border-gray-300">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -251,7 +251,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
           <div className="space-y-1.5">
             <Label htmlFor="stress">Faktor Stres</Label>
             <Select value={stress} onValueChange={setStress}>
-              <SelectTrigger id="stress" className="min-h-11 whitespace-normal text-left">
+              <SelectTrigger id="stress" className="min-h-11 whitespace-normal text-left border-gray-300">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="max-h-72">
@@ -296,7 +296,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
               value={anjuranStr}
               onChange={(e) => setAnjuranStr(e.target.value)}
               placeholder={totalEnergy != null ? String(totalEnergy) : 'Masukkan anjuran kalori'}
-              className="tabular-nums"
+              className="tabular-nums border-gray-300"
             />
             <p className="text-xs text-muted-foreground">
               Nilai yang disimpan akan digunakan sebagai batas kalori di dashboard klien.
@@ -307,10 +307,9 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
 
       {/* Evaluation Notes Section */}
       <section>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4 md:text-white">Catatan Asesmen</h2>
-        <Card className="p-5">
+        <Card className="p-5 shadow-md">
+          <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Catatan Asesmen</h2>
           <div className="space-y-1.5">
-            <Label htmlFor="catatan">Catatan Evaluasi</Label>
             <Textarea
               id="catatan"
               value={catatan}
@@ -318,6 +317,7 @@ export function AssessmentForm({ client, lastAssessment, onSave, isSaving }) {
               placeholder="Tulis catatan asesmen, rekomendasi, atau evaluasi perkembangan klien..."
               rows={6}
               maxLength={5000}
+              className="bg-transparent border-gray-300"
             />
             <p className="text-xs text-muted-foreground text-right">
               {catatan.length} / 5000 karakter
