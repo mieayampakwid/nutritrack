@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { toIsoDateLocal } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 
@@ -49,6 +50,30 @@ export function useExerciseLogsForUser(userId, enabledOrOptions = true) {
         .order('created_at', { ascending: false })
       if (error) throw error
       return data ?? []
+    },
+  })
+}
+
+export function useDeleteExerciseLog() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ logId, userId, jenisOlahraga }) => {
+      const { error: delError } = await supabase
+        .from('exercise_log_deletions')
+        .insert({ user_id: userId, exercise_log_id: logId, jenis_olahraga: jenisOlahraga })
+      if (delError) throw delError
+      const { error } = await supabase
+        .from('exercise_logs')
+        .delete()
+        .eq('id', logId)
+      if (error) throw error
+    },
+    onSuccess: (_, { userId }) => {
+      qc.invalidateQueries({ queryKey: ['exercise_logs', userId] })
+      toast.success('Entri log berhasil dihapus.')
+    },
+    onError: (error) => {
+      toast.error(error.message ?? 'Gagal menghapus entri.')
     },
   })
 }

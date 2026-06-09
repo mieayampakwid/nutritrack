@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Sunrise, Sun, Moon, Cookie, Dumbbell, Trash2 } from 'lucide-react'
 import { useFoodLogsForUser, useFoodLogItems, useDeleteFoodLog } from '@/hooks/useFoodLog'
-import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
+import { useExerciseLogsForUser, useDeleteExerciseLog } from '@/hooks/useExerciseLog'
 import { useAuth } from '@/hooks/useAuth'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { Button } from '@/components/ui/button'
@@ -40,8 +40,10 @@ const rowClass = 'flex items-center gap-2 py-1.5 text-sm'
 
 export function DailyFoodSummary({ userId, tanggal }) {
   const { profile } = useAuth()
-  const deleteMutation = useDeleteFoodLog()
+  const deleteFoodMutation = useDeleteFoodLog()
+  const deleteExerciseMutation = useDeleteExerciseLog()
   const [confirmLogId, setConfirmLogId] = useState(null)
+  const [confirmIsExercise, setConfirmIsExercise] = useState(false)
 
   const { data: foodLogs = [], isLoading: loadingFood } = useFoodLogsForUser(userId, {
     dateFrom: tanggal,
@@ -67,8 +69,12 @@ export function DailyFoodSummary({ userId, tanggal }) {
 
   const showDelete = profile?.role === 'klien' || profile?.role === 'ahli_gizi'
 
-  const confirmLog = confirmLogId ? foodLogs.find((l) => l.id === confirmLogId) : null
-  const confirmItems = confirmLog ? (itemsByLogId[confirmLog.id] ?? []) : []
+  const confirmLog = confirmLogId
+    ? confirmIsExercise
+      ? exerciseLogs.find((l) => l.id === confirmLogId)
+      : foodLogs.find((l) => l.id === confirmLogId)
+    : null
+  const confirmItems = !confirmIsExercise && confirmLog ? (itemsByLogId[confirmLog.id] ?? []) : []
   const confirmFoodName = confirmItems.map((i) => i.nama_makanan).join(', ') || '—'
 
   if (loadingFood || loadingExercise) return null
@@ -122,11 +128,30 @@ export function DailyFoodSummary({ userId, tanggal }) {
               className="text-xs font-semibold tabular-nums whitespace-nowrap"
               unitClassName="text-[0.7em] font-normal text-muted-foreground"
             />
+            {showDelete && (
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmLogId(log.id)
+                  setConfirmIsExercise(true)
+                }}
+                className="shrink-0 ml-1 p-1.5 rounded-md text-muted-foreground/50 hover:text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+                aria-label={`Hapus log ${log.jenis_olahraga}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         ))}
       </div>
 
-      <Dialog open={Boolean(confirmLogId)} onOpenChange={(o) => { if (!o && !deleteMutation.isPending) setConfirmLogId(null) }}>
+      <Dialog open={Boolean(confirmLogId)} onOpenChange={(o) => {
+        const pending = confirmIsExercise ? deleteExerciseMutation.isPending : deleteFoodMutation.isPending
+        if (!o && !pending) {
+          setConfirmLogId(null)
+          setConfirmIsExercise(false)
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Hapus entri log?</DialogTitle>
@@ -136,16 +161,31 @@ export function DailyFoodSummary({ userId, tanggal }) {
               Entri berikut akan dihapus permanen:
             </p>
             <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 space-y-0.5 text-xs">
-              <div className="flex gap-2">
-                <span className="text-muted-foreground shrink-0">Makanan:</span>
-                <span className="font-medium text-foreground">{confirmFoodName}</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-muted-foreground shrink-0">Waktu:</span>
-                <span className="font-medium text-foreground">
-                  {confirmLog ? (MEAL_LABELS[confirmLog.waktu_makan] || confirmLog.waktu_makan) : '—'}
-                </span>
-              </div>
+              {confirmIsExercise ? (
+                <>
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground shrink-0">Aktivitas:</span>
+                    <span className="font-medium text-foreground">{confirmLog?.jenis_olahraga || '—'}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground shrink-0">Durasi:</span>
+                    <span className="font-medium text-foreground">{confirmLog?.durasi || '—'}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground shrink-0">Makanan:</span>
+                    <span className="font-medium text-foreground">{confirmFoodName}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground shrink-0">Waktu:</span>
+                    <span className="font-medium text-foreground">
+                      {confirmLog ? (MEAL_LABELS[confirmLog.waktu_makan] || confirmLog.waktu_makan) : '—'}
+                    </span>
+                  </div>
+                </>
+              )}
               <div className="flex gap-2">
                 <span className="text-muted-foreground shrink-0">Tanggal:</span>
                 <span className="font-medium text-foreground">{formatDateId(tanggal)}</span>
@@ -156,29 +196,53 @@ export function DailyFoodSummary({ userId, tanggal }) {
             </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmLogId(null)} disabled={deleteMutation.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmLogId(null)
+                setConfirmIsExercise(false)
+              }}
+              disabled={confirmIsExercise ? deleteExerciseMutation.isPending : deleteFoodMutation.isPending}
+            >
               Batal
             </Button>
             <Button
               variant="destructive"
-              disabled={deleteMutation.isPending || !confirmLogId}
+              disabled={(confirmIsExercise ? deleteExerciseMutation.isPending : deleteFoodMutation.isPending) || !confirmLogId}
               onClick={() => {
                 if (!confirmLogId || !userId) return
-                deleteMutation.mutate(
-                  {
-                    logId: confirmLogId,
-                    userId,
-                    foodName: confirmFoodName,
-                  },
-                  {
-                    onSuccess: () => {
-                      setConfirmLogId(null)
+                if (confirmIsExercise) {
+                  deleteExerciseMutation.mutate(
+                    {
+                      logId: confirmLogId,
+                      userId,
+                      jenisOlahraga: confirmLog?.jenis_olahraga || '—',
                     },
-                  },
-                )
+                    {
+                      onSuccess: () => {
+                        setConfirmLogId(null)
+                        setConfirmIsExercise(false)
+                      },
+                    },
+                  )
+                } else {
+                  deleteFoodMutation.mutate(
+                    {
+                      logId: confirmLogId,
+                      userId,
+                      foodName: confirmFoodName,
+                    },
+                    {
+                      onSuccess: () => {
+                        setConfirmLogId(null)
+                        setConfirmIsExercise(false)
+                      },
+                    },
+                  )
+                }
               }}
             >
-              {deleteMutation.isPending ? 'Menghapus…' : 'Hapus'}
+              {confirmIsExercise ? (deleteExerciseMutation.isPending ? 'Menghapus…' : 'Hapus') : (deleteFoodMutation.isPending ? 'Menghapus…' : 'Hapus')}
             </Button>
           </DialogFooter>
         </DialogContent>

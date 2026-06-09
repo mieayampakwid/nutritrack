@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { subDays } from 'date-fns'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -10,8 +10,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { formatDateId, toIsoDateLocal } from '@/lib/format'
-import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
+import { useExerciseLogsForUser, useDeleteExerciseLog } from '@/hooks/useExerciseLog'
+import { useAuth } from '@/hooks/useAuth'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { cn } from '@/lib/utils'
 
@@ -39,8 +47,14 @@ export function ExerciseLogHistoryCard({ userId, tanggal, pageSize = 10, embedde
     ),
   })
 
+  const { profile } = useAuth()
+  const deleteMutation = useDeleteExerciseLog()
+  const [confirmLogId, setConfirmLogId] = useState(null)
+
+  const confirmLog = confirmLogId ? (logs ?? []).find((l) => l.id === confirmLogId) : null
+
   // Group logs by date for mobile view
-  const logsByDate = useMemo(() => {
+  const logsByDate = (() => {
     const map = new Map()
     for (const log of logs ?? []) {
       const d = log.tanggal
@@ -52,12 +66,9 @@ export function ExerciseLogHistoryCard({ userId, tanggal, pageSize = 10, embedde
       arr.sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
     }
     return map
-  }, [logs])
+  })()
 
-  const sortedDates = useMemo(
-    () => [...logsByDate.keys()].sort((a, b) => b.localeCompare(a)),
-    [logsByDate],
-  )
+  const sortedDates = [...logsByDate.keys()].sort((a, b) => b.localeCompare(a))
 
   // Pagination state
   const [page, setPage] = useState(0)
@@ -119,26 +130,42 @@ export function ExerciseLogHistoryCard({ userId, tanggal, pageSize = 10, embedde
                   </div>
                 </div>
                 <ul className="mt-3 space-y-2 border-t border-blue-200/40 pt-3">
-                  {logsForDay.map((log) => (
-                    <li
-                      key={log.id}
-                      className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-xs"
-                    >
-                      <span className="font-medium text-foreground">
-                        {log.jenis_olahraga || '—'}
-                      </span>
-                      <span className="shrink-0 tabular-nums text-muted-foreground">
-                        {log.durasi || '—'}
-                      </span>
-                      <span className="shrink-0 font-semibold tabular-nums text-foreground">
-                        {log.kalori_estimasi != null && log.kalori_estimasi > 0 ? (
-                          <KaloriValue value={log.kalori_estimasi} />
-                        ) : (
-                          '—'
+                  {logsForDay.map((log) => {
+                    const showDelete = (profile?.role === 'klien' || profile?.role === 'ahli_gizi') && userId === profile?.id
+
+                    return (
+                      <li
+                        key={log.id}
+                        className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-xs"
+                      >
+                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          <span className="font-medium text-foreground">
+                            {log.jenis_olahraga || '—'}
+                          </span>
+                          <span className="shrink-0 tabular-nums text-muted-foreground">
+                            {log.durasi || '—'}
+                          </span>
+                          <span className="shrink-0 font-semibold tabular-nums text-foreground">
+                            {log.kalori_estimasi != null && log.kalori_estimasi > 0 ? (
+                              <KaloriValue value={log.kalori_estimasi} />
+                            ) : (
+                              '—'
+                            )}
+                          </span>
+                        </div>
+                        {showDelete && (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmLogId(log.id)}
+                            className="shrink-0 p-1 rounded-md text-muted-foreground/50 hover:text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+                            aria-label={`Hapus ${log.jenis_olahraga}`}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         )}
-                      </span>
-                    </li>
-                  ))}
+                      </li>
+                    )
+                  })}
                 </ul>
               </button>
             )
@@ -185,23 +212,39 @@ export function ExerciseLogHistoryCard({ userId, tanggal, pageSize = 10, embedde
                         </TableCell>
                         <TableCell className="max-w-[min(28rem,42vw)] align-top text-sm">
                           <ul className="space-y-1.5 py-0.5">
-                            {logsForDay.map((log) => (
-                              <li key={log.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                <span className="font-medium text-foreground">
-                                  {log.jenis_olahraga || '—'}
-                                </span>
-                                <span className="tabular-nums text-muted-foreground">
-                                  {log.durasi || '—'}
-                                </span>
-                                <span className="ml-auto shrink-0 font-medium tabular-nums">
-                                  {log.kalori_estimasi != null && log.kalori_estimasi > 0 ? (
-                                    <KaloriValue value={log.kalori_estimasi} />
-                                  ) : (
-                                    '—'
+                            {logsForDay.map((log) => {
+                              const showDelete = (profile?.role === 'klien' || profile?.role === 'ahli_gizi') && userId === profile?.id
+
+                              return (
+                                <li key={log.id} className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
+                                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                    <span className="font-medium text-foreground">
+                                      {log.jenis_olahraga || '—'}
+                                    </span>
+                                    <span className="tabular-nums text-muted-foreground">
+                                      {log.durasi || '—'}
+                                    </span>
+                                    <span className="font-medium tabular-nums">
+                                      {log.kalori_estimasi != null && log.kalori_estimasi > 0 ? (
+                                        <KaloriValue value={log.kalori_estimasi} />
+                                      ) : (
+                                        '—'
+                                      )}
+                                    </span>
+                                  </div>
+                                  {showDelete && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setConfirmLogId(log.id)}
+                                      className="shrink-0 p-1 rounded-md text-muted-foreground/50 hover:text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+                                      aria-label={`Hapus ${log.jenis_olahraga}`}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
                                   )}
-                                </span>
-                              </li>
-                            ))}
+                                </li>
+                              )
+                            })}
                           </ul>
                         </TableCell>
                         <TableCell className="text-right font-medium tabular-nums align-top">
@@ -252,6 +295,64 @@ export function ExerciseLogHistoryCard({ userId, tanggal, pageSize = 10, embedde
           Berikutnya
         </Button>
       </div>
+
+      {confirmLog && (
+        <Dialog open={Boolean(confirmLogId)} onOpenChange={(o) => { if (!o && !deleteMutation.isPending) setConfirmLogId(null) }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Hapus entri log?</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-1.5 text-sm">
+              <p className="text-muted-foreground">
+                Entri berikut akan dihapus permanen:
+              </p>
+              <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 space-y-0.5 text-xs">
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground shrink-0">Aktivitas:</span>
+                  <span className="font-medium text-foreground">{confirmLog.jenis_olahraga || '—'}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground shrink-0">Durasi:</span>
+                  <span className="font-medium text-foreground">{confirmLog.durasi || '—'}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground shrink-0">Tanggal:</span>
+                  <span className="font-medium text-foreground">{formatDateId(confirmLog.tanggal)}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Tindakan ini tidak bisa dibatalkan.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmLogId(null)} disabled={deleteMutation.isPending}>
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={deleteMutation.isPending || !confirmLogId}
+                onClick={() => {
+                  if (!confirmLogId || !userId) return
+                  deleteMutation.mutate(
+                    {
+                      logId: confirmLogId,
+                      userId,
+                      jenisOlahraga: confirmLog.jenis_olahraga || '—',
+                    },
+                    {
+                      onSuccess: () => {
+                        setConfirmLogId(null)
+                      },
+                    },
+                  )
+                }}
+              >
+                {deleteMutation.isPending ? 'Menghapus…' : 'Hapus'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

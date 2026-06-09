@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
-import { id as localeId } from 'date-fns/locale'
 import { FileText } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { MeasurementChart } from '@/components/measurement/MeasurementChart'
@@ -220,7 +219,6 @@ export function MyProgress() {
                       const bb = a.berat_badan
                       const tb = a.tinggi_badan
                       const bmi = a.bmi ?? calculateBMI(bb, tb)
-                      const bmiCat = getBMICategoryAsiaPacific(bmi)
                       const d = parseIsoDateLocal(a.tanggal)
                       const dateFormatted = d ? format(d, 'dd/MM/yy') : '—'
                       return (
