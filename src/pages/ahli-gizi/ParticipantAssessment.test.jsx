@@ -112,10 +112,9 @@ describe('ParticipantAssessment', () => {
     renderWithProviders(<ParticipantAssessment />)
 
     await waitFor(() => {
-      expect(screen.getByText('Asesmen Klien')).toBeInTheDocument()
-      expect(screen.getByText((content, element) => {
-        return element?.textContent === 'Test Client • Perempuan'
-      })).toBeInTheDocument()
+      expect(screen.getByText('Test Client')).toBeInTheDocument()
+      expect(screen.getByText('36 tahun')).toBeInTheDocument()
+      expect(screen.getByText('Perempuan')).toBeInTheDocument()
     })
   })
 

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { subDays } from 'date-fns'
-import { ChevronRight, Utensils, Dumbbell } from 'lucide-react'
+import { ChevronRight, Utensils, Dumbbell, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -10,10 +10,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { FoodLogMealDetailDialog } from '@/components/food/FoodLogMealDetailDialog'
 import { formatDateId, formatNumberId, toIsoDateLocal } from '@/lib/format'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { useFoodLogItems } from '@/hooks/useFoodLog'
+import { useDeleteExerciseLog } from '@/hooks/useExerciseLog'
+import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
 const THEMES = {
@@ -71,6 +80,12 @@ export function ActivityLogTable({
 }) {
   const theme = THEMES[type]
   const Icon = theme.icon
+
+  const { profile } = useAuth()
+  const deleteMutation = useDeleteExerciseLog()
+  const [confirmLogId, setConfirmLogId] = useState(null)
+
+  const confirmLog = confirmLogId ? (filteredData ?? []).find((l) => l.id === confirmLogId) : null
 
   // Filter data by date range
   const filteredData = useMemo(() => {
@@ -222,21 +237,37 @@ export function ActivityLogTable({
         </li>
       )
     } else {
+      const showDelete = type === 'exercise' &&
+        (profile?.role === 'klien' || profile?.role === 'ahli_gizi') &&
+        userId === profile?.id
+
       return (
-        <li className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-xs">
-          <span className="font-medium text-foreground">
-            {item.jenis_olahraga || '—'}
-          </span>
-          <span className="shrink-0 tabular-nums text-muted-foreground">
-            {item.durasi || '—'}
-          </span>
-          <span className="shrink-0 font-semibold tabular-nums text-foreground">
-            {item.kalori_estimasi != null && item.kalori_estimasi > 0 ? (
-              <KaloriValue value={item.kalori_estimasi} />
-            ) : (
-              '—'
-            )}
-          </span>
+        <li className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-xs">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="font-medium text-foreground">
+              {item.jenis_olahraga || '—'}
+            </span>
+            <span className="shrink-0 tabular-nums text-muted-foreground">
+              {item.durasi || '—'}
+            </span>
+            <span className="shrink-0 font-semibold tabular-nums text-foreground">
+              {item.kalori_estimasi != null && item.kalori_estimasi > 0 ? (
+                <KaloriValue value={item.kalori_estimasi} />
+              ) : (
+                '—'
+              )}
+            </span>
+          </div>
+          {showDelete && (
+            <button
+              type="button"
+              onClick={() => setConfirmLogId(item.id)}
+              className="shrink-0 p-1 rounded-md text-muted-foreground/50 hover:text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+              aria-label={`Hapus ${item.jenis_olahraga}`}
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          )}
         </li>
       )
     }
@@ -259,21 +290,37 @@ export function ActivityLogTable({
         </li>
       )
     } else {
+      const showDelete = type === 'exercise' &&
+        (profile?.role === 'klien' || profile?.role === 'ahli_gizi') &&
+        userId === profile?.id
+
       return (
-        <li key={item.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className="font-medium text-foreground">
-            {item.jenis_olahraga || '—'}
-          </span>
-          <span className="tabular-nums text-muted-foreground">
-            {item.durasi || '—'}
-          </span>
-          <span className="ml-auto shrink-0 font-medium tabular-nums">
-            {item.kalori_estimasi != null && item.kalori_estimasi > 0 ? (
-              <KaloriValue value={item.kalori_estimasi} />
-            ) : (
-              '—'
-            )}
-          </span>
+        <li key={item.id} className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="font-medium text-foreground">
+              {item.jenis_olahraga || '—'}
+            </span>
+            <span className="tabular-nums text-muted-foreground">
+              {item.durasi || '—'}
+            </span>
+            <span className="font-medium tabular-nums">
+              {item.kalori_estimasi != null && item.kalori_estimasi > 0 ? (
+                <KaloriValue value={item.kalori_estimasi} />
+              ) : (
+                '—'
+              )}
+            </span>
+          </div>
+          {showDelete && (
+            <button
+              type="button"
+              onClick={() => setConfirmLogId(item.id)}
+              className="shrink-0 p-1 rounded-md text-muted-foreground/50 hover:text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+              aria-label={`Hapus ${item.jenis_olahraga}`}
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          )}
         </li>
       )
     }
@@ -451,6 +498,64 @@ export function ActivityLogTable({
           itemsByLogId={itemsByLogId}
           userId={userId}
         />
+      )}
+
+      {type === 'exercise' && confirmLog && (
+        <Dialog open={Boolean(confirmLogId)} onOpenChange={(o) => { if (!o && !deleteMutation.isPending) setConfirmLogId(null) }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Hapus entri log?</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-1.5 text-sm">
+              <p className="text-muted-foreground">
+                Entri berikut akan dihapus permanen:
+              </p>
+              <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 space-y-0.5 text-xs">
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground shrink-0">Aktivitas:</span>
+                  <span className="font-medium text-foreground">{confirmLog.jenis_olahraga || '—'}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground shrink-0">Durasi:</span>
+                  <span className="font-medium text-foreground">{confirmLog.durasi || '—'}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground shrink-0">Tanggal:</span>
+                  <span className="font-medium text-foreground">{formatDateId(confirmLog.tanggal)}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Tindakan ini tidak bisa dibatalkan.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmLogId(null)} disabled={deleteMutation.isPending}>
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={deleteMutation.isPending || !confirmLogId}
+                onClick={() => {
+                  if (!confirmLogId || !userId) return
+                  deleteMutation.mutate(
+                    {
+                      logId: confirmLogId,
+                      userId,
+                      jenisOlahraga: confirmLog.jenis_olahraga || '—',
+                    },
+                    {
+                      onSuccess: () => {
+                        setConfirmLogId(null)
+                      },
+                    },
+                  )
+                }}
+              >
+                {deleteMutation.isPending ? 'Menghapus…' : 'Hapus'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )
