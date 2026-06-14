@@ -329,9 +329,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const [pendingResult, setPendingResult] = useState(null)
   const [result, setResult] = useState(null)
   const [addFormOpen, setAddFormOpen] = useState(false)
-  const [addItemName, setAddItemName] = useState('')
-  const [addItemQty, setAddItemQty] = useState('')
-  const [addItemUnit, setAddItemUnit] = useState('')
+  const [addRows, setAddRows] = useState(() => [emptyRow()])
   const [addLoading, setAddLoading] = useState(false)
   const idempotencyKeyRef = useRef(null)
   const resultRef = useRef(null)
@@ -776,61 +774,89 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
     })
   }
 
-  async function handleAddItem() {
-    const nama = addItemName.trim()
-    const qty = Number(addItemQty)
-    if (!nama || !qty || qty <= 0 || !addItemUnit) return
+  async function handleAddItems() {
+    const filled = addRows
+      .map((r) => {
+        const unit = unitMap[r.unitId]
+        return {
+          row: r,
+          nama_makanan: (r.nama ?? '').trim(),
+          jumlah: r.jumlah === '' ? NaN : Number(r.jumlah),
+          unit_id: r.unitId || null,
+          unit_nama: unit?.nama ?? '',
+        }
+      })
+      .filter((x) => x.nama_makanan && !Number.isNaN(x.jumlah) && x.jumlah > 0 && x.unit_nama)
 
-    const unit = unitMap[addItemUnit]
-    if (!unit) return
+    if (!filled.length) return
 
     setAddLoading(true)
     try {
-      const result = await analyzeFood([{ nama_makanan: nama, jumlah: qty, unit_nama: unit.nama }])
+      const result = await analyzeFood(
+        filled.map((x) => ({ nama_makanan: x.nama_makanan, jumlah: x.jumlah, unit_nama: x.unit_nama })),
+      )
 
       if (Array.isArray(result) && result.length > 0) {
-        const est = result[0]
-        const newItem = {
-          nama_makanan: nama,
-          jumlah: qty,
-          unit_id: addItemUnit,
-          unit_nama: unit.nama,
-          kalori_estimasi: Number(est.kalori) || 0,
-          karbohidrat: Number(est.karbohidrat) || 0,
-          protein: Number(est.protein) || 0,
-          lemak: Number(est.lemak) || 0,
-          serat: Number(est.serat) || 0,
-          natrium: Number(est.natrium) || 0,
+        const byName = {}
+        for (const e of result) {
+          if (e?.nama_makanan != null) byName[String(e.nama_makanan).trim().toLowerCase()] = e
         }
 
-        setPendingResult((prev) => {
-          if (!prev) return prev
-          const newItems = [...prev.items, newItem]
+        const newItems = filled.map((x) => {
+          const key = x.nama_makanan.toLowerCase()
+          const e = byName[key] ?? {}
           return {
-            ...prev,
-            items: newItems,
-            total: newItems.reduce((a, x) => a + (x.kalori_estimasi || 0), 0),
-            totalKarbohidrat: newItems.reduce((a, x) => a + (x.karbohidrat || 0), 0),
-            totalProtein: newItems.reduce((a, x) => a + (x.protein || 0), 0),
-            totalLemak: newItems.reduce((a, x) => a + (x.lemak || 0), 0),
-            totalSerat: newItems.reduce((a, x) => a + (x.serat || 0), 0),
-            totalNatrium: newItems.reduce((a, x) => a + (x.natrium || 0), 0),
+            nama_makanan: x.nama_makanan,
+            jumlah: x.jumlah,
+            unit_id: x.unit_id,
+            unit_nama: x.unit_nama,
+            kalori_estimasi: Number(e.kalori) || 0,
+            karbohidrat: Number(e.karbohidrat) || 0,
+            protein: Number(e.protein) || 0,
+            lemak: Number(e.lemak) || 0,
+            serat: Number(e.serat) || 0,
+            natrium: Number(e.natrium) || 0,
           }
         })
 
-        setAddItemName('')
-        setAddItemQty('')
-        setAddItemUnit('')
+        setPendingResult((prev) => {
+          if (!prev) return prev
+          const merged = [...prev.items, ...newItems]
+          return {
+            ...prev,
+            items: merged,
+            total: merged.reduce((a, x) => a + (x.kalori_estimasi || 0), 0),
+            totalKarbohidrat: merged.reduce((a, x) => a + (x.karbohidrat || 0), 0),
+            totalProtein: merged.reduce((a, x) => a + (x.protein || 0), 0),
+            totalLemak: merged.reduce((a, x) => a + (x.lemak || 0), 0),
+            totalSerat: merged.reduce((a, x) => a + (x.serat || 0), 0),
+            totalNatrium: merged.reduce((a, x) => a + (x.natrium || 0), 0),
+          }
+        })
+
+        setAddRows([emptyRow()])
         setAddFormOpen(false)
       } else {
         toast.error('Gagal menganalisa makanan.')
       }
     } catch (e) {
-      logError('FoodEntryForm.handleAddItem', e)
+      logError('FoodEntryForm.handleAddItems', e)
       toast.error('Gagal menganalisa.')
     } finally {
       setAddLoading(false)
     }
+  }
+
+  function addAddRow() {
+    setAddRows((prev) => [...prev, emptyRow()])
+  }
+
+  function removeAddRow(i) {
+    setAddRows((prev) => (prev.length <= 1 ? prev : prev.filter((_, j) => j !== i)))
+  }
+
+  function setAddRow(i, patch) {
+    setAddRows((prev) => prev.map((r, j) => (j === i ? { ...r, ...patch } : r)))
   }
 
   function handleSelesai() {
@@ -944,47 +970,67 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                       </Button>
                       {addFormOpen ? (
                         <div className="mt-2 space-y-2">
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Nama makanan"
-                              className="food-entry-compact-input h-9 flex-1 text-sm"
-                              value={addItemName}
-                              onChange={(e) => setAddItemName(e.target.value)}
-                              autoFocus
-                            />
-                            <div className={cn(foodQtyStepperShellClass, 'w-24 shrink-0')}>
-                              <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddItemQty((v) => Math.max(0, (Number(v) || 0) - 0.5).toString())} aria-label="Kurangi jumlah">-</button>
+                          {addRows.map((r, i) => (
+                            <div key={r.id} className="flex gap-2">
                               <Input
-                                type="number" inputMode="decimal" step="any" min={0} placeholder="0"
-                                className={foodQtyStepperInnerInputClass}
-                                value={addItemQty}
-                                onChange={(e) => setAddItemQty(e.target.value)}
+                                placeholder="Nama makanan"
+                                className="food-entry-compact-input h-9 flex-1 text-sm"
+                                value={r.nama}
+                                onChange={(e) => setAddRow(i, { nama: e.target.value })}
+                                autoFocus={i === addRows.length - 1}
                               />
-                              <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddItemQty((v) => ((Number(v) || 0) + 0.5).toString())} aria-label="Tambah jumlah">+</button>
+                              <div className={cn(foodQtyStepperShellClass, 'w-24 shrink-0')}>
+                                <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddRow(i, { jumlah: String(Math.max(0, (Number(r.jumlah) || 0) - 0.5)) })} aria-label="Kurangi jumlah">-</button>
+                                <Input
+                                  type="number" inputMode="decimal" step="any" min={0} placeholder="0"
+                                  className={foodQtyStepperInnerInputClass}
+                                  value={r.jumlah}
+                                  onChange={(e) => setAddRow(i, { jumlah: e.target.value })}
+                                />
+                                <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddRow(i, { jumlah: String((Number(r.jumlah) || 0) + 0.5) })} aria-label="Tambah jumlah">+</button>
+                              </div>
+                              <Select value={r.unitId || undefined} onValueChange={(v) => setAddRow(i, { unitId: v })}>
+                                <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'w-28 shrink-0 text-xs')}>
+                                  <SelectValue placeholder="Satuan" />
+                                </SelectTrigger>
+                                <SelectContent align="end" className="text-xs">
+                                  {units.map((u) => (
+                                    <SelectItem key={u.id} value={u.id} className="text-xs">{u.nama}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {addRows.length > 1 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => removeAddRow(i)}
+                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive"
+                                  aria-label="Hapus baris"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              ) : null}
                             </div>
-                            <Select value={addItemUnit || undefined} onValueChange={setAddItemUnit}>
-                              <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'w-28 shrink-0 text-xs')}>
-                                <SelectValue placeholder="Satuan" />
-                              </SelectTrigger>
-                              <SelectContent align="end" className="text-xs">
-                                {units.map((u) => (
-                                  <SelectItem key={u.id} value={u.id} className="text-xs">{u.nama}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="flex justify-end gap-2">
+                          ))}
+                          <Button
+                            type="button" variant="ghost" size="sm"
+                            className="w-full text-xs text-muted-foreground hover:text-foreground"
+                            onClick={addAddRow}
+                          >
+                            <Plus className="mr-1 h-3.5 w-3.5" />
+                            Tambah baris
+                          </Button>
+                          <div className="flex justify-end gap-2 !mt-3 border-t border-amber-200/30 pt-2">
                             <Button
                               type="button" variant="ghost" size="sm" className="text-xs"
-                              onClick={() => { setAddFormOpen(false); setAddItemName(''); setAddItemQty(''); setAddItemUnit('') }}
+                              onClick={() => { setAddFormOpen(false); setAddRows([emptyRow()]) }}
                             >
                               Batal
                             </Button>
                             <Button
                               type="button" size="sm"
                               className="bg-gradient-to-r from-primary to-primary/90 text-xs shadow-sm shadow-primary/20"
-                              onClick={handleAddItem}
-                              disabled={addLoading || !addItemName.trim() || !addItemQty || Number(addItemQty) <= 0 || !addItemUnit}
+                              onClick={handleAddItems}
+                              disabled={addLoading}
                             >
                               {addLoading ? (
                                 <Loader2 className={cn('mr-1 h-3.5 w-3.5', !reduceMotion && 'motion-safe:animate-spin')} />
