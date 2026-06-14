@@ -181,7 +181,7 @@ describe('FoodEntryForm', () => {
 
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Nasi Goreng')
     await user.type(screen.getByPlaceholderText('0'), '1')
-    await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
+    await user.selectOptions(screen.getByRole('combobox'), 'g')
 
     expect(screen.getByRole('button', { name: /analisa/i })).toBeDisabled()
 
@@ -206,7 +206,7 @@ describe('FoodEntryForm', () => {
 
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Nasi Goreng')
     await user.type(screen.getByPlaceholderText('0'), '1')
-    await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
+    await user.selectOptions(screen.getByRole('combobox'), 'g')
 
     await user.click(screen.getByRole('button', { name: /tambah makanan/i }))
     const groups = screen.getAllByRole('group', { name: /diary makanan/i })
@@ -215,7 +215,7 @@ describe('FoodEntryForm', () => {
     await user.click(within(groups[1]).getByRole('button', { name: /ketuk untuk mengisi makanan/i }))
     await user.type(within(groups[1]).getByPlaceholderText(/nama makanan/i), 'asdfqwer')
     await user.type(within(groups[1]).getByPlaceholderText('0'), '1')
-    await user.selectOptions(within(groups[1]).getByLabelText(/satuan/i), 'g')
+    await user.selectOptions(within(groups[1]).getByRole('combobox'), 'g')
 
     await user.click(screen.getByRole('button', { name: /analisa/i }))
 
@@ -241,7 +241,7 @@ describe('FoodEntryForm', () => {
     await setJamMakan(user, '7', '5')
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'bak')
     await user.type(screen.getByPlaceholderText('0'), '1')
-    await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
+    await user.selectOptions(screen.getByRole('combobox'), 'g')
 
     await user.click(screen.getByRole('button', { name: /analisa/i }))
 
@@ -264,7 +264,7 @@ describe('FoodEntryForm', () => {
     await user.click(screen.getByRole('radio', { name: /sarapan/i }))
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Bakso')
     await user.type(screen.getByPlaceholderText('0'), '1')
-    await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
+    await user.selectOptions(screen.getByRole('combobox'), 'g')
 
     await setJamMakan(user, '7', '5')
 
@@ -278,7 +278,6 @@ describe('FoodEntryForm', () => {
 
   it('recovers from idempotency key collision (network retry)', async () => {
     const user = userEvent.setup()
-    const { toast } = await import('sonner')
 
     // Phase 1: successful AI analysis
     openaiMock.analyzeFood.mockResolvedValueOnce([
@@ -332,7 +331,7 @@ describe('FoodEntryForm', () => {
     await setJamMakan(user, '7', '5')
     await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Nasi Goreng')
     await user.type(screen.getByPlaceholderText('0'), '1')
-    await user.selectOptions(screen.getByLabelText(/satuan/i), 'g')
+    await user.selectOptions(screen.getByRole('combobox'), 'g')
 
     // Click Analisa → shows "Simpan" button
     await user.click(screen.getByRole('button', { name: /analisa/i }))

@@ -82,8 +82,6 @@ const MEAL_CARD_COLORS = {
   snack: { card: 'border-rose-200/60 bg-rose-50/70', accent: 'border-rose-300/60 text-rose-800', border: 'border-rose-200/50', divider: 'border-rose-200/30', hover: 'hover:bg-rose-100/50' },
 }
 
-const typeLabel = 'text-sm font-medium leading-none text-foreground'
-
 const ANALYZE_STATUS_LINES = [
   'Memetakan bahan dan porsi ke basis data gizi…',
   'Menghitung estimasi energi dan zat gizi (makro) per item…',
@@ -1354,11 +1352,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                     {rowError}
                                   </p>
                                 ) : null}
-                                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_8.5rem_minmax(0,1fr)] sm:items-end">
-                                  <div className="grid gap-1.5">
-                                    <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-name-${r.id}`}>
-                                      Makanan
-                                    </Label>
+                                <div className="space-y-2">
+                                  <div>
                                     <FoodNameSuggestField
                                       inputId={`food-name-${r.id}`}
                                       value={r.nama}
@@ -1380,11 +1375,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                       onChangeNama={(nama) => setRow(i, { nama })}
                                     />
                                   </div>
-                                  <div className="grid gap-1.5">
-                                    <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-qty-${r.id}`}>
-                                      Jumlah
-                                    </Label>
-                                    <div className={foodQtyStepperShellClass}>
+                                  <div className="flex gap-2">
+                                    <div className={cn(foodQtyStepperShellClass, 'flex-1')}>
                                       <button type="button" className={foodQtyStepperBtnClass} onClick={() => adjustRowJumlah(i, -1)} aria-label="Kurangi jumlah">-</button>
                                       <Input
                                         id={`food-qty-${r.id}`}
@@ -1399,16 +1391,12 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                         onFocus={(e) => e.target.select()}
                                       />
                                       <button type="button" className={foodQtyStepperBtnClass} onClick={() => adjustRowJumlah(i, 1)} aria-label="Tambah jumlah">+</button>
-                  </div>
-                                  </div>
-                                  <div className="grid min-w-0 gap-1.5">
-                                    <Label className={cn(typeLabel, 'sm:sr-only')} htmlFor={`food-unit-${r.id}`}>
-                                      Satuan
-                                    </Label>
+                                    </div>
                                     <Select value={r.unitId || undefined} onValueChange={(v) => setRow(i, { unitId: v })}>
                                       <SelectTrigger
                                         id={`food-unit-${r.id}`}
-                                        className={cn(foodRowControlShell, foodRowSelectFocus, foodRowSelectMobileType, 'min-w-0 w-full placeholder:text-[13.25px]')}
+                                        aria-label="Satuan"
+                                        className={cn(foodRowControlShell, foodRowSelectFocus, foodRowSelectMobileType, 'flex-1 min-w-0 placeholder:text-[13.25px]')}
                                       >
                                         <SelectValue placeholder="Satuan" />
                                       </SelectTrigger>
