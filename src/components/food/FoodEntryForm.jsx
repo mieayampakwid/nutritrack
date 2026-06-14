@@ -1203,7 +1203,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                     <button
                       type="button"
                       className={cn(
-                        'flex h-10 min-h-[44px] w-14 shrink-0 items-center justify-center gap-1 rounded-xl border px-2 text-xs font-semibold tabular-nums transition-all duration-200',
+                        'flex h-10 min-h-[44px] min-w-14 shrink-0 items-center justify-center gap-1 rounded-xl border px-2 text-xs font-semibold tabular-nums transition-all duration-200',
                         'md:h-9 md:min-h-0 md:w-16',
                         mealKey
                           ? 'border-primary/30 bg-primary/5 text-primary hover:bg-primary/10'
