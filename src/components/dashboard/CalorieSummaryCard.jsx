@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { FlagBanner, Hamburger, PersonSimpleRun } from '@phosphor-icons/react'
+import { FlagBanner, Hamburger, PersonSimpleRun, Fire, Trophy } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
@@ -184,18 +184,24 @@ export function CalorieSummaryCard({ userId, className }) {
             </div>
           </div>
         </div>
-        <div className="border-t border-border/40 px-5 py-2">
+        <div className="border-t border-border/40 px-5 py-2.5">
           {streakLoading ? (
-            <div className="h-4 w-32 animate-pulse rounded bg-muted/50 mx-auto" />
+            <div className="mx-auto h-4 w-32 animate-pulse rounded bg-muted/50" />
           ) : (
-            <p className="text-center text-[0.6875rem] text-muted-foreground">
+            <p className="flex items-center justify-center gap-3 text-[0.75rem] text-muted-foreground">
               {currentStreak > 0 ? (
-                <>🔥 Streak: <span className="font-medium text-foreground">{currentStreak}</span> hari</>
+                <span className="inline-flex items-center gap-1">
+                  <Fire className="h-4 w-4 text-orange-500" weight="fill" />
+                  <span className="font-semibold text-foreground">{currentStreak}</span> hari
+                </span>
               ) : (
-                <>Catat hari ini untuk mulai streak!</>
+                <span>Catat hari ini untuk mulai streak!</span>
               )}
               {longestStreak > 0 && (
-                <>  ·  🏆 Rekor: <span className="font-medium text-foreground">{longestStreak}</span> hari</>
+                <span className="inline-flex items-center gap-1">
+                  <Trophy className="h-4 w-4 text-amber-500" weight="fill" />
+                  <span className="font-semibold text-foreground">{longestStreak}</span> hari
+                </span>
               )}
             </p>
           )}
