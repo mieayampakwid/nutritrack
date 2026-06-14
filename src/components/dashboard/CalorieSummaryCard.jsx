@@ -177,8 +177,8 @@ function Donut({ ratio, overBudget, excessRatio }) {
           fill="none"
           stroke={DONUT_OVER}
           strokeWidth={DONUT_STROKE}
-          strokeLinecap="round"
-          strokeDasharray="3 9"
+          strokeLinecap="butt"
+          strokeDasharray={DONUT_CIRCUMFERENCE}
           strokeDashoffset={mounted ? excessOffset : DONUT_CIRCUMFERENCE}
           style={{ transition: transitionStyle }}
         />
