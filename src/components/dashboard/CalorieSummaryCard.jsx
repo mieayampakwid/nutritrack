@@ -82,6 +82,7 @@ export function CalorieSummaryCard({ userId, className }) {
           <p className="mt-1 text-xs">Silakan hubungi ahli gizi untuk melakukan asesmen kebutuhan energi.</p>
         </div>
       ) : (
+        <>
         <div className="mx-auto flex w-fit items-center gap-5 px-5 py-3">
           <div className="relative h-[120px] w-[120px] shrink-0">
             <Donut ratio={donutRatio} overBudget={overBudget} excessRatio={excessRatio} />
@@ -132,8 +133,13 @@ export function CalorieSummaryCard({ userId, className }) {
               </div>
             </div>
           </div>
-          <div className="h-2" />
         </div>
+        <div className="border-t border-border/40 px-5 py-2">
+          <p className="text-center text-[0.6875rem] text-muted-foreground">
+            Target kalori harian Anda
+          </p>
+        </div>
+        </>
       )}
     </div>
   )
