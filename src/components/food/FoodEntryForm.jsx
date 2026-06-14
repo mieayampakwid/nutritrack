@@ -919,31 +919,18 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                   </ul>
 
                   {isPending ? (
-                    <div className="mt-2">
-                      {!addFormOpen ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="w-full text-xs text-muted-foreground hover:text-foreground"
-                          onClick={() => setAddFormOpen(true)}
-                        >
-                          <Plus className="mr-1 h-3.5 w-3.5" />
-                          Tambah makanan
-                        </Button>
-                      ) : (
-                        <div className="rounded-lg border border-border/60 bg-background/60 p-3">
-                          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_6rem_minmax(0,1fr)] sm:items-end">
-                            <div>
-                              <Input
-                                placeholder="Nama makanan"
-                                className="food-entry-compact-input h-9 text-sm"
-                                value={addItemName}
-                                onChange={(e) => setAddItemName(e.target.value)}
-                                autoFocus
-                              />
-                            </div>
-                            <div className={foodQtyStepperShellClass}>
+                    <div className="mt-2 border-t border-amber-200/50 pt-2">
+                      {addFormOpen ? (
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Nama makanan"
+                              className="food-entry-compact-input h-9 flex-1 text-sm"
+                              value={addItemName}
+                              onChange={(e) => setAddItemName(e.target.value)}
+                              autoFocus
+                            />
+                            <div className={cn(foodQtyStepperShellClass, 'w-24 shrink-0')}>
                               <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddItemQty((v) => Math.max(0, (Number(v) || 0) - 0.5).toString())} aria-label="Kurangi jumlah">-</button>
                               <Input
                                 type="number"
@@ -957,46 +944,56 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                               />
                               <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddItemQty((v) => ((Number(v) || 0) + 0.5).toString())} aria-label="Tambah jumlah">+</button>
                             </div>
-                            <div className="flex gap-2">
-                              <Select value={addItemUnit || undefined} onValueChange={setAddItemUnit}>
-                                <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'min-w-0 flex-1 text-xs')}>
-                                  <SelectValue placeholder="Satuan" />
-                                </SelectTrigger>
-                                <SelectContent align="end" className="text-xs">
-                                  {units.map((u) => (
-                                    <SelectItem key={u.id} value={u.id} className="text-xs">
-                                      {u.nama}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <div className="flex gap-1">
-                                <Button
-                                  type="button"
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-9 w-9 shrink-0"
-                                  onClick={() => { setAddFormOpen(false); setAddItemName(''); setAddItemQty(''); setAddItemUnit('') }}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  className="h-9 shrink-0 bg-gradient-to-r from-primary to-primary/90 text-xs"
-                                  onClick={handleAddItem}
-                                  disabled={addLoading || !addItemName.trim() || !addItemQty || Number(addItemQty) <= 0 || !addItemUnit}
-                                >
-                                  {addLoading ? (
-                                    <Loader2 className={cn('h-3.5 w-3.5', !reduceMotion && 'motion-safe:animate-spin')} />
-                                  ) : (
-                                    <Sparkles className="h-3.5 w-3.5" />
-                                  )}
-                                </Button>
-                              </div>
-                            </div>
+                            <Select value={addItemUnit || undefined} onValueChange={setAddItemUnit}>
+                              <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'w-28 shrink-0 text-xs')}>
+                                <SelectValue placeholder="Satuan" />
+                              </SelectTrigger>
+                              <SelectContent align="end" className="text-xs">
+                                {units.map((u) => (
+                                  <SelectItem key={u.id} value={u.id} className="text-xs">
+                                    {u.nama}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => { setAddFormOpen(false); setAddItemName(''); setAddItemQty(''); setAddItemUnit('') }}
+                            >
+                              Batal
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="bg-gradient-to-r from-primary to-primary/90 text-xs shadow-sm shadow-primary/20"
+                              onClick={handleAddItem}
+                              disabled={addLoading || !addItemName.trim() || !addItemQty || Number(addItemQty) <= 0 || !addItemUnit}
+                            >
+                              {addLoading ? (
+                                <Loader2 className={cn('mr-1 h-3.5 w-3.5', !reduceMotion && 'motion-safe:animate-spin')} />
+                              ) : (
+                                <Sparkles className="mr-1 h-3.5 w-3.5" />
+                              )}
+                              Analisa
+                            </Button>
                           </div>
                         </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full border-amber-300/60 text-xs text-amber-800 hover:bg-amber-100/50 hover:text-amber-900"
+                          onClick={() => setAddFormOpen(true)}
+                        >
+                          <Plus className="mr-1 h-3.5 w-3.5" />
+                          Tambah makanan
+                        </Button>
                       )}
                     </div>
                   ) : null}
