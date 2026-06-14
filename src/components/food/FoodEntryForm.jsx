@@ -902,11 +902,11 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                           </div>
                           {isPending ? (
                             <div className="flex shrink-0 items-center self-center">
-                              <div className="h-7 w-px bg-border/50" aria-hidden />
+                              <div className="h-7 w-px bg-border" aria-hidden />
                               <button
                                 type="button"
                                 onClick={() => handleRemovePendingItem(idx)}
-                                className="ml-2 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                className="ml-2 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
                                 aria-label={`Hapus ${x.nama_makanan}`}
                               >
                                 <Trash2 className="h-5 w-5" />
