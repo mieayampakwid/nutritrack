@@ -82,7 +82,7 @@ export function CalorieSummaryCard({ userId, className }) {
           <p className="mt-1 text-xs">Silakan hubungi ahli gizi untuk melakukan asesmen kebutuhan energi.</p>
         </div>
       ) : (
-        <div className="flex items-center gap-4 pl-4 pr-5 py-3">
+        <div className="flex items-center justify-center gap-5 px-5 py-3">
           <div className="relative h-[104px] w-[104px] shrink-0">
             <Donut ratio={donutRatio} overBudget={overBudget} excessRatio={excessRatio} />
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
@@ -105,28 +105,28 @@ export function CalorieSummaryCard({ userId, className }) {
 
           <div className="flex min-w-0 flex-1 flex-col gap-2.5 text-sm">
             <div className="flex items-center gap-3">
-              <FlagBanner className="h-5 w-5 shrink-0 text-teal-600" weight="fill" />
+              <FlagBanner className="h-6 w-6 shrink-0 text-teal-600" weight="fill" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Target Kalori</p>
-                <p className="text-sm font-semibold tabular-nums text-foreground">
+                <p className="text-base font-semibold tabular-nums text-foreground">
                   {formatNumberId(targetKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Hamburger className="h-5 w-5 shrink-0 text-amber-600" weight="fill" />
+              <Hamburger className="h-6 w-6 shrink-0 text-amber-600" weight="fill" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Makanan</p>
-                <p className="text-sm font-semibold tabular-nums text-foreground">
+                <p className="text-base font-semibold tabular-nums text-foreground">
                   {formatNumberId(consumedKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <PersonSimpleRun className="h-5 w-5 shrink-0 text-blue-600" weight="fill" />
+              <PersonSimpleRun className="h-6 w-6 shrink-0 text-blue-600" weight="fill" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Olahraga</p>
-                <p className="text-sm font-semibold tabular-nums text-foreground">
+                <p className="text-base font-semibold tabular-nums text-foreground">
                   {formatNumberId(burnedKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
                 </p>
               </div>
