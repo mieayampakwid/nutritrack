@@ -132,6 +132,7 @@ export function CalorieSummaryCard({ userId, className }) {
               </div>
             </div>
           </div>
+          <div className="h-2" />
         </div>
       )}
     </div>
