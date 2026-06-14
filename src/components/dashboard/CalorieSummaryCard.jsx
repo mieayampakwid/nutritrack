@@ -149,6 +149,11 @@ function Donut({ ratio, overBudget, excessRatio }) {
       className="h-full w-full -rotate-90"
       aria-hidden
     >
+      <defs>
+        <pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke="hsl(210 6% 78%)" strokeWidth="1.5" />
+        </pattern>
+      </defs>
       <circle
         cx={DONUT_SIZE / 2}
         cy={DONUT_SIZE / 2}
@@ -162,11 +167,11 @@ function Donut({ ratio, overBudget, excessRatio }) {
         cy={DONUT_SIZE / 2}
         r={DONUT_RADIUS}
         fill="none"
-        stroke={overBudget ? DONUT_TRACK : DONUT_PRIMARY}
+        stroke={overBudget ? 'url(#hatch)' : DONUT_PRIMARY}
         strokeWidth={DONUT_STROKE}
         strokeLinecap={clampedRatio >= 1 ? 'butt' : 'round'}
-        strokeDasharray={overBudget ? '2 4' : DONUT_CIRCUMFERENCE}
-        strokeDashoffset={mounted ? (overBudget ? 0 : targetOffset) : DONUT_CIRCUMFERENCE}
+        strokeDasharray={DONUT_CIRCUMFERENCE}
+        strokeDashoffset={mounted ? targetOffset : DONUT_CIRCUMFERENCE}
         style={{ transition: transitionStyle }}
       />
       {excessRatio > 0 ? (
