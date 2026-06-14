@@ -328,6 +328,7 @@ export function AppShell({
   dashboardContext,
   dashboardHeroBareMobile = false,
   dashboardHeroBareLogo = false,
+  dashboardHeroCompactLogo = false,
 }) {
   const { profile } = useAuth()
   const isStaff = profile?.role === 'admin' || profile?.role === 'ahli_gizi'
@@ -349,6 +350,7 @@ export function AppShell({
               contextLabel={dashboardContext}
               bareOnMobile={dashboardHeroBareMobile}
               bareLogoShell={dashboardHeroBareLogo}
+              compactLogo={dashboardHeroCompactLogo}
             />
           ) : null}
           {children}

@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 export function DashboardHero({
   className,
   bareOnMobile = false,
+  compactLogo = false,
   bareLogoShell = false,
 }) {
   const { profile } = useAuth()
@@ -99,7 +100,12 @@ export function DashboardHero({
             <img
               src={laperAppLogo}
               alt="LAPER"
-              className="h-auto w-full max-w-[min(100%,22rem)] object-contain sm:max-w-md md:max-w-lg"
+              className={cn(
+                'h-auto w-auto object-contain',
+                compactLogo
+                  ? 'max-w-[min(100%,10rem)] sm:max-w-[14rem] md:max-w-[16rem]'
+                  : 'max-w-[min(100%,16rem)] sm:max-w-[18rem] md:max-w-[20rem]',
+              )}
               width={640}
               height={160}
               decoding="async"
