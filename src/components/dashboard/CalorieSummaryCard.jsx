@@ -225,7 +225,7 @@ export function CalorieSummaryCard({ userId, className }) {
                   )}
                 </span>
                 {streakInfo ? (
-                  <div className="absolute -top-2 left-0 w-56 translate-y-[-100%] rounded-xl border border-border bg-popover px-3 py-2 text-left text-xs text-muted-foreground shadow-lg ring-1 ring-black/5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 motion-safe:duration-200">
+                  <div className="absolute -top-2 right-0 w-52 max-w-[80vw] translate-y-[-100%] rounded-xl border border-border bg-popover px-3 py-2 text-left text-xs text-muted-foreground shadow-lg ring-1 ring-black/5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 motion-safe:duration-200">
                     <p>Streak dihitung dari jumlah hari kamu mencatat makanan secara berurutan, tanpa jeda.</p>
                     <p className="mt-1 text-muted-foreground/70">Hanya entri yang dicatat di hari yang sama yang dihitung — entri mundur (backdate) tidak termasuk.</p>
                   </div>
