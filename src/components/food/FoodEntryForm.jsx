@@ -882,21 +882,23 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                               </span>
                             </p>
                           </div>
-                          <KaloriValue
-                            value={x.kalori_estimasi}
-                            className="shrink-0 text-sm font-bold tabular-nums text-teal-800"
-                            unitClassName="text-[0.65em] font-normal text-teal-700/70"
-                          />
-                          {isPending ? (
-                            <button
-                              type="button"
-                              onClick={() => handleRemovePendingItem(idx)}
-                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                              aria-label={`Hapus ${x.nama_makanan}`}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          ) : null}
+                          <div className="flex shrink-0 items-center gap-1">
+                            <KaloriValue
+                              value={x.kalori_estimasi}
+                              className="text-sm font-bold tabular-nums text-teal-800"
+                              unitClassName="text-[0.65em] font-normal text-teal-700/70"
+                            />
+                            {isPending ? (
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePendingItem(idx)}
+                                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                aria-label={`Hapus ${x.nama_makanan}`}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                         <p className="mt-1 text-[11px] text-muted-foreground/70">
                           P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g
