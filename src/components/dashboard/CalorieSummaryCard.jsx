@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 
 const DONUT_SIZE = 120
-const DONUT_STROKE = 12
+const DONUT_STROKE = 15
 const DONUT_RADIUS = (DONUT_SIZE - DONUT_STROKE) / 2
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS
 
@@ -105,7 +105,7 @@ export function CalorieSummaryCard({ userId, className }) {
 
           <div className="flex min-w-0 flex-1 flex-col gap-2.5 text-sm">
             <div className="flex items-center gap-3">
-              <FlagBanner className="h-6 w-6 shrink-0 text-teal-600" weight="fill" />
+              <FlagBanner className="h-8 w-8 shrink-0 text-teal-600" weight="fill" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Target Kalori</p>
                 <p className="text-base font-semibold tabular-nums text-foreground">
@@ -114,7 +114,7 @@ export function CalorieSummaryCard({ userId, className }) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Hamburger className="h-6 w-6 shrink-0 text-amber-600" weight="fill" />
+              <Hamburger className="h-8 w-8 shrink-0 text-amber-600" weight="fill" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Makanan</p>
                 <p className="text-base font-semibold tabular-nums text-foreground">
@@ -123,7 +123,7 @@ export function CalorieSummaryCard({ userId, className }) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <PersonSimpleRun className="h-6 w-6 shrink-0 text-blue-600" weight="fill" />
+              <PersonSimpleRun className="h-8 w-8 shrink-0 text-blue-600" weight="fill" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Olahraga</p>
                 <p className="text-base font-semibold tabular-nums text-foreground">
