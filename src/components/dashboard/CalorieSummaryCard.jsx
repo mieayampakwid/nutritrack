@@ -80,6 +80,9 @@ export function CalorieSummaryCard({ userId, className }) {
           <div className="relative h-[104px] w-[104px] shrink-0">
             <Donut ratio={donutRatio} overBudget={overBudget} />
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground">
+                Sisa
+              </span>
               <span
                 className={cn(
                   'text-lg font-bold tabular-nums leading-none',
@@ -88,8 +91,8 @@ export function CalorieSummaryCard({ userId, className }) {
               >
                 {formatNumberId(remaining)}
               </span>
-              <span className="mt-0.5 text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground">
-                Sisa
+              <span className="text-[0.625rem] font-medium text-muted-foreground">
+                kkal
               </span>
             </div>
           </div>
