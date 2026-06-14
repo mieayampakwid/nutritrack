@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
+  "mcp": {
+    "supabase": {
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp?project_ref=rxqjbckuqvfykeytwouk",
+      "enabled": true
+    },
+    "clickup": {
+      "type": "local",
+      "command": ["npx", "-y", "clickup-mcp-server"],
+      "enabled": true,
+      "environment": {
+        "CLICKUP_API_TOKEN": "pk_312663717_70M71E1DAYMSEBXX82HK8D1L9KIDKI98"
+      }
+    }
+  }
+}

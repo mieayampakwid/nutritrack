@@ -1,0 +1,166 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useFoodLogsForUser } from '@/hooks/useFoodLog'
+import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
+import { formatNumberId, toIsoDateLocal } from '@/lib/format'
+import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
+
+const DONUT_SIZE = 104
+const DONUT_STROKE = 10
+const DONUT_RADIUS = (DONUT_SIZE - DONUT_STROKE) / 2
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS
+
+const DONUT_TRACK = 'hsl(168 15% 88%)'
+const DONUT_PRIMARY = 'var(--color-primary)'
+const DONUT_OVER = 'hsl(32 95% 44%)'
+
+function sumField(list, field) {
+  return (list ?? []).reduce((s, row) => s + (Number(row[field]) || 0), 0)
+}
+
+export function CalorieSummaryCard({ userId, className }) {
+  const today = toIsoDateLocal(new Date())
+
+  const { data: foodLogs = [], isLoading: foodLoading } = useFoodLogsForUser(userId, {
+    enabled: Boolean(userId),
+    dateFrom: today,
+    dateTo: today,
+  })
+
+  const { data: exerciseLogs = [], isLoading: exerciseLoading } = useExerciseLogsForUser(userId, {
+    enabled: Boolean(userId),
+    dateFrom: today,
+    dateTo: today,
+  })
+
+  const { data: latestAssessment, isLoading: assessmentLoading } = useQuery({
+    queryKey: ['assessments', userId, 'latest'],
+    enabled: Boolean(userId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('assessments')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      if (error) throw error
+      return data?.[0] ?? null
+    },
+  })
+
+  const loading = foodLoading || exerciseLoading || assessmentLoading
+
+  const targetKcal = latestAssessment?.anjuran_kalori_harian ?? latestAssessment?.energi_total
+  const consumedKcal = useMemo(() => sumField(foodLogs, 'total_kalori'), [foodLogs])
+  const burnedKcal = useMemo(() => sumField(exerciseLogs, 'kalori_estimasi'), [exerciseLogs])
+
+  const hasTarget = targetKcal != null && Number(targetKcal) > 0
+  const remaining = hasTarget ? Number(targetKcal) - consumedKcal : 0
+  const overBudget = hasTarget && consumedKcal > Number(targetKcal)
+
+  const donutRatio = useMemo(() => {
+    if (!hasTarget) return 0
+    return Math.min(consumedKcal / Number(targetKcal), 1)
+  }, [hasTarget, targetKcal, consumedKcal])
+
+  return (
+    <div className={cn('rounded-2xl bg-white/95 shadow-sm ring-1 ring-black/5 backdrop-blur-sm', className)}>
+      {loading ? (
+        <div className="flex min-h-[120px] items-center justify-center py-4">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      ) : !hasTarget ? (
+        <div className="px-4 py-4 text-center text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">Belum ada target kalori</p>
+          <p className="mt-1 text-xs">Silakan hubungi ahli gizi untuk melakukan asesmen kebutuhan energi.</p>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="relative h-[104px] w-[104px] shrink-0">
+            <Donut ratio={donutRatio} overBudget={overBudget} />
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <span
+                className={cn(
+                  'text-lg font-bold tabular-nums leading-none',
+                  overBudget ? 'text-amber-600' : 'text-foreground',
+                )}
+              >
+                {formatNumberId(remaining)}
+              </span>
+              <span className="mt-0.5 text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground">
+                Remaining
+              </span>
+            </div>
+          </div>
+
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-sm">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-muted-foreground">Base Goal</span>
+              <span className="font-semibold tabular-nums text-foreground">
+                {formatNumberId(targetKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-muted-foreground">Food</span>
+              <span className="font-semibold tabular-nums text-foreground">
+                {formatNumberId(consumedKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-muted-foreground">Exercise</span>
+              <span className="font-semibold tabular-nums text-foreground">
+                {formatNumberId(burnedKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Donut({ ratio, overBudget }) {
+  const targetOffset = DONUT_CIRCUMFERENCE * (1 - ratio)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  const progressColor = overBudget ? DONUT_OVER : DONUT_PRIMARY
+
+  return (
+    <svg
+      viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
+      className="h-full w-full -rotate-90"
+      aria-hidden
+    >
+      <circle
+        cx={DONUT_SIZE / 2}
+        cy={DONUT_SIZE / 2}
+        r={DONUT_RADIUS}
+        fill="none"
+        stroke={DONUT_TRACK}
+        strokeWidth={DONUT_STROKE}
+      />
+      <circle
+        cx={DONUT_SIZE / 2}
+        cy={DONUT_SIZE / 2}
+        r={DONUT_RADIUS}
+        fill="none"
+        stroke={progressColor}
+        strokeWidth={DONUT_STROKE}
+        strokeLinecap="round"
+        strokeDasharray={DONUT_CIRCUMFERENCE}
+        strokeDashoffset={mounted ? targetOffset : DONUT_CIRCUMFERENCE}
+        style={{
+          transition: mounted
+            ? 'stroke-dashoffset 0.85s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.35s ease-out'
+            : 'none',
+        }}
+      />
+    </svg>
+  )
+}
