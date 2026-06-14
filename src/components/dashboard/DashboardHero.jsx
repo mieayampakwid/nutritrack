@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import laperAppLogo from '@/assets/laper-app.png'
 import { useAuth } from '@/hooks/useAuth'
 import {
   formatClockWib,
@@ -93,7 +94,18 @@ export function DashboardHero({
           aria-hidden
         />
 
-        <div className="relative flex flex-col items-center gap-0 text-center" />
+        <div className="relative flex flex-col items-center gap-0 text-center">
+          <div className="flex w-full justify-center px-1">
+            <img
+              src={laperAppLogo}
+              alt="LAPER"
+              className="h-auto w-full max-w-[min(100%,22rem)] object-contain sm:max-w-md md:max-w-lg"
+              width={640}
+              height={160}
+              decoding="async"
+            />
+          </div>
+        </div>
       </div>
 
       <div ref={sentinelRef} className="h-1 w-full shrink-0" aria-hidden />
