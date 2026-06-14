@@ -911,17 +911,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                             </button>
                           ) : null}
                         </div>
-                        <p className="mt-1 text-[11px] text-muted-foreground/70">
-                          P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g
-                          <span className="mx-1 text-border">·</span>
-                          K: {formatNumberId(x.karbohidrat, { maximumFractionDigits: 1 })}g
-                          <span className="mx-1 text-border">·</span>
-                          L: {formatNumberId(x.lemak, { maximumFractionDigits: 1 })}g
-                          <span className="mx-1 text-border">·</span>
-                          S: {formatNumberId(x.serat, { maximumFractionDigits: 1 })}g
-                          <span className="mx-1 text-border">·</span>
-                          Na: {formatNumberId(x.natrium, { maximumFractionDigits: 0 })}mg
-                        </p>
                       </li>
                     ))}
                   </ul>
