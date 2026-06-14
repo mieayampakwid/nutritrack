@@ -888,7 +888,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                 unitClassName="text-[0.65em] font-normal text-teal-700/70"
                               />
                             </div>
-                            <p className="mt-1 text-[11px] text-muted-foreground/70">
+                            <p className="mt-1 truncate text-[11px] text-muted-foreground/70">
                               P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g
                               <span className="mx-1 text-border">·</span>
                               K: {formatNumberId(x.karbohidrat, { maximumFractionDigits: 1 })}g
@@ -904,10 +904,10 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                             <button
                               type="button"
                               onClick={() => handleRemovePendingItem(idx)}
-                              className="flex h-7 w-7 shrink-0 items-center justify-center self-center rounded-full text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                              className="flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-full text-muted-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
                               aria-label={`Hapus ${x.nama_makanan}`}
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="h-4 w-4" />
                             </button>
                           ) : null}
                         </div>
