@@ -104,8 +104,8 @@ export function CalorieSummaryCard({ userId, className }) {
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col gap-2.5 text-sm">
-            <div className="flex items-center gap-2">
-              <FlagBanner className="h-4 w-4 shrink-0 text-teal-600" weight="fill" />
+            <div className="flex items-center gap-3">
+              <FlagBanner className="h-5 w-5 shrink-0 text-teal-600" weight="fill" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Target Kalori</p>
                 <p className="text-sm font-semibold tabular-nums text-foreground">
@@ -113,8 +113,8 @@ export function CalorieSummaryCard({ userId, className }) {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Hamburger className="h-4 w-4 shrink-0 text-amber-600" weight="fill" />
+            <div className="flex items-center gap-3">
+              <Hamburger className="h-5 w-5 shrink-0 text-amber-600" weight="fill" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Makanan</p>
                 <p className="text-sm font-semibold tabular-nums text-foreground">
@@ -122,8 +122,8 @@ export function CalorieSummaryCard({ userId, className }) {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <PersonSimpleRun className="h-4 w-4 shrink-0 text-blue-600" weight="fill" />
+            <div className="flex items-center gap-3">
+              <PersonSimpleRun className="h-5 w-5 shrink-0 text-blue-600" weight="fill" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-muted-foreground">Olahraga</p>
                 <p className="text-sm font-semibold tabular-nums text-foreground">
