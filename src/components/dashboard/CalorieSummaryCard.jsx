@@ -58,11 +58,18 @@ export function CalorieSummaryCard({ userId, className }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('food_logs')
-        .select('tanggal')
+        .select('tanggal, created_at')
         .eq('user_id', userId)
         .order('tanggal', { ascending: false })
       if (error) throw error
-      return [...new Set((data ?? []).map((r) => r.tanggal))]
+      const honest = new Map()
+      for (const row of data ?? []) {
+        const tgl = row.tanggal
+        if (!tgl || honest.has(tgl)) continue
+        const createdDate = toIsoDateLocal(new Date(row.created_at))
+        if (createdDate === tgl) honest.set(tgl, true)
+      }
+      return [...honest.keys()]
     },
     staleTime: 5 * 60 * 1000,
   })
