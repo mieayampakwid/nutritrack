@@ -25,6 +25,18 @@ import { supabase } from '@/lib/supabase'
 import { foodEntrySchema } from '@/lib/validators'
 import { logError } from '@/lib/logger'
 
+function safeUUID() {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID()
+    }
+  } catch { /* fall through */ }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+  })
+}
+
 const WAKTU = [
   {
     key: 'pagi', label: 'Sarapan', icon: Sunrise, defaultJam: '07:00',
@@ -284,7 +296,7 @@ function FoodNameSuggestField({
 }
 
 function emptyRow() {
-  return { id: crypto.randomUUID(), nama: '', jumlah: '', unitId: '' }
+  return { id: safeUUID(), nama: '', jumlah: '', unitId: '' }
 }
 
 function foodRowSummaryLine(r, unitMap) {
@@ -537,7 +549,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
         const totalSerat = itemsWithKal.reduce((a, x) => a + (x.serat || 0), 0)
         const totalNatrium = itemsWithKal.reduce((a, x) => a + (x.natrium || 0), 0)
 
-        idempotencyKeyRef.current = crypto.randomUUID()
+        idempotencyKeyRef.current = safeUUID()
         setPendingResult({
           items: itemsWithKal,
           total,
