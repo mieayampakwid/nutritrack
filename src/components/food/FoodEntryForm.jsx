@@ -75,6 +75,13 @@ const MEAL_RECEIPT_BADGE = {
   snack: 'border-[#7a1e2c]/45 bg-rose-50 text-rose-950',
 }
 
+const MEAL_CARD_COLORS = {
+  pagi: { card: 'border-emerald-200/60 bg-emerald-50/70', accent: 'border-emerald-300/60 text-emerald-800', border: 'border-emerald-200/50', divider: 'border-emerald-200/30', hover: 'hover:bg-emerald-100/50' },
+  siang: { card: 'border-orange-200/60 bg-orange-50/70', accent: 'border-orange-300/60 text-orange-800', border: 'border-orange-200/50', divider: 'border-orange-200/30', hover: 'hover:bg-orange-100/50' },
+  malam: { card: 'border-blue-200/60 bg-blue-50/70', accent: 'border-blue-300/60 text-blue-800', border: 'border-blue-200/50', divider: 'border-blue-200/30', hover: 'hover:bg-blue-100/50' },
+  snack: { card: 'border-rose-200/60 bg-rose-50/70', accent: 'border-rose-300/60 text-rose-800', border: 'border-rose-200/50', divider: 'border-rose-200/30', hover: 'hover:bg-rose-100/50' },
+}
+
 const typeLabel = 'text-sm font-medium leading-none text-foreground'
 
 const ANALYZE_STATUS_LINES = [
@@ -888,7 +895,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                   'rounded-2xl border px-5 py-4 shadow-sm ring-1 ring-black/5',
                   'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:fill-mode-both',
                   isPending
-                    ? 'border-amber-200/60 bg-amber-50/70'
+                    ? (MEAL_CARD_COLORS[displayResult.waktuMakan]?.card ?? MEAL_CARD_COLORS.pagi.card)
                     : 'border-border/70 bg-card',
                 )}
               >
@@ -957,10 +964,10 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                   </ul>
 
                   {isPending ? (
-                    <div className="mt-2 border-t border-amber-200/50 pt-2">
+                    <div className={cn('mt-2 border-t pt-2', (MEAL_CARD_COLORS[displayResult.waktuMakan]?.border ?? MEAL_CARD_COLORS.pagi.border))}>
                       <button
                         type="button"
-                        className="flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100/40"
+                        className={cn('flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-xs font-medium transition-colors', (MEAL_CARD_COLORS[displayResult.waktuMakan]?.accent ?? MEAL_CARD_COLORS.pagi.accent), (MEAL_CARD_COLORS[displayResult.waktuMakan]?.hover ?? MEAL_CARD_COLORS.pagi.hover))}
                         onClick={() => setAddFormOpen((v) => !v)}
                       >
                         <span className="flex items-center gap-1.5">
@@ -1017,13 +1024,13 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                           ))}
                           <Button
                             type="button" variant="outline" size="sm"
-                            className="w-full border-amber-300/60 text-xs text-amber-800 hover:bg-amber-100/50"
+                            className={cn('w-full text-xs', (MEAL_CARD_COLORS[displayResult.waktuMakan]?.accent ?? MEAL_CARD_COLORS.pagi.accent), (MEAL_CARD_COLORS[displayResult.waktuMakan]?.hover ?? MEAL_CARD_COLORS.pagi.hover))}
                             onClick={addAddRow}
                           >
                              <Plus className="mr-1 h-3.5 w-3.5" />
                              Tambah makanan
                           </Button>
-                          <div className="flex justify-end gap-2 !mt-3 border-t border-amber-200/30 pt-2">
+                          <div className={cn('flex justify-end gap-2 !mt-3 border-t pt-2', (MEAL_CARD_COLORS[displayResult.waktuMakan]?.divider ?? MEAL_CARD_COLORS.pagi.divider))}>
                             <Button
                               type="button" variant="ghost" size="sm" className="text-xs"
                               onClick={() => { setAddFormOpen(false); setAddRows([emptyRow()]) }}
