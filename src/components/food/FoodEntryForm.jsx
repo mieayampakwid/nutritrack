@@ -316,6 +316,11 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const [rowErrorsById, setRowErrorsById] = useState(() => ({}))
   const [pendingResult, setPendingResult] = useState(null)
   const [result, setResult] = useState(null)
+  const [addFormOpen, setAddFormOpen] = useState(false)
+  const [addItemName, setAddItemName] = useState('')
+  const [addItemQty, setAddItemQty] = useState('')
+  const [addItemUnit, setAddItemUnit] = useState('')
+  const [addLoading, setAddLoading] = useState(false)
   const idempotencyKeyRef = useRef(null)
   const resultRef = useRef(null)
   const analyzingAnchorRef = useRef(null)
@@ -759,6 +764,63 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
     })
   }
 
+  async function handleAddItem() {
+    const nama = addItemName.trim()
+    const qty = Number(addItemQty)
+    if (!nama || !qty || qty <= 0 || !addItemUnit) return
+
+    const unit = unitMap[addItemUnit]
+    if (!unit) return
+
+    setAddLoading(true)
+    try {
+      const result = await analyzeFood([{ nama_makanan: nama, jumlah: qty, unit_nama: unit.nama }])
+
+      if (Array.isArray(result) && result.length > 0) {
+        const est = result[0]
+        const newItem = {
+          nama_makanan: nama,
+          jumlah: qty,
+          unit_id: addItemUnit,
+          unit_nama: unit.nama,
+          kalori_estimasi: Number(est.kalori) || 0,
+          karbohidrat: Number(est.karbohidrat) || 0,
+          protein: Number(est.protein) || 0,
+          lemak: Number(est.lemak) || 0,
+          serat: Number(est.serat) || 0,
+          natrium: Number(est.natrium) || 0,
+        }
+
+        setPendingResult((prev) => {
+          if (!prev) return prev
+          const newItems = [...prev.items, newItem]
+          return {
+            ...prev,
+            items: newItems,
+            total: newItems.reduce((a, x) => a + (x.kalori_estimasi || 0), 0),
+            totalKarbohidrat: newItems.reduce((a, x) => a + (x.karbohidrat || 0), 0),
+            totalProtein: newItems.reduce((a, x) => a + (x.protein || 0), 0),
+            totalLemak: newItems.reduce((a, x) => a + (x.lemak || 0), 0),
+            totalSerat: newItems.reduce((a, x) => a + (x.serat || 0), 0),
+            totalNatrium: newItems.reduce((a, x) => a + (x.natrium || 0), 0),
+          }
+        })
+
+        setAddItemName('')
+        setAddItemQty('')
+        setAddItemUnit('')
+        setAddFormOpen(false)
+      } else {
+        toast.error('Gagal menganalisa makanan.')
+      }
+    } catch (e) {
+      logError('FoodEntryForm.handleAddItem', e)
+      toast.error('Gagal menganalisa.')
+    } finally {
+      setAddLoading(false)
+    }
+  }
+
   function handleSelesai() {
     idempotencyKeyRef.current = null
     setResult(null)
@@ -811,7 +873,17 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                   <ul className="mt-3 divide-y divide-border/40">
                     {displayResult.items.map((x, idx) => (
                       <li key={idx} className="py-2.5 first:pt-0 last:pb-0">
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          {isPending ? (
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePendingItem(idx)}
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                              aria-label={`Hapus ${x.nama_makanan}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          ) : null}
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold leading-snug text-foreground">
                               {x.nama_makanan}
@@ -820,23 +892,11 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                               </span>
                             </p>
                           </div>
-                          <div className="flex shrink-0 items-center gap-1.5">
-                            {isPending ? (
-                              <button
-                                type="button"
-                                onClick={() => handleRemovePendingItem(idx)}
-                                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                aria-label={`Hapus ${x.nama_makanan}`}
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </button>
-                            ) : null}
-                            <KaloriValue
-                              value={x.kalori_estimasi}
-                              className="text-sm font-bold tabular-nums text-teal-800"
-                              unitClassName="text-[0.65em] font-normal text-teal-700/70"
-                            />
-                          </div>
+                          <KaloriValue
+                            value={x.kalori_estimasi}
+                            className="shrink-0 text-sm font-bold tabular-nums text-teal-800"
+                            unitClassName="text-[0.65em] font-normal text-teal-700/70"
+                          />
                         </div>
                         <p className="mt-1 text-[11px] text-muted-foreground/70">
                           P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g
@@ -852,6 +912,89 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                       </li>
                     ))}
                   </ul>
+
+                  {isPending ? (
+                    <div className="mt-2">
+                      {!addFormOpen ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => setAddFormOpen(true)}
+                        >
+                          <Plus className="mr-1 h-3.5 w-3.5" />
+                          Tambah makanan
+                        </Button>
+                      ) : (
+                        <div className="rounded-lg border border-border/60 bg-background/60 p-3">
+                          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_6rem_minmax(0,1fr)] sm:items-end">
+                            <div>
+                              <Input
+                                placeholder="Nama makanan"
+                                className="food-entry-compact-input h-9 text-sm"
+                                value={addItemName}
+                                onChange={(e) => setAddItemName(e.target.value)}
+                                autoFocus
+                              />
+                            </div>
+                            <div className={foodQtyStepperShellClass}>
+                              <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddItemQty((v) => Math.max(0, (Number(v) || 0) - 0.5).toString())} aria-label="Kurangi jumlah">-</button>
+                              <Input
+                                type="number"
+                                inputMode="decimal"
+                                step="any"
+                                min={0}
+                                placeholder="0"
+                                className={foodQtyStepperInnerInputClass}
+                                value={addItemQty}
+                                onChange={(e) => setAddItemQty(e.target.value)}
+                              />
+                              <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddItemQty((v) => ((Number(v) || 0) + 0.5).toString())} aria-label="Tambah jumlah">+</button>
+                            </div>
+                            <div className="flex gap-2">
+                              <Select value={addItemUnit || undefined} onValueChange={setAddItemUnit}>
+                                <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'min-w-0 flex-1 text-xs')}>
+                                  <SelectValue placeholder="Satuan" />
+                                </SelectTrigger>
+                                <SelectContent align="end" className="text-xs">
+                                  {units.map((u) => (
+                                    <SelectItem key={u.id} value={u.id} className="text-xs">
+                                      {u.nama}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <div className="flex gap-1">
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-9 w-9 shrink-0"
+                                  onClick={() => { setAddFormOpen(false); setAddItemName(''); setAddItemQty(''); setAddItemUnit('') }}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="h-9 shrink-0 bg-gradient-to-r from-primary to-primary/90 text-xs"
+                                  onClick={handleAddItem}
+                                  disabled={addLoading || !addItemName.trim() || !addItemQty || Number(addItemQty) <= 0 || !addItemUnit}
+                                >
+                                  {addLoading ? (
+                                    <Loader2 className={cn('h-3.5 w-3.5', !reduceMotion && 'motion-safe:animate-spin')} />
+                                  ) : (
+                                    <Sparkles className="h-3.5 w-3.5" />
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
 
                   <div className="mt-3 flex items-end justify-between gap-2 border-t border-border/50 pt-3">
                     <div className="space-y-0.5">
