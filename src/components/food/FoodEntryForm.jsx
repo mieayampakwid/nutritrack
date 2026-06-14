@@ -1051,7 +1051,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                           ))}
                           <Button
                             type="button" variant="outline" size="sm"
-                            className={cn('w-full text-xs', (MEAL_CARD_COLORS[displayResult.waktuMakan]?.accent ?? MEAL_CARD_COLORS.pagi.accent), (MEAL_CARD_COLORS[displayResult.waktuMakan]?.hover ?? MEAL_CARD_COLORS.pagi.hover))}
+                            className="w-full rounded-xl border-gray-300 text-xs text-muted-foreground hover:bg-muted/50"
                             onClick={addAddRow}
                           >
                              <Plus className="mr-1 h-3.5 w-3.5" />
@@ -1059,14 +1059,14 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                           </Button>
                           <div className={cn('flex justify-end gap-2 !mt-3 border-t pt-2', (MEAL_CARD_COLORS[displayResult.waktuMakan]?.divider ?? MEAL_CARD_COLORS.pagi.divider))}>
                             <Button
-                              type="button" variant="ghost" size="sm" className="text-xs"
+                              type="button" variant="ghost" size="sm" className="rounded-xl text-xs"
                               onClick={() => { setAddFormOpen(false); setAddRows([emptyRow()]) }}
                             >
                               Batal
                             </Button>
                             <Button
                               type="button" size="sm"
-                              className="bg-gradient-to-r from-primary to-primary/90 text-xs shadow-sm shadow-primary/20"
+                              className="rounded-xl bg-gradient-to-r from-primary to-primary/90 text-xs shadow-sm shadow-primary/20"
                               onClick={handleAddItems}
                               disabled={addLoading}
                             >
@@ -1106,7 +1106,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full sm:w-auto"
+                        className="w-full rounded-xl sm:w-auto"
                         onClick={handleDiscard}
                         disabled={saving}
                       >
@@ -1116,7 +1116,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                       <Button
                         type="button"
                         className={cn(
-                          'w-full sm:w-auto',
+                          'w-full rounded-xl sm:w-auto',
                           'bg-gradient-to-r from-primary to-primary/90',
                           'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
                         )}
@@ -1375,7 +1375,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                     />
                                   </div>
                                   <div className="flex gap-2">
-                                    <div className={cn(foodQtyStepperShellClass, 'flex-1')}>
+                                    <div className={cn(foodQtyStepperShellClass, 'flex-1 shadow-sm')}>
                                       <button type="button" className={foodQtyStepperBtnClass} onClick={() => adjustRowJumlah(i, -1)} aria-label="Kurangi jumlah">-</button>
                                       <Input
                                         id={`food-qty-${r.id}`}
@@ -1421,7 +1421,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99]"
+                  className="w-full rounded-xl text-sm transition-all duration-200 motion-safe:active:scale-[0.99]"
                   onClick={addRow}
                 >
                   <Plus className="h-4 w-4" />
@@ -1447,7 +1447,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                 <Button
                   type="button"
                   className={cn(
-                    'order-1 h-9 w-full text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:order-2 sm:w-auto sm:min-w-44',
+                    'order-1 h-9 w-full rounded-xl text-sm transition-all duration-200 motion-safe:active:scale-[0.99] sm:order-2 sm:w-auto sm:min-w-44',
                     'bg-gradient-to-r from-primary to-primary/90',
                     'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
                   )}
