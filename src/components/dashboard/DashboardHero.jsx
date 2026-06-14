@@ -39,7 +39,7 @@ export function DashboardHero({
     }
   }, [])
 
-  /** Scroll sync: IntersectionObserver + 1px sentinels often report false on first paint → spurious “floated” + full-width bg. */
+  /** Scroll sync */
   useLayoutEffect(() => {
     const sentinel = sentinelRef.current
     const main = sentinel?.closest('main')
@@ -118,7 +118,7 @@ export function DashboardHero({
 
       <div
         className={cn(
-          'dashboard-sticky-greeting sticky top-0 -mx-3 w-[calc(100%+1.5rem)] max-w-none px-3 md:-mx-6 md:w-[calc(100%+3rem)] md:px-6 lg:-mx-8 lg:w-[calc(100%+4rem)] lg:px-8',
+          'sticky top-0 -mx-3 w-[calc(100%+1.5rem)] max-w-none px-3 md:-mx-6 md:w-[calc(100%+3rem)] md:px-6 lg:-mx-8 lg:w-[calc(100%+4rem)] lg:px-8',
           'transition-[padding,box-shadow,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
           !greetingFloated && 'mt-2.5 sm:mt-3',
           greetingFloated &&
@@ -128,13 +128,10 @@ export function DashboardHero({
         <div className="relative z-10 mx-auto w-full max-w-[min(100%,22rem)] sm:max-w-lg md:max-w-xl lg:max-w-2xl">
           <div
             className={cn(
-              /* -mb-px + hairline: mask 1px seam vs fixed hero bg under rounded corners (GPU compositing). */
               'relative z-10 -mb-px overflow-hidden rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100/95',
               'px-2.5 py-2.5 text-left shadow-[0_2px_20px_-6px_hsl(38_60%_30%_/_0.12)] md:px-4 md:py-3',
               'ring-1 ring-inset ring-amber-100/90 backdrop-blur-md',
               'after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-[1] after:h-[3px] after:bg-gradient-to-b after:from-amber-100/95 after:to-amber-100',
-              '',
-              '',
               'transition-[box-shadow,border-color,ring-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
               greetingFloated &&
                 'shadow-[0_12px_36px_-14px_hsl(38_55%_28%_/_0.2)] ring-amber-900/[0.06]',
