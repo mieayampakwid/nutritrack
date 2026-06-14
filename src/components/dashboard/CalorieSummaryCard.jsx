@@ -165,8 +165,8 @@ function Donut({ ratio, overBudget, excessRatio }) {
         stroke={overBudget ? DONUT_TRACK : DONUT_PRIMARY}
         strokeWidth={DONUT_STROKE}
         strokeLinecap={clampedRatio >= 1 ? 'butt' : 'round'}
-        strokeDasharray={DONUT_CIRCUMFERENCE}
-        strokeDashoffset={mounted ? targetOffset : DONUT_CIRCUMFERENCE}
+        strokeDasharray={overBudget ? '2 4' : DONUT_CIRCUMFERENCE}
+        strokeDashoffset={mounted ? (overBudget ? 0 : targetOffset) : DONUT_CIRCUMFERENCE}
         style={{ transition: transitionStyle }}
       />
       {excessRatio > 0 ? (
