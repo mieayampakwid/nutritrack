@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { FlagBanner, Hamburger, PersonSimpleRun, Fire, Trophy } from '@phosphor-icons/react'
+import { FlagBanner, Hamburger, PersonSimpleRun, CheckCircle, Circle } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
@@ -52,55 +52,43 @@ export function CalorieSummaryCard({ userId, className }) {
 
   const loading = foodLoading || exerciseLoading || assessmentLoading
 
-  const { data: streakDates = [], isLoading: streakLoading } = useQuery({
-    queryKey: ['food_log_dates', userId],
+  const { data: weekDates = [], isLoading: weekLoading } = useQuery({
+    queryKey: ['food_log_dates_week', userId],
     enabled: Boolean(userId),
     queryFn: async () => {
+      const today = new Date()
+      const dayOfWeek = today.getDay()
+      const monday = new Date(today)
+      monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7))
+      const start = toIsoDateLocal(monday)
+      const end = toIsoDateLocal(today)
       const { data, error } = await supabase
         .from('food_logs')
         .select('tanggal')
         .eq('user_id', userId)
-        .order('tanggal', { ascending: false })
+        .gte('tanggal', start)
+        .lte('tanggal', end)
       if (error) throw error
       return [...new Set((data ?? []).map((r) => r.tanggal))]
     },
     staleTime: 5 * 60 * 1000,
   })
 
-  const { currentStreak, longestStreak } = useMemo(() => {
-    if (!streakDates.length) return { currentStreak: 0, longestStreak: 0 }
-    const sorted = [...streakDates].sort((a, b) => a.localeCompare(b))
-    const today = toIsoDateLocal(new Date())
-    let longest = 0
-    let current = 0
-    let run = 1
-    for (let i = 1; i < sorted.length; i++) {
-      const prev = new Date(sorted[i - 1])
-      const curr = new Date(sorted[i])
-      const diff = (curr - prev) / (1000 * 60 * 60 * 24)
-      if (diff === 1) {
-        run++
-      } else {
-        if (run > longest) longest = run
-        run = 1
-      }
+  const weekDays = useMemo(() => {
+    const today = new Date()
+    const dayOfWeek = today.getDay()
+    const monday = new Date(today)
+    monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7))
+    const days = []
+    const labels = ['S', 'S', 'R', 'K', 'J', 'S', 'M']
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday)
+      d.setDate(monday.getDate() + i)
+      const iso = toIsoDateLocal(d)
+      days.push({ iso, label: labels[i], checked: weekDates.includes(iso) })
     }
-    if (run > longest) longest = run
-    current = 0
-    if (sorted.length > 0) {
-      const lastDate = sorted[sorted.length - 1]
-      if (lastDate === today) {
-        current = 1
-        for (let i = sorted.length - 2; i >= 0; i--) {
-          const next = new Date(sorted[i + 1])
-          const curr = new Date(sorted[i])
-          if ((next - curr) / (1000 * 60 * 60 * 24) === 1) current++
-          else break
-        }
-      }
-    }
-    return { currentStreak: current, longestStreak: longest }
-  }, [streakDates])
+    return days
+  }, [weekDates])
 
   const targetKcal = latestAssessment?.anjuran_kalori_harian ?? latestAssessment?.energi_total
   const consumedKcal = useMemo(() => sumField(foodLogs, 'total_kalori'), [foodLogs])
@@ -185,34 +173,20 @@ export function CalorieSummaryCard({ userId, className }) {
           </div>
         </div>
         <div className="border-t border-border/40 px-5 py-3">
-          {streakLoading ? (
-            <div className="mx-auto h-12 w-48 animate-pulse rounded bg-muted/50" />
+          {weekLoading ? (
+            <div className="mx-auto h-6 w-48 animate-pulse rounded bg-muted/50" />
           ) : (
-            <div className="flex flex-col gap-2.5">
-              <div className="flex items-center gap-3">
-                <Fire className="h-8 w-8 shrink-0 text-orange-500" weight="fill" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">Rekor saat ini</p>
-                  <p className="text-sm font-semibold text-foreground">
-                    {currentStreak > 0 ? (
-                      <>Mencatat <span className="tabular-nums">{currentStreak}</span> hari tanpa henti!</>
-                    ) : (
-                      <>Catat hari ini untuk mulai!</>
-                    )}
-                  </p>
+            <div className="flex items-center justify-center gap-1.5">
+              {weekDays.map((d) => (
+                <div key={d.iso} className="flex flex-col items-center gap-0.5">
+                  <span className="text-[0.625rem] text-muted-foreground">{d.label}</span>
+                  {d.checked ? (
+                    <CheckCircle className="h-5 w-5 text-emerald-500" weight="fill" />
+                  ) : (
+                    <Circle className="h-5 w-5 text-muted-foreground/25" weight="fill" />
+                  )}
                 </div>
-              </div>
-              {longestStreak > 0 ? (
-              <div className="flex items-center gap-3">
-                <Trophy className="h-8 w-8 shrink-0 text-amber-500" weight="fill" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">Rekor tertinggi Anda</p>
-                  <p className="text-sm font-semibold text-foreground">
-                    <span className="tabular-nums">{longestStreak}</span> hari tanpa telat mencatat!
-                  </p>
-                </div>
-              </div>
-              ) : null}
+              ))}
             </div>
           )}
         </div>
