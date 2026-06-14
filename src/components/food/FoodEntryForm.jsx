@@ -914,7 +914,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                         <div className="flex items-center gap-2">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-2">
-                              <p className="text-sm font-semibold leading-snug text-foreground">
+                              <p className="text-[13px] font-semibold leading-snug text-foreground">
                                 {x.nama_makanan}
                                 <span className="ml-1.5 font-normal text-muted-foreground">
                                   {formatNumberId(x.jumlah)} {x.unit_nama}
@@ -977,7 +977,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                             <div key={r.id} className="space-y-2 rounded-lg border border-border/40 bg-background/50 p-2.5">
                               <Input
                                 placeholder="Nama makanan"
-                                className="food-entry-compact-input h-8 flex-1 text-sm placeholder:text-sm"
+                                className="food-entry-compact-input h-8 flex-1 text-[13px] placeholder:text-[13px]"
                                 value={r.nama}
                                 onChange={(e) => setAddRow(i, { nama: e.target.value })}
                               />
@@ -986,19 +986,19 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                   <button type="button" className={cn(foodQtyStepperBtnClass, 'w-8 sm:w-8')} onClick={() => setAddRow(i, { jumlah: String(Math.max(0, (Number(r.jumlah) || 0) - 0.5)) })} aria-label="Kurangi jumlah">-</button>
                                   <Input
                                     type="number" inputMode="decimal" step="any" min={0} placeholder="0"
-                                    className={cn(foodQtyStepperInnerInputClass, 'text-sm placeholder:text-sm')}
+                                    className={cn(foodQtyStepperInnerInputClass, 'text-[13px] placeholder:text-[13px]')}
                                     value={r.jumlah}
                                     onChange={(e) => setAddRow(i, { jumlah: e.target.value })}
                                   />
                                   <button type="button" className={cn(foodQtyStepperBtnClass, 'w-8 sm:w-8')} onClick={() => setAddRow(i, { jumlah: String((Number(r.jumlah) || 0) + 0.5) })} aria-label="Tambah jumlah">+</button>
                                 </div>
                                 <Select value={r.unitId || undefined} onValueChange={(v) => setAddRow(i, { unitId: v })}>
-                                  <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'h-8 min-h-0 w-28 shrink-0 text-sm')}>
+                                  <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'h-8 min-h-0 w-28 shrink-0 text-[13px]')}>
                                     <SelectValue placeholder="Satuan" />
                                   </SelectTrigger>
-                                  <SelectContent align="end" className="text-sm">
+                                  <SelectContent align="end" className="text-[13px]">
                                     {units.map((u) => (
-                                      <SelectItem key={u.id} value={u.id} className="text-sm">{u.nama}</SelectItem>
+                                      <SelectItem key={u.id} value={u.id} className="text-[13px]">{u.nama}</SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
