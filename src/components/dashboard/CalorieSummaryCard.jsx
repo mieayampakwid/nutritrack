@@ -230,7 +230,7 @@ export function CalorieSummaryCard({ userId, className }) {
                 ref={streakRef}
               >
                 <Fire className="h-7 w-7 text-orange-500" weight="fill" />
-                <span className="text-sm text-muted-foreground">
+                <span className="text-base text-muted-foreground">
                   {currentStreak > 0 ? (
                     <><span className="font-semibold tabular-nums text-foreground">{currentStreak}</span> hari</>
                   ) : (
