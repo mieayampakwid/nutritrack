@@ -977,7 +977,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                             <div key={r.id} className="space-y-2 rounded-lg border border-border/40 bg-background/50 p-2.5">
                               <Input
                                 placeholder="Nama makanan"
-                                className="food-entry-compact-input h-8 flex-1 text-xs placeholder:text-[11px]"
+                                className="food-entry-compact-input h-8 flex-1 text-sm placeholder:text-sm"
                                 value={r.nama}
                                 onChange={(e) => setAddRow(i, { nama: e.target.value })}
                               />
@@ -986,19 +986,19 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                   <button type="button" className={cn(foodQtyStepperBtnClass, 'w-8 sm:w-8')} onClick={() => setAddRow(i, { jumlah: String(Math.max(0, (Number(r.jumlah) || 0) - 0.5)) })} aria-label="Kurangi jumlah">-</button>
                                   <Input
                                     type="number" inputMode="decimal" step="any" min={0} placeholder="0"
-                                    className={cn(foodQtyStepperInnerInputClass, 'text-xs placeholder:text-[11px]')}
+                                    className={cn(foodQtyStepperInnerInputClass, 'text-sm placeholder:text-sm')}
                                     value={r.jumlah}
                                     onChange={(e) => setAddRow(i, { jumlah: e.target.value })}
                                   />
                                   <button type="button" className={cn(foodQtyStepperBtnClass, 'w-8 sm:w-8')} onClick={() => setAddRow(i, { jumlah: String((Number(r.jumlah) || 0) + 0.5) })} aria-label="Tambah jumlah">+</button>
                                 </div>
                                 <Select value={r.unitId || undefined} onValueChange={(v) => setAddRow(i, { unitId: v })}>
-                                  <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'h-8 min-h-0 w-28 shrink-0 text-[11px]')}>
+                                  <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'h-8 min-h-0 w-28 shrink-0 text-sm')}>
                                     <SelectValue placeholder="Satuan" />
                                   </SelectTrigger>
-                                  <SelectContent align="end" className="text-[11px]">
+                                  <SelectContent align="end" className="text-sm">
                                     {units.map((u) => (
-                                      <SelectItem key={u.id} value={u.id} className="text-[11px]">{u.nama}</SelectItem>
+                                      <SelectItem key={u.id} value={u.id} className="text-sm">{u.nama}</SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
