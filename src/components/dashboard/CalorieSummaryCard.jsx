@@ -184,26 +184,36 @@ export function CalorieSummaryCard({ userId, className }) {
             </div>
           </div>
         </div>
-        <div className="border-t border-border/40 px-5 py-2.5">
+        <div className="border-t border-border/40 px-5 py-3">
           {streakLoading ? (
-            <div className="mx-auto h-4 w-32 animate-pulse rounded bg-muted/50" />
+            <div className="mx-auto h-12 w-48 animate-pulse rounded bg-muted/50" />
           ) : (
-            <p className="flex items-center justify-center gap-3 text-[0.75rem] text-muted-foreground">
-              {currentStreak > 0 ? (
-                <span className="inline-flex items-center gap-1">
-                  <Fire className="h-4 w-4 text-orange-500" weight="fill" />
-                  <span className="font-semibold text-foreground">{currentStreak}</span> hari
-                </span>
-              ) : (
-                <span>Catat hari ini untuk mulai streak!</span>
-              )}
-              {longestStreak > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <Trophy className="h-4 w-4 text-amber-500" weight="fill" />
-                  <span className="font-semibold text-foreground">{longestStreak}</span> hari
-                </span>
-              )}
-            </p>
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center gap-3">
+                <Fire className="h-8 w-8 shrink-0 text-orange-500" weight="fill" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground">Rekor saat ini</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {currentStreak > 0 ? (
+                      <>Mencatat <span className="tabular-nums">{currentStreak}</span> hari tanpa henti!</>
+                    ) : (
+                      <>Catat hari ini untuk mulai!</>
+                    )}
+                  </p>
+                </div>
+              </div>
+              {longestStreak > 0 ? (
+              <div className="flex items-center gap-3">
+                <Trophy className="h-8 w-8 shrink-0 text-amber-500" weight="fill" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground">Rekor tertinggi Anda</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    <span className="tabular-nums">{longestStreak}</span> hari tanpa telat mencatat!
+                  </p>
+                </div>
+              </div>
+              ) : null}
+            </div>
           )}
         </div>
         </>
