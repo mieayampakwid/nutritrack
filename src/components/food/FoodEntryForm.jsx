@@ -1203,10 +1203,10 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                     <button
                       type="button"
                       className={cn(
-                        'flex h-10 min-h-[44px] min-w-14 shrink-0 items-center justify-center gap-1 rounded-xl border px-2 text-xs font-semibold tabular-nums transition-all duration-200',
-                        'md:h-9 md:min-h-0 md:w-16',
+                        'flex h-9 min-h-0 min-w-14 shrink-0 items-center justify-center gap-1 rounded-xl border px-2 text-xs font-semibold tabular-nums transition-all duration-200',
+                        'md:w-16',
                         mealKey
-                          ? 'border-primary/30 bg-primary/5 text-primary hover:bg-primary/10'
+                          ? WAKTU.find((w) => w.key === mealKey)?.pill
                           : 'border-border bg-muted/30 text-muted-foreground',
                         jamError && 'border-destructive/55 ring-1 ring-destructive/25',
                       )}
