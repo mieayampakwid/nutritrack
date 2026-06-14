@@ -914,7 +914,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                         <div className="flex items-center gap-2">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-2">
-                              <p className="text-[13px] font-semibold leading-snug text-foreground">
+                              <p className="text-sm font-semibold leading-snug text-foreground">
                                 {x.nama_makanan}
                                 <span className="ml-1.5 font-normal text-muted-foreground">
                                   {formatNumberId(x.jumlah)} {x.unit_nama}
