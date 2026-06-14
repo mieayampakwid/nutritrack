@@ -64,6 +64,11 @@ export function CalorieSummaryCard({ userId, className }) {
     return Math.min(consumedKcal / Number(targetKcal), 1)
   }, [hasTarget, targetKcal, consumedKcal])
 
+  const excessRatio = useMemo(() => {
+    if (!hasTarget || !overBudget) return 0
+    return (consumedKcal - Number(targetKcal)) / Number(targetKcal)
+  }, [hasTarget, targetKcal, consumedKcal, overBudget])
+
   return (
     <div className={cn('rounded-2xl bg-white/95 shadow-sm ring-1 ring-black/5 backdrop-blur-sm', className)}>
       {loading ? (
@@ -78,7 +83,7 @@ export function CalorieSummaryCard({ userId, className }) {
       ) : (
         <div className="flex items-center gap-4 pl-4 pr-5 py-3">
           <div className="relative h-[104px] w-[104px] shrink-0">
-            <Donut ratio={donutRatio} overBudget={overBudget} />
+            <Donut ratio={donutRatio} overBudget={overBudget} excessRatio={excessRatio} />
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground">
                 Sisa
@@ -123,8 +128,10 @@ export function CalorieSummaryCard({ userId, className }) {
   )
 }
 
-function Donut({ ratio, overBudget }) {
-  const targetOffset = DONUT_CIRCUMFERENCE * (1 - ratio)
+function Donut({ ratio, overBudget, excessRatio }) {
+  const clampedRatio = Math.min(ratio, 1)
+  const targetOffset = DONUT_CIRCUMFERENCE * (1 - clampedRatio)
+  const excessOffset = DONUT_CIRCUMFERENCE * (1 - excessRatio)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -132,7 +139,9 @@ function Donut({ ratio, overBudget }) {
     return () => cancelAnimationFrame(frame)
   }, [])
 
-  const progressColor = overBudget ? DONUT_OVER : DONUT_PRIMARY
+  const transitionStyle = mounted
+    ? 'stroke-dashoffset 0.85s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.35s ease-out'
+    : 'none'
 
   return (
     <svg
@@ -153,17 +162,27 @@ function Donut({ ratio, overBudget }) {
         cy={DONUT_SIZE / 2}
         r={DONUT_RADIUS}
         fill="none"
-        stroke={progressColor}
+        stroke={overBudget ? DONUT_PRIMARY : DONUT_PRIMARY}
         strokeWidth={DONUT_STROKE}
-        strokeLinecap="round"
+        strokeLinecap={clampedRatio >= 1 ? 'butt' : 'round'}
         strokeDasharray={DONUT_CIRCUMFERENCE}
         strokeDashoffset={mounted ? targetOffset : DONUT_CIRCUMFERENCE}
-        style={{
-          transition: mounted
-            ? 'stroke-dashoffset 0.85s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.35s ease-out'
-            : 'none',
-        }}
+        style={{ transition: transitionStyle }}
       />
+      {excessRatio > 0 ? (
+        <circle
+          cx={DONUT_SIZE / 2}
+          cy={DONUT_SIZE / 2}
+          r={DONUT_RADIUS}
+          fill="none"
+          stroke={DONUT_OVER}
+          strokeWidth={DONUT_STROKE}
+          strokeLinecap="butt"
+          strokeDasharray={DONUT_CIRCUMFERENCE}
+          strokeDashoffset={mounted ? excessOffset : DONUT_CIRCUMFERENCE}
+          style={{ transition: transitionStyle }}
+        />
+      ) : null}
     </svg>
   )
 }
