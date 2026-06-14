@@ -76,10 +76,10 @@ const MEAL_RECEIPT_BADGE = {
 }
 
 const MEAL_CARD_COLORS = {
-  pagi: { card: 'border-emerald-200/60 bg-emerald-50/70', accent: 'border-emerald-300/60 text-emerald-800', border: 'border-emerald-200/50', divider: 'border-emerald-200/30', hover: 'hover:bg-emerald-100/50' },
-  siang: { card: 'border-orange-200/60 bg-orange-50/70', accent: 'border-orange-300/60 text-orange-800', border: 'border-orange-200/50', divider: 'border-orange-200/30', hover: 'hover:bg-orange-100/50' },
-  malam: { card: 'border-blue-200/60 bg-blue-50/70', accent: 'border-blue-300/60 text-blue-800', border: 'border-blue-200/50', divider: 'border-blue-200/30', hover: 'hover:bg-blue-100/50' },
-  snack: { card: 'border-rose-200/60 bg-rose-50/70', accent: 'border-rose-300/60 text-rose-800', border: 'border-rose-200/50', divider: 'border-rose-200/30', hover: 'hover:bg-rose-100/50' },
+  pagi: { card: 'border-emerald-200/60 bg-emerald-50/70', accent: 'border-emerald-300/60 text-emerald-800', border: 'border-emerald-200/50', divider: 'border-emerald-200/30', hover: 'hover:bg-emerald-100/50', header: 'bg-emerald-100/60' },
+  siang: { card: 'border-orange-200/60 bg-orange-50/70', accent: 'border-orange-300/60 text-orange-800', border: 'border-orange-200/50', divider: 'border-orange-200/30', hover: 'hover:bg-orange-100/50', header: 'bg-orange-100/60' },
+  malam: { card: 'border-blue-200/60 bg-blue-50/70', accent: 'border-blue-300/60 text-blue-800', border: 'border-blue-200/50', divider: 'border-blue-200/30', hover: 'hover:bg-blue-100/50', header: 'bg-blue-100/60' },
+  snack: { card: 'border-rose-200/60 bg-rose-50/70', accent: 'border-rose-300/60 text-rose-800', border: 'border-rose-200/50', divider: 'border-rose-200/30', hover: 'hover:bg-rose-100/50', header: 'bg-rose-100/60' },
 }
 
 const ANALYZE_STATUS_LINES = [
@@ -1284,11 +1284,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                               'focus-within:border-primary/35 focus-within:shadow-md focus-within:ring-2 focus-within:ring-ring/35',
                           )}
                         >
-                          <div className="shrink-0 self-stretch overflow-hidden rounded-l-xl" aria-hidden>
-                            <div className="h-full w-1 bg-primary/25 sm:w-1.5" />
-                          </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 border-b border-border/50 bg-muted/25 px-4 py-3 sm:px-5 sm:py-3.5">
+                            <div className={cn('flex items-center gap-2 border-b border-border/50 px-4 py-3 sm:px-5 sm:py-3.5', MEAL_CARD_COLORS[mealKey]?.header ?? 'bg-muted/25')}>
                               <Badge
                                 variant="outline"
                                 className="h-7 min-w-7 shrink-0 justify-center rounded-lg border-primary/25 bg-background/80 px-0 font-mono text-xs font-semibold tabular-nums text-primary"
