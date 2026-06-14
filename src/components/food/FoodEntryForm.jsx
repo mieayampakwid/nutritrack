@@ -1285,7 +1285,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                           )}
                         >
                           <div className="shrink-0 self-stretch overflow-hidden rounded-l-xl" aria-hidden>
-                            <div className="h-full w-1 bg-linear-to-b from-primary/55 via-primary/35 to-primary/15 motion-safe:transition-opacity motion-safe:group-hover:opacity-100 sm:w-1.5" />
+                            <div className="h-full w-1 bg-primary/25 sm:w-1.5" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 border-b border-border/50 bg-muted/25 px-4 py-3 sm:px-5 sm:py-3.5">
@@ -1327,16 +1327,18 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                   aria-hidden
                                 />
                               </button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
-                                onClick={() => removeRow(i)}
-                                aria-label="Hapus baris"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              {rows.length > 1 ? (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
+                                  onClick={() => removeRow(i)}
+                                  aria-label="Hapus baris"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              ) : null}
                             </div>
 
                             <div
