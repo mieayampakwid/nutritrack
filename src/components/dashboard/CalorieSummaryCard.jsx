@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { FlagBanner, Hamburger, PersonSimpleRun, CheckCircle, Circle, Fire } from '@phosphor-icons/react'
+import Lottie from 'lottie-react'
+import fireAnimation from '@/assets/fire-animation.json'
+import { FlagBanner, Hamburger, PersonSimpleRun, CheckCircle, Circle } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
@@ -229,7 +231,7 @@ export function CalorieSummaryCard({ userId, className }) {
                 aria-label="Info streak"
                 ref={streakRef}
               >
-                <Fire className="h-7 w-7 text-orange-500 motion-safe:animate-pulse" weight="fill" />
+                <Lottie animationData={fireAnimation} loop autoplay className="h-7 w-7" />
                 <span className="text-sm text-muted-foreground">
                   {currentStreak > 0 ? (
                     <><span className="font-semibold tabular-nums text-foreground">{currentStreak}</span> hari</>

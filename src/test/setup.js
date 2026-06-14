@@ -28,3 +28,7 @@ global.IntersectionObserver = class IntersectionObserver {
 }
 
 Element.prototype.scrollIntoView = () => {}
+
+vi.mock('lottie-react', () => ({
+  default: () => null,
+}))
