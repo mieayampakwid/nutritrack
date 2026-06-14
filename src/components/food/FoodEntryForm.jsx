@@ -980,7 +980,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                 className="food-entry-compact-input h-9 flex-1 text-sm"
                                 value={r.nama}
                                 onChange={(e) => setAddRow(i, { nama: e.target.value })}
-                                autoFocus={i === addRows.length - 1}
                               />
                               <div className={cn(foodQtyStepperShellClass, 'w-24 shrink-0')}>
                                 <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddRow(i, { jumlah: String(Math.max(0, (Number(r.jumlah) || 0) - 0.5)) })} aria-label="Kurangi jumlah">-</button>
