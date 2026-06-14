@@ -115,6 +115,7 @@ export function CalorieSummaryCard({ userId, className }) {
   const burnedKcal = useMemo(() => sumField(exerciseLogs, 'kalori_estimasi'), [exerciseLogs])
 
   const hasTarget = targetKcal != null && Number(targetKcal) > 0
+  const [streakInfo, setStreakInfo] = useState(false)
   const remaining = hasTarget ? Number(targetKcal) - consumedKcal : 0
   const overBudget = hasTarget && consumedKcal > Number(targetKcal)
 
@@ -209,7 +210,12 @@ export function CalorieSummaryCard({ userId, className }) {
                   </div>
                 ))}
               </div>
-              <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="relative flex items-center gap-2 cursor-help"
+                onClick={() => setStreakInfo((v) => !v)}
+                aria-label="Info streak"
+              >
                 <Fire className="h-7 w-7 text-orange-500 motion-safe:animate-pulse" weight="fill" />
                 <span className="text-sm text-muted-foreground">
                   {currentStreak > 0 ? (
@@ -218,7 +224,13 @@ export function CalorieSummaryCard({ userId, className }) {
                     'Catat hari ini!'
                   )}
                 </span>
-              </div>
+                {streakInfo ? (
+                  <div className="absolute -top-2 left-0 w-56 translate-y-[-100%] rounded-xl border border-border bg-popover px-3 py-2 text-left text-xs text-muted-foreground shadow-lg ring-1 ring-black/5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 motion-safe:duration-200">
+                    <p>Streak dihitung dari jumlah hari kamu mencatat makanan secara berurutan, tanpa jeda.</p>
+                    <p className="mt-1 text-muted-foreground/70">Hanya entri yang dicatat di hari yang sama yang dihitung — entri mundur (backdate) tidak termasuk.</p>
+                  </div>
+                ) : null}
+              </button>
             </div>
           )}
         </div>
