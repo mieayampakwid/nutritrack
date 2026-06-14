@@ -184,7 +184,7 @@ export function CalorieSummaryCard({ userId, className }) {
           {weekLoading ? (
             <div className="mx-auto h-6 w-48 animate-pulse rounded bg-muted/50" />
           ) : (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center gap-4">
               <div className="flex items-center gap-1.5">
                 {weekDays.map((d) => (
                   <div key={d.iso} className="flex flex-col items-center gap-0.5">
