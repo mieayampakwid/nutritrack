@@ -77,7 +77,7 @@ const calendarModifierClass = {
 }
 
 const CARD_CLASS =
-  'rounded-2xl border-border/70 bg-white text-neutral-900 shadow-sm ring-1 ring-black/5 backdrop-blur-sm max-md:shadow-md'
+  'rounded-2xl border-border/70 bg-white text-neutral-900 ring-1 ring-black/5 backdrop-blur-sm'
 
 export function FoodEntry() {
   const { profile } = useAuth()
