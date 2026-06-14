@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Apple, Ruler } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { AppShell } from '@/components/layout/AppShell'
 import { ClientNutritionSummaryCard } from '@/components/clients/ClientNutritionSummaryCard'
 import { DailyCalorieChart } from '@/components/dashboard/DailyCalorieChart'
-import { DashboardActionCard } from '@/components/dashboard/DashboardActionCard'
 import { ActivityLogTable } from '@/components/shared/ActivityLogTable'
 import { useAuth } from '@/hooks/useAuth'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
@@ -46,22 +45,6 @@ export function KlienDashboard() {
       <div className="mx-auto max-w-5xl -mt-2 space-y-4 sm:space-y-5">
         <section aria-label="Ringkasan gizi dan kebutuhan kalori">
           <ClientNutritionSummaryCard profile={profile} />
-        </section>
-        <section aria-label="Aksi cepat">
-          <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
-            <DashboardActionCard
-              to="/klien/food-entry"
-              title="Tambah diary makanan"
-              desc="Catat sarapan, makan siang, snack, atau makan malam."
-              icon={Apple}
-            />
-            <DashboardActionCard
-              to="/klien/progress"
-              title="Lihat progres"
-              desc="Pantau pengukuran dan baca evaluasi rutin dari ahli gizi."
-              icon={Ruler}
-            />
-          </div>
         </section>
         <section aria-label="Grafik kalori 30 hari terakhir">
           <DailyCalorieChart userId={profile?.id} />
