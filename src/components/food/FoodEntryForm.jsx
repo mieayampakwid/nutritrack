@@ -982,7 +982,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                 onChange={(e) => setAddRow(i, { nama: e.target.value })}
                               />
                               <div className="flex gap-2">
-                                <div className={cn(foodQtyStepperShellClass, 'h-8 min-h-0 flex-1')}>
+                                <div className={cn(foodQtyStepperShellClass, 'h-8 min-h-0 w-24 shrink-0')}>
                                   <button type="button" className={cn(foodQtyStepperBtnClass, 'w-8 sm:w-8')} onClick={() => setAddRow(i, { jumlah: String(Math.max(0, (Number(r.jumlah) || 0) - 0.5)) })} aria-label="Kurangi jumlah">-</button>
                                   <Input
                                     type="number" inputMode="decimal" step="any" min={0} placeholder="0"
@@ -993,7 +993,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                   <button type="button" className={cn(foodQtyStepperBtnClass, 'w-8 sm:w-8')} onClick={() => setAddRow(i, { jumlah: String((Number(r.jumlah) || 0) + 0.5) })} aria-label="Tambah jumlah">+</button>
                                 </div>
                                 <Select value={r.unitId || undefined} onValueChange={(v) => setAddRow(i, { unitId: v })}>
-                                  <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'h-8 min-h-0 w-28 shrink-0 text-[13px]')}>
+                                  <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'h-8 min-h-0 flex-1 text-[13px]')}>
                                     <SelectValue placeholder="Satuan" />
                                   </SelectTrigger>
                                   <SelectContent align="end" className="text-[13px]">
