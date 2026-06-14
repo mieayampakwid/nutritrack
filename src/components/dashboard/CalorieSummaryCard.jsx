@@ -184,7 +184,7 @@ export function CalorieSummaryCard({ userId, className }) {
           {weekLoading ? (
             <div className="mx-auto h-6 w-48 animate-pulse rounded bg-muted/50" />
           ) : (
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center justify-end gap-4">
               <div className="flex items-center gap-2">
                 <Fire className="h-7 w-7 text-orange-500 motion-safe:animate-pulse" weight="fill" />
                 <span className="text-sm text-muted-foreground">
