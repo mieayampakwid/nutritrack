@@ -213,8 +213,8 @@ export function ActivityLogTable({
     if (!karbohidrat && !protein && !lemak) return null
     return (
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] leading-none text-muted-foreground/80">
-        <span>Karb: {formatNumberId(karbohidrat, { maximumFractionDigits: 1 })}g</span>
-        <span>Prot: {formatNumberId(protein, { maximumFractionDigits: 1 })}g</span>
+        <span>Karbo: {formatNumberId(karbohidrat, { maximumFractionDigits: 1 })}g</span>
+        <span>Protein: {formatNumberId(protein, { maximumFractionDigits: 1 })}g</span>
         <span>Lemak: {formatNumberId(lemak, { maximumFractionDigits: 1 })}g</span>
       </div>
     )
