@@ -892,7 +892,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                     : 'border-border/70 bg-card',
                 )}
               >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center justify-center gap-2">
                     <span
                       className={cn(
                         'inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide',
