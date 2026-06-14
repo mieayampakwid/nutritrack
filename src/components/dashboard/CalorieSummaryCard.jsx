@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import Lottie from 'lottie-react'
+import lottieReact from 'lottie-react'
+const Lottie = lottieReact.default || lottieReact
 import fireAnimation from '@/assets/fire-animation.json'
 import { FlagBanner, Hamburger, PersonSimpleRun, CheckCircle, Circle } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'

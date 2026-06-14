@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from 'vitest'
 import { screen } from '@testing-library/react'
 import { renderWithProviders } from '@/test/renderWithProviders'
 
+vi.mock('lottie-react', () => ({
+  default: () => null,
+}))
+
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
     profile: { id: 'u1', role: 'klien', nama: 'Test User', email: 'test@example.com' },
