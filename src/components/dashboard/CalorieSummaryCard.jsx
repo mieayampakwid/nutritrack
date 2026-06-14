@@ -52,6 +52,56 @@ export function CalorieSummaryCard({ userId, className }) {
 
   const loading = foodLoading || exerciseLoading || assessmentLoading
 
+  const { data: streakDates = [], isLoading: streakLoading } = useQuery({
+    queryKey: ['food_log_dates', userId],
+    enabled: Boolean(userId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('food_logs')
+        .select('tanggal')
+        .eq('user_id', userId)
+        .order('tanggal', { ascending: false })
+      if (error) throw error
+      return [...new Set((data ?? []).map((r) => r.tanggal))]
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const { currentStreak, longestStreak } = useMemo(() => {
+    if (!streakDates.length) return { currentStreak: 0, longestStreak: 0 }
+    const sorted = [...streakDates].sort((a, b) => a.localeCompare(b))
+    const today = toIsoDateLocal(new Date())
+    let longest = 0
+    let current = 0
+    let run = 1
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = new Date(sorted[i - 1])
+      const curr = new Date(sorted[i])
+      const diff = (curr - prev) / (1000 * 60 * 60 * 24)
+      if (diff === 1) {
+        run++
+      } else {
+        if (run > longest) longest = run
+        run = 1
+      }
+    }
+    if (run > longest) longest = run
+    current = 0
+    if (sorted.length > 0) {
+      const lastDate = sorted[sorted.length - 1]
+      if (lastDate === today) {
+        current = 1
+        for (let i = sorted.length - 2; i >= 0; i--) {
+          const next = new Date(sorted[i + 1])
+          const curr = new Date(sorted[i])
+          if ((next - curr) / (1000 * 60 * 60 * 24) === 1) current++
+          else break
+        }
+      }
+    }
+    return { currentStreak: current, longestStreak: longest }
+  }, [streakDates])
+
   const targetKcal = latestAssessment?.anjuran_kalori_harian ?? latestAssessment?.energi_total
   const consumedKcal = useMemo(() => sumField(foodLogs, 'total_kalori'), [foodLogs])
   const burnedKcal = useMemo(() => sumField(exerciseLogs, 'kalori_estimasi'), [exerciseLogs])
@@ -135,9 +185,20 @@ export function CalorieSummaryCard({ userId, className }) {
           </div>
         </div>
         <div className="border-t border-border/40 px-5 py-2">
-          <p className="text-center text-[0.6875rem] text-muted-foreground">
-            Target kalori harian Anda
-          </p>
+          {streakLoading ? (
+            <div className="h-4 w-32 animate-pulse rounded bg-muted/50 mx-auto" />
+          ) : (
+            <p className="text-center text-[0.6875rem] text-muted-foreground">
+              {currentStreak > 0 ? (
+                <>🔥 Streak: <span className="font-medium text-foreground">{currentStreak}</span> hari</>
+              ) : (
+                <>Catat hari ini untuk mulai streak!</>
+              )}
+              {longestStreak > 0 && (
+                <>  ·  🏆 Rekor: <span className="font-medium text-foreground">{longestStreak}</span> hari</>
+              )}
+            </p>
+          )}
         </div>
         </>
       )}
