@@ -208,7 +208,7 @@ export function FoodEntry() {
                   Aktivitas
                 </TabsTrigger>
               </TabsList>
-              <TabsContent value="makanan" className="mt-0">
+              <TabsContent value="makanan" className="mt-0" forceMount>
                 <FoodEntryForm
                   key={formKey}
                   userId={profile.id}
@@ -216,7 +216,7 @@ export function FoodEntry() {
                   onSaved={handleSaved}
                 />
               </TabsContent>
-              <TabsContent value="olahraga" className="mt-0">
+              <TabsContent value="olahraga" className="mt-0" forceMount>
                 <ExerciseEntryForm
                   key={exerciseKey}
                   userId={profile.id}

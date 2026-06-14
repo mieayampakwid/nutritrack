@@ -23,10 +23,12 @@ const TabsTrigger = ({ className, ...props }) => (
   />
 )
 
-const TabsContent = ({ className, ...props }) => (
+const TabsContent = ({ className, forceMount, ...props }) => (
   <TabsPrimitive.Content
+    forceMount={forceMount}
     className={cn(
       'mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+      !forceMount && 'data-[state=inactive]:hidden',
       className,
     )}
     {...props}
