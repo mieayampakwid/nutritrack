@@ -238,7 +238,7 @@ const foodQtyStepperShellClass =
   'flex h-10 min-h-[44px] w-full min-w-0 items-center overflow-hidden rounded-md border border-input bg-background/80 md:h-9 md:min-h-0'
 
 const foodQtyStepperInnerInputClass =
-  'food-entry-compact-input h-full min-h-0 min-w-0 w-12 flex-1 rounded-none border-0 bg-transparent px-0 text-center text-base tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-14 sm:flex-none md:text-sm placeholder:text-[13.25px]'
+  'food-entry-compact-input h-full min-h-0 min-w-0 w-12 flex-1 rounded-none border-0 bg-transparent px-0 text-center text-base tabular-nums leading-tight shadow-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-14 sm:flex-none md:text-sm'
 
 const foodQtyStepperBtnClass =
   'flex h-full w-9 shrink-0 items-center justify-center text-sm font-medium text-muted-foreground transition-colors hover:bg-accent sm:w-10 md:w-8 md:text-xs'
@@ -270,7 +270,7 @@ function FoodNameSuggestField({
         id={inputId}
         placeholder="Nama makanan"
         autoComplete="off"
-        className="food-entry-compact-input bg-background/80 text-base leading-tight transition-shadow duration-200 md:text-sm placeholder:text-[13.25px]"
+        className="food-entry-compact-input bg-background/80 text-base leading-tight transition-shadow duration-200 md:text-sm"
         value={value}
         onChange={(e) => {
           const v = e.target.value
@@ -919,7 +919,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
             >
               <div
                 className={cn(
-                  'rounded-2xl border px-5 py-4 shadow-sm ring-1 ring-black/5',
+                  'rounded-2xl border px-5 py-4 ring-1 ring-black/5',
                   'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:fill-mode-both',
                   isPending
                     ? (MEAL_CARD_COLORS[displayResult.waktuMakan]?.card ?? MEAL_CARD_COLORS.pagi.card)
@@ -1274,7 +1274,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                           data-invalid={rowError ? 'true' : 'false'}
                           ref={rowError ? rowErrorAnchorRef : null}
                           className={cn(
-                            'group flex overflow-visible rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm',
+                            'group flex overflow-visible rounded-xl border border-border/80 bg-card text-card-foreground',
                             'ring-1 ring-border/30',
                             'transition-[border-color,box-shadow,ring-color] duration-200',
                             'motion-safe:hover:border-primary/30 motion-safe:hover:shadow-md motion-safe:hover:ring-primary/20',
