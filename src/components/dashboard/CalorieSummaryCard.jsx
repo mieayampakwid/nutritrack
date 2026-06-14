@@ -76,7 +76,7 @@ export function CalorieSummaryCard({ userId, className }) {
           <p className="mt-1 text-xs">Silakan hubungi ahli gizi untuk melakukan asesmen kebutuhan energi.</p>
         </div>
       ) : (
-        <div className="flex items-center gap-4 px-4 py-3">
+        <div className="flex items-center gap-4 pl-4 pr-5 py-3">
           <div className="relative h-[104px] w-[104px] shrink-0">
             <Donut ratio={donutRatio} overBudget={overBudget} />
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
