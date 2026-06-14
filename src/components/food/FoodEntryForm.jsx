@@ -847,7 +847,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
             >
               <div
                 className={cn(
-                  'rounded-2xl border p-4 shadow-sm ring-1 ring-black/5',
+                  'rounded-2xl border px-5 py-4 shadow-sm ring-1 ring-black/5',
                   'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:fill-mode-both',
                   isPending
                     ? 'border-amber-200/60 bg-amber-50/70'
@@ -904,10 +904,10 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                             <button
                               type="button"
                               onClick={() => handleRemovePendingItem(idx)}
-                              className="flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-full text-muted-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                              className="flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-full text-muted-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
                               aria-label={`Hapus ${x.nama_makanan}`}
                             >
-                                <Trash2 className="h-4 w-4" />
+                                 <Trash2 className="h-5 w-5" />
                             </button>
                           ) : null}
                         </div>
