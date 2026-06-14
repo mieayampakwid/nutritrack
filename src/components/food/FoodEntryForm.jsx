@@ -874,16 +874,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                     {displayResult.items.map((x, idx) => (
                       <li key={idx} className="py-2.5 first:pt-0 last:pb-0">
                         <div className="flex items-center gap-2">
-                          {isPending ? (
-                            <button
-                              type="button"
-                              onClick={() => handleRemovePendingItem(idx)}
-                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                              aria-label={`Hapus ${x.nama_makanan}`}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          ) : null}
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold leading-snug text-foreground">
                               {x.nama_makanan}
@@ -897,6 +887,16 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                             className="shrink-0 text-sm font-bold tabular-nums text-teal-800"
                             unitClassName="text-[0.65em] font-normal text-teal-700/70"
                           />
+                          {isPending ? (
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePendingItem(idx)}
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                              aria-label={`Hapus ${x.nama_makanan}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          ) : null}
                         </div>
                         <p className="mt-1 text-[11px] text-muted-foreground/70">
                           P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g
