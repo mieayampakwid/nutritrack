@@ -26,15 +26,6 @@ import {
 } from '@/lib/foodLogUtils'
 import { cn } from '@/lib/utils'
 
-const DIALOG_LAYOUT = {
-  type: 'spring',
-  stiffness: 200,
-  damping: 46,
-  mass: 0.92,
-  restSpeed: 0.5,
-  restDelta: 0.01,
-}
-
 const MotionDialogContent = motion(DialogPrimitive.Content)
 
 export function FoodLogMealDetailDialog({ open, onOpenChange, tanggal, logsForDay, itemsByLogId, userId }) {
@@ -70,8 +61,6 @@ export function FoodLogMealDetailDialog({ open, onOpenChange, tanggal, logsForDa
         <DialogPortal>
           <DialogOverlay className="data-[state=open]:duration-420 data-[state=closed]:duration-240" />
           <MotionDialogContent
-            layout
-            transition={{ layout: DIALOG_LAYOUT }}
             className={cn(
               'fixed left-[50%] top-4 bottom-4 z-50 flex w-full max-w-[calc(100%-2rem)] translate-x-[-50%] flex-col gap-3 overflow-hidden p-4 text-popover-foreground shadow-2xl sm:top-6 sm:bottom-6 sm:max-w-lg sm:p-5',
               'rounded-2xl border border-border bg-popover',
