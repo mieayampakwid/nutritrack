@@ -1395,7 +1395,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                       <SelectTrigger
                                         id={`food-unit-${r.id}`}
                                         aria-label="Satuan"
-                                        className={cn(foodRowControlShell, foodRowSelectFocus, foodRowSelectMobileType, 'flex-1 min-w-0 placeholder:text-[13.25px]')}
+                                        className={cn(foodRowControlShell, foodRowSelectFocus, foodRowSelectMobileType, 'flex-1 min-w-0 text-[13.25px] placeholder:text-[13.25px]')}
                                       >
                                         <SelectValue placeholder="Satuan" />
                                       </SelectTrigger>
