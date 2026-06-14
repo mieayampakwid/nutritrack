@@ -1050,8 +1050,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                             </div>
                           ))}
                           <Button
-                            type="button" variant="outline" size="sm"
-                            className="w-full rounded-xl border-gray-300 text-xs text-muted-foreground hover:bg-muted/50"
+                            type="button" variant="ghost" size="sm"
+                            className="w-full rounded-xl border border-gray-300 text-xs text-muted-foreground hover:bg-muted/50"
                             onClick={addAddRow}
                           >
                              <Plus className="mr-1 h-3.5 w-3.5" />
@@ -1420,8 +1420,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
 
                 <Button
                   type="button"
-                  variant="outline"
-                  className="w-full rounded-xl text-sm transition-all duration-200 motion-safe:active:scale-[0.99]"
+                  variant="ghost"
+                  className="w-full rounded-xl border border-gray-300 text-sm transition-all duration-200 motion-safe:active:scale-[0.99] hover:bg-muted/50 hover:text-foreground"
                   onClick={addRow}
                 >
                   <Plus className="h-4 w-4" />
