@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Target, Utensils, Dumbbell } from 'lucide-react'
+import { useMemo, useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
@@ -105,8 +104,8 @@ export function CalorieSummaryCard({ userId, className }) {
 
           <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-sm">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
-                <Target className="h-3.5 w-3.5 text-teal-600" />
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-teal-500" />
                 Target Kalori
               </span>
               <span className="font-semibold tabular-nums text-foreground">
@@ -114,8 +113,8 @@ export function CalorieSummaryCard({ userId, className }) {
               </span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
-                <Utensils className="h-3.5 w-3.5 text-amber-600" />
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-amber-500" />
                 Makanan
               </span>
               <span className="font-semibold tabular-nums text-foreground">
@@ -123,8 +122,8 @@ export function CalorieSummaryCard({ userId, className }) {
               </span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
-                <Dumbbell className="h-3.5 w-3.5 text-blue-600" />
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-blue-500" />
                 Olahraga
               </span>
               <span className="font-semibold tabular-nums text-foreground">
