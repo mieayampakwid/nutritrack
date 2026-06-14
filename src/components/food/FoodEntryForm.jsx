@@ -338,6 +338,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const [addFormOpen, setAddFormOpen] = useState(false)
   const [addRows, setAddRows] = useState(() => [emptyRow()])
   const [addLoading, setAddLoading] = useState(false)
+  const [showSaved, setShowSaved] = useState(false)
   const idempotencyKeyRef = useRef(null)
   const resultRef = useRef(null)
   const analyzingAnchorRef = useRef(null)
@@ -691,12 +692,21 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
       const { error: itemErr } = await supabase.from('food_log_items').insert(inserts)
       if (itemErr) throw itemErr
 
-      setResult(pendingResult)
+      setShowSaved(true)
       setPendingResult(null)
       idempotencyKeyRef.current = null
       qc.invalidateQueries({ queryKey: ['food_logs', userId] })
       qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
-      toast.success('Data tersimpan.')
+
+      setTimeout(() => {
+        setShowSaved(false)
+        const nextRow = emptyRow()
+        setRows([nextRow])
+        setExpandedRowId(nextRow.id)
+        setMealKey('')
+        setJamMakan('')
+        onSaved?.()
+      }, 1000)
     } catch (e) {
       logError('FoodEntryForm.handleConfirmSave', e)
 
@@ -737,12 +747,21 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
             }
           }
 
-          setResult(pendingResult)
+          setShowSaved(true)
           setPendingResult(null)
           idempotencyKeyRef.current = null
           qc.invalidateQueries({ queryKey: ['food_logs', userId] })
           qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
-          toast.success('Data tersimpan.')
+
+          setTimeout(() => {
+            setShowSaved(false)
+            const nextRow = emptyRow()
+            setRows([nextRow])
+            setExpandedRowId(nextRow.id)
+            setMealKey('')
+            setJamMakan('')
+            onSaved?.()
+          }, 1000)
         } catch (recoveryErr) {
           logError('FoodEntryForm.handleConfirmSave recovery', recoveryErr)
           toast.error('Gagal menyimpan data. Silakan coba kembali.')
@@ -882,6 +901,16 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
 
   return (
     <div className="space-y-2 sm:space-y-3 p-4 sm:p-5">
+      {showSaved ? (
+        <div className="flex items-center justify-center py-6 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-300">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+              <Check className="h-6 w-6 text-emerald-600 motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-200" />
+            </div>
+            <span className="text-sm font-medium text-emerald-700">Tersimpan</span>
+          </div>
+        </div>
+      ) : null}
       {displayResult ? (
             <div
               ref={resultRef}
@@ -1137,7 +1166,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
             </div>
           ) : null}
 
-          {!pendingResult && (
+          {!pendingResult && !showSaved && (
             <>
               <section className="space-y-2">
 

@@ -339,8 +339,8 @@ describe('FoodEntryForm', () => {
     const simpanBtn = await screen.findByRole('button', { name: /simpan/i })
     await user.click(simpanBtn)
 
-    // Should succeed via recovery path
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Data tersimpan.'))
+    // Should succeed via recovery path — shows saved animation
+    await waitFor(() => expect(screen.getByText('Tersimpan')).toBeInTheDocument())
 
     // Verify food_log_items were inserted against the existing log row
     expect(foodLogItemsInsertSpy).toHaveBeenCalled()
