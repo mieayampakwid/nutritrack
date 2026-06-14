@@ -186,10 +186,10 @@ export function CalorieSummaryCard({ userId, className }) {
           ) : (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Fire className="h-5 w-5 text-orange-500 motion-safe:animate-pulse" weight="fill" />
-                <span className="text-xs text-muted-foreground">
+                <Fire className="h-7 w-7 text-orange-500 motion-safe:animate-pulse" weight="fill" />
+                <span className="text-sm text-muted-foreground">
                   {currentStreak > 0 ? (
-                    <><span className="font-semibold tabular-nums text-foreground">{currentStreak}</span> hari berturut-turut</>
+                    <><span className="font-semibold tabular-nums text-foreground">{currentStreak}</span> hari</>
                   ) : (
                     'Catat hari ini!'
                   )}
