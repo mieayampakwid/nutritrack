@@ -70,7 +70,7 @@ export function CalorieSummaryCard({ userId, className }) {
   }, [hasTarget, targetKcal, consumedKcal, overBudget])
 
   return (
-    <div className={cn('rounded-2xl bg-white/95 shadow-sm ring-1 ring-black/5 backdrop-blur-sm', className)}>
+    <div className={cn('overflow-hidden rounded-2xl bg-white/95 shadow-sm ring-1 ring-black/5 backdrop-blur-sm', className)}>
       {loading ? (
         <div className="flex min-h-[120px] items-center justify-center py-4">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -121,6 +121,11 @@ export function CalorieSummaryCard({ userId, className }) {
                 {formatNumberId(burnedKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
               </span>
             </div>
+          </div>
+          <div className="bg-teal-700 px-4 py-2.5">
+            <p className="text-center text-xs italic text-white/90">
+              Siap buat catat asupanmu hari ini?
+            </p>
           </div>
         </div>
       )}
