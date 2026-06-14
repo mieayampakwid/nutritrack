@@ -103,7 +103,7 @@ export function FoodLogMealDetailDialog({ open, onOpenChange, tanggal, logsForDa
                       <div
                         key={key}
                         className={cn(
-                          'rounded-xl border shadow-sm ring-1',
+                          'rounded-xl overflow-hidden border shadow-sm ring-1',
                           colors.border,
                           colors.bg,
                           colors.ring,
