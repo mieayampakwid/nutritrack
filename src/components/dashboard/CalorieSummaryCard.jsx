@@ -162,7 +162,7 @@ function Donut({ ratio, overBudget, excessRatio }) {
         cy={DONUT_SIZE / 2}
         r={DONUT_RADIUS}
         fill="none"
-        stroke={overBudget ? DONUT_PRIMARY : DONUT_PRIMARY}
+        stroke={overBudget ? DONUT_TRACK : DONUT_PRIMARY}
         strokeWidth={DONUT_STROKE}
         strokeLinecap={clampedRatio >= 1 ? 'butt' : 'round'}
         strokeDasharray={DONUT_CIRCUMFERENCE}
