@@ -11,9 +11,9 @@ const DONUT_STROKE = 10
 const DONUT_RADIUS = (DONUT_SIZE - DONUT_STROKE) / 2
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS
 
-const DONUT_TRACK = 'hsl(168 15% 88%)'
+const DONUT_TRACK = 'hsl(210 12% 90%)'
 const DONUT_PRIMARY = 'var(--color-primary)'
-const DONUT_OVER = 'hsl(32 95% 44%)'
+const DONUT_OVER = 'hsl(5 72% 52%)'
 
 function sumField(list, field) {
   return (list ?? []).reduce((s, row) => s + (Number(row[field]) || 0), 0)
