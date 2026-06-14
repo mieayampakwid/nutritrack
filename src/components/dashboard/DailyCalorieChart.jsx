@@ -36,7 +36,7 @@ const tooltipStyles = {
 }
 
 /** Last N calendar days through today (oldest → newest). */
-const CHART_DAY_COUNT = 30
+const CHART_DAY_COUNT = 14
 
 function buildDailySeries(logs, targetKcal, numDays) {
   const byTanggal = new Map()
@@ -143,9 +143,9 @@ export function DailyCalorieChart({ userId, days = CHART_DAY_COUNT, className })
       )}
     >
       <CardHeader className="space-y-1 pb-2">
-        <CardTitle className="text-base font-semibold">Kalori harian (30 hari)</CardTitle>
+        <CardTitle className="text-base font-semibold">Kalori harian (14 hari)</CardTitle>
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Total kalori per hari dari log makanan (30 hari terakhir). Batang hijau = di bawah atau sama
+          Total kalori per hari dari log makanan (14 hari terakhir). Batang hijau = di bawah atau sama
           dengan target; jingga = di atas target.
         </p>
       </CardHeader>
