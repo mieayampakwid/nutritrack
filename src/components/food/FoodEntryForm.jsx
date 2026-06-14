@@ -982,7 +982,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                 onChange={(e) => setAddRow(i, { nama: e.target.value })}
                               />
                               <div className="flex gap-2">
-                                <div className={cn(foodQtyStepperShellClass, 'h-8 min-h-0 w-24 shrink-0')}>
+                                <div className={cn(foodQtyStepperShellClass, 'h-8 min-h-0 w-24 shrink-0 shadow-sm')}>
                                   <button type="button" className={cn(foodQtyStepperBtnClass, 'w-8 sm:w-8')} onClick={() => setAddRow(i, { jumlah: String(Math.max(0, (Number(r.jumlah) || 0) - 0.5)) })} aria-label="Kurangi jumlah">-</button>
                                   <Input
                                     type="number" inputMode="decimal" step="any" min={0} placeholder="0"
