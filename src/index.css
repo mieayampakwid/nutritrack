@@ -80,12 +80,12 @@
     center bottom,
     center top;
   background-repeat: no-repeat;
-  background-attachment: fixed, fixed, fixed, fixed;
+  background-attachment: scroll, scroll, scroll, scroll;
 }
 
 .app-hero-split-bg::before {
   content: '';
-  position: fixed;
+  position: absolute;
   inset: 0 0 auto 0;
   height: 40%;
   z-index: 0;
