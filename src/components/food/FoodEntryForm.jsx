@@ -974,43 +974,45 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                       {addFormOpen ? (
                         <div className="mt-2 space-y-2">
                           {addRows.map((r, i) => (
-                            <div key={r.id} className="flex gap-2">
+                            <div key={r.id} className="space-y-2 rounded-lg border border-border/40 bg-background/50 p-2.5">
                               <Input
                                 placeholder="Nama makanan"
-                                className="food-entry-compact-input h-9 flex-1 text-sm"
+                                className="food-entry-compact-input h-8 flex-1 text-xs placeholder:text-[11px]"
                                 value={r.nama}
                                 onChange={(e) => setAddRow(i, { nama: e.target.value })}
                               />
-                              <div className={cn(foodQtyStepperShellClass, 'w-24 shrink-0')}>
-                                <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddRow(i, { jumlah: String(Math.max(0, (Number(r.jumlah) || 0) - 0.5)) })} aria-label="Kurangi jumlah">-</button>
-                                <Input
-                                  type="number" inputMode="decimal" step="any" min={0} placeholder="0"
-                                  className={foodQtyStepperInnerInputClass}
-                                  value={r.jumlah}
-                                  onChange={(e) => setAddRow(i, { jumlah: e.target.value })}
-                                />
-                                <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddRow(i, { jumlah: String((Number(r.jumlah) || 0) + 0.5) })} aria-label="Tambah jumlah">+</button>
+                              <div className="flex gap-2">
+                                <div className={cn(foodQtyStepperShellClass, 'h-8 min-h-0 flex-1')}>
+                                  <button type="button" className={cn(foodQtyStepperBtnClass, 'w-8 sm:w-8')} onClick={() => setAddRow(i, { jumlah: String(Math.max(0, (Number(r.jumlah) || 0) - 0.5)) })} aria-label="Kurangi jumlah">-</button>
+                                  <Input
+                                    type="number" inputMode="decimal" step="any" min={0} placeholder="0"
+                                    className={cn(foodQtyStepperInnerInputClass, 'text-xs placeholder:text-[11px]')}
+                                    value={r.jumlah}
+                                    onChange={(e) => setAddRow(i, { jumlah: e.target.value })}
+                                  />
+                                  <button type="button" className={cn(foodQtyStepperBtnClass, 'w-8 sm:w-8')} onClick={() => setAddRow(i, { jumlah: String((Number(r.jumlah) || 0) + 0.5) })} aria-label="Tambah jumlah">+</button>
+                                </div>
+                                <Select value={r.unitId || undefined} onValueChange={(v) => setAddRow(i, { unitId: v })}>
+                                  <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'h-8 min-h-0 w-28 shrink-0 text-[11px]')}>
+                                    <SelectValue placeholder="Satuan" />
+                                  </SelectTrigger>
+                                  <SelectContent align="end" className="text-[11px]">
+                                    {units.map((u) => (
+                                      <SelectItem key={u.id} value={u.id} className="text-[11px]">{u.nama}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                {addRows.length > 1 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeAddRow(i)}
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive"
+                                    aria-label="Hapus baris"
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </button>
+                                ) : null}
                               </div>
-                              <Select value={r.unitId || undefined} onValueChange={(v) => setAddRow(i, { unitId: v })}>
-                                <SelectTrigger className={cn(foodRowControlShell, foodRowSelectFocus, 'w-28 shrink-0 text-xs')}>
-                                  <SelectValue placeholder="Satuan" />
-                                </SelectTrigger>
-                                <SelectContent align="end" className="text-xs">
-                                  {units.map((u) => (
-                                    <SelectItem key={u.id} value={u.id} className="text-xs">{u.nama}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              {addRows.length > 1 ? (
-                                <button
-                                  type="button"
-                                  onClick={() => removeAddRow(i)}
-                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive"
-                                  aria-label="Hapus baris"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              ) : null}
                             </div>
                           ))}
                           <Button
