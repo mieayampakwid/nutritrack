@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FlagBanner, Hamburger, PersonSimpleRun, CheckCircle, Circle, Fire } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
@@ -116,6 +116,18 @@ export function CalorieSummaryCard({ userId, className }) {
 
   const hasTarget = targetKcal != null && Number(targetKcal) > 0
   const [streakInfo, setStreakInfo] = useState(false)
+  const streakRef = useRef(null)
+
+  useEffect(() => {
+    if (!streakInfo) return
+    const close = (e) => {
+      if (streakRef.current && !streakRef.current.contains(e.target)) {
+        setStreakInfo(false)
+      }
+    }
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [streakInfo])
   const remaining = hasTarget ? Number(targetKcal) - consumedKcal : 0
   const overBudget = hasTarget && consumedKcal > Number(targetKcal)
 
@@ -213,8 +225,9 @@ export function CalorieSummaryCard({ userId, className }) {
               <button
                 type="button"
                 className="relative flex items-center gap-2 cursor-help"
-                onClick={() => setStreakInfo((v) => !v)}
+                onClick={(e) => { e.stopPropagation(); setStreakInfo((v) => !v) }}
                 aria-label="Info streak"
+                ref={streakRef}
               >
                 <Fire className="h-7 w-7 text-orange-500 motion-safe:animate-pulse" weight="fill" />
                 <span className="text-sm text-muted-foreground">
@@ -228,6 +241,12 @@ export function CalorieSummaryCard({ userId, className }) {
                   <div className="absolute -top-2 right-0 w-52 max-w-[80vw] translate-y-[-100%] rounded-xl border border-border bg-popover px-3 py-2 text-left text-xs text-muted-foreground shadow-lg ring-1 ring-black/5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 motion-safe:duration-200">
                     <p>Streak dihitung dari jumlah hari kamu mencatat makanan secara berurutan, tanpa jeda.</p>
                     <p className="mt-1 text-muted-foreground/70">Hanya entri yang dicatat di hari yang sama yang dihitung — entri mundur (backdate) tidak termasuk.</p>
+                    <a
+                      href="/klien/food-entry"
+                      className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-orange-600"
+                    >
+                      Lanjut streak?
+                    </a>
                   </div>
                 ) : null}
               </button>
