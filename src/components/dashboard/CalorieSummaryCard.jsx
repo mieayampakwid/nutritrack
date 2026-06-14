@@ -184,17 +184,7 @@ export function CalorieSummaryCard({ userId, className }) {
           {weekLoading ? (
             <div className="mx-auto h-6 w-48 animate-pulse rounded bg-muted/50" />
           ) : (
-            <div className="flex items-center justify-end gap-4">
-              <div className="flex items-center gap-2">
-                <Fire className="h-7 w-7 text-orange-500 motion-safe:animate-pulse" weight="fill" />
-                <span className="text-sm text-muted-foreground">
-                  {currentStreak > 0 ? (
-                    <><span className="font-semibold tabular-nums text-foreground">{currentStreak}</span> hari</>
-                  ) : (
-                    'Catat hari ini!'
-                  )}
-                </span>
-              </div>
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 {weekDays.map((d) => (
                   <div key={d.iso} className="flex flex-col items-center gap-0.5">
@@ -206,6 +196,16 @@ export function CalorieSummaryCard({ userId, className }) {
                     )}
                   </div>
                 ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <Fire className="h-7 w-7 text-orange-500 motion-safe:animate-pulse" weight="fill" />
+                <span className="text-sm text-muted-foreground">
+                  {currentStreak > 0 ? (
+                    <><span className="font-semibold tabular-nums text-foreground">{currentStreak}</span> hari</>
+                  ) : (
+                    'Catat hari ini!'
+                  )}
+                </span>
               </div>
             </div>
           )}
