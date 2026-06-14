@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Target, Utensils, Dumbbell } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
@@ -104,19 +105,28 @@ export function CalorieSummaryCard({ userId, className }) {
 
           <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-sm">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-muted-foreground">Target Kalori</span>
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <Target className="h-3.5 w-3.5 text-teal-600" />
+                Target Kalori
+              </span>
               <span className="font-semibold tabular-nums text-foreground">
                 {formatNumberId(targetKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
               </span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-muted-foreground">Makanan</span>
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <Utensils className="h-3.5 w-3.5 text-amber-600" />
+                Makanan
+              </span>
               <span className="font-semibold tabular-nums text-foreground">
                 {formatNumberId(consumedKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
               </span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-muted-foreground">Olahraga</span>
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <Dumbbell className="h-3.5 w-3.5 text-blue-600" />
+                Olahraga
+              </span>
               <span className="font-semibold tabular-nums text-foreground">
                 {formatNumberId(burnedKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
               </span>
