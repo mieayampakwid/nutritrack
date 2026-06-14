@@ -762,7 +762,15 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
               className="scroll-mt-24 text-left outline-none sm:scroll-mt-28"
               aria-live="polite"
             >
-              <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm ring-1 ring-black/5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:fill-mode-both">
+              <div
+                className={cn(
+                  'rounded-2xl border p-4 shadow-sm ring-1 ring-black/5',
+                  'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:fill-mode-both',
+                  isPending
+                    ? 'border-amber-200/60 bg-amber-50/70'
+                    : 'border-border/70 bg-card',
+                )}
+              >
                   <div className="flex items-center justify-between gap-2">
                     <span
                       className={cn(
@@ -790,9 +798,9 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold leading-snug text-foreground">
                               {x.nama_makanan}
-                            </p>
-                            <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
-                              {formatNumberId(x.jumlah)} {x.unit_nama}
+                              <span className="ml-1.5 font-normal text-muted-foreground">
+                                {formatNumberId(x.jumlah)} {x.unit_nama}
+                              </span>
                             </p>
                           </div>
                           <KaloriValue
@@ -801,7 +809,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                             unitClassName="text-[0.65em] font-normal text-teal-700/70"
                           />
                         </div>
-                        <p className="mt-1 text-[10px] text-muted-foreground/70">
+                        <p className="mt-1 text-[11px] text-muted-foreground/70">
                           P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g
                           <span className="mx-1 text-border">·</span>
                           K: {formatNumberId(x.karbohidrat, { maximumFractionDigits: 1 })}g
@@ -818,8 +826,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
 
                   <div className="mt-3 flex items-end justify-between gap-2 border-t border-border/50 pt-3">
                     <div className="space-y-0.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Total</p>
-                      <p className="text-[10px] text-muted-foreground/60">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Total</p>
+                      <p className="text-[11px] text-muted-foreground/60">
                         K: {formatNumberId(displayResult.totalKarbohidrat ?? 0, { maximumFractionDigits: 1 })}g
                         <span className="mx-1">·</span>
                         P: {formatNumberId(displayResult.totalProtein ?? 0, { maximumFractionDigits: 1 })}g
@@ -829,8 +837,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                     </div>
                     <KaloriValue
                       value={displayResult.total}
-                      className="text-xl font-bold tracking-tight text-teal-800"
-                      unitClassName="text-sm font-semibold text-teal-700/75"
+                      className="text-2xl font-bold tracking-tight text-teal-800"
+                      unitClassName="text-base font-semibold text-teal-700/75"
                     />
                   </div>
 
