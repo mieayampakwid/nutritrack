@@ -1012,12 +1012,12 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                             </div>
                           ))}
                           <Button
-                            type="button" variant="ghost" size="sm"
-                            className="w-full text-xs text-muted-foreground hover:text-foreground"
+                            type="button" variant="outline" size="sm"
+                            className="w-full border-amber-300/60 text-xs text-amber-800 hover:bg-amber-100/50"
                             onClick={addAddRow}
                           >
                             <Plus className="mr-1 h-3.5 w-3.5" />
-                            Tambah baris
+                            Tambah makanan
                           </Button>
                           <div className="flex justify-end gap-2 !mt-3 border-t border-amber-200/30 pt-2">
                             <Button
