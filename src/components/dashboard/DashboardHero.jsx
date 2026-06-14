@@ -1,5 +1,4 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import laperLogo from '@/assets/laper-logo.png'
 import { useAuth } from '@/hooks/useAuth'
 import {
   formatClockWib,
@@ -8,7 +7,6 @@ import {
 } from '@/lib/dashboardGreeting'
 import { AdBannerCarousel } from '@/components/dashboard/AdBannerCarousel'
 import { CalorieSummaryCard } from '@/components/dashboard/CalorieSummaryCard'
-import { APP_ACRONYM, APP_TAGLINE } from '@/lib/appMeta'
 import { profileDisplayName } from '@/lib/profileDisplay'
 import { cn } from '@/lib/utils'
 
@@ -19,7 +17,6 @@ import { cn } from '@/lib/utils'
 export function DashboardHero({
   className,
   bareOnMobile = false,
-  compactLogo = false,
   bareLogoShell = false,
 }) {
   const { profile } = useAuth()
@@ -96,23 +93,7 @@ export function DashboardHero({
           aria-hidden
         />
 
-        <div className="relative flex flex-col items-center gap-0 text-center">
-          <div className="flex w-full justify-center px-1">
-            <img
-              src={laperLogo}
-              alt={`${APP_ACRONYM} — ${APP_TAGLINE}`}
-              className={cn(
-                'h-auto w-full object-contain',
-                compactLogo
-                  ? 'max-w-[min(100%,14rem)] sm:max-w-sm md:max-w-md'
-                  : 'max-w-[min(100%,22rem)] sm:max-w-md md:max-w-lg',
-              )}
-              width={640}
-              height={160}
-              decoding="async"
-            />
-          </div>
-        </div>
+        <div className="relative flex flex-col items-center gap-0 text-center" />
       </div>
 
       <div ref={sentinelRef} className="h-1 w-full shrink-0" aria-hidden />
