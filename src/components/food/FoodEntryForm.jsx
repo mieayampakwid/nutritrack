@@ -920,8 +920,18 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
 
                   {isPending ? (
                     <div className="mt-2 border-t border-amber-200/50 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-amber-300/60 text-xs text-amber-800 hover:bg-amber-100/50 hover:text-amber-900"
+                        onClick={() => setAddFormOpen((v) => !v)}
+                      >
+                        <Plus className="mr-1 h-3.5 w-3.5" />
+                        Tambah makanan
+                      </Button>
                       {addFormOpen ? (
-                        <div className="space-y-2">
+                        <div className="mt-2 space-y-2">
                           <div className="flex gap-2">
                             <Input
                               placeholder="Nama makanan"
@@ -933,11 +943,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                             <div className={cn(foodQtyStepperShellClass, 'w-24 shrink-0')}>
                               <button type="button" className={foodQtyStepperBtnClass} onClick={() => setAddItemQty((v) => Math.max(0, (Number(v) || 0) - 0.5).toString())} aria-label="Kurangi jumlah">-</button>
                               <Input
-                                type="number"
-                                inputMode="decimal"
-                                step="any"
-                                min={0}
-                                placeholder="0"
+                                type="number" inputMode="decimal" step="any" min={0} placeholder="0"
                                 className={foodQtyStepperInnerInputClass}
                                 value={addItemQty}
                                 onChange={(e) => setAddItemQty(e.target.value)}
@@ -950,26 +956,20 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                               </SelectTrigger>
                               <SelectContent align="end" className="text-xs">
                                 {units.map((u) => (
-                                  <SelectItem key={u.id} value={u.id} className="text-xs">
-                                    {u.nama}
-                                  </SelectItem>
+                                  <SelectItem key={u.id} value={u.id} className="text-xs">{u.nama}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           </div>
                           <div className="flex justify-end gap-2">
                             <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs"
+                              type="button" variant="ghost" size="sm" className="text-xs"
                               onClick={() => { setAddFormOpen(false); setAddItemName(''); setAddItemQty(''); setAddItemUnit('') }}
                             >
                               Batal
                             </Button>
                             <Button
-                              type="button"
-                              size="sm"
+                              type="button" size="sm"
                               className="bg-gradient-to-r from-primary to-primary/90 text-xs shadow-sm shadow-primary/20"
                               onClick={handleAddItem}
                               disabled={addLoading || !addItemName.trim() || !addItemQty || Number(addItemQty) <= 0 || !addItemUnit}
@@ -983,18 +983,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                             </Button>
                           </div>
                         </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="w-full border-amber-300/60 text-xs text-amber-800 hover:bg-amber-100/50 hover:text-amber-900"
-                          onClick={() => setAddFormOpen(true)}
-                        >
-                          <Plus className="mr-1 h-3.5 w-3.5" />
-                          Tambah makanan
-                        </Button>
-                      )}
+                      ) : null}
                     </div>
                   ) : null}
 
