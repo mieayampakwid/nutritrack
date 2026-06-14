@@ -958,16 +958,19 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
 
                   {isPending ? (
                     <div className="mt-2 border-t border-amber-200/50 pt-2">
-                      <Button
+                      <button
                         type="button"
-                        variant="outline"
-                        size="sm"
-                        className="w-full border-amber-300/60 text-xs text-amber-800 hover:bg-amber-100/50 hover:text-amber-900"
+                        className="flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100/40"
                         onClick={() => setAddFormOpen((v) => !v)}
                       >
-                        <Plus className="mr-1 h-3.5 w-3.5" />
-                        Tambah makanan
-                      </Button>
+                        <span className="flex items-center gap-1.5">
+                          <Plus className="h-3.5 w-3.5" />
+                          Tambah makanan
+                        </span>
+                        <ChevronDown
+                          className={cn('h-4 w-4 transition-transform duration-200', addFormOpen && 'rotate-180')}
+                        />
+                      </button>
                       {addFormOpen ? (
                         <div className="mt-2 space-y-2">
                           {addRows.map((r, i) => (
