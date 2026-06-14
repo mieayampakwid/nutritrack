@@ -175,6 +175,7 @@ export function DashboardHero({
           <div className="mt-3">
             <CalorieSummaryCard userId={profile?.id} />
           </div>
+          <div className="h-3 sm:h-4" />
           <div className="mb-6 sm:mb-8">
             <AdBannerCarousel dismissible userId={profile?.id} />
           </div>
