@@ -89,26 +89,26 @@ export function CalorieSummaryCard({ userId, className }) {
                 {formatNumberId(remaining)}
               </span>
               <span className="mt-0.5 text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground">
-                Remaining
+                Sisa
               </span>
             </div>
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-sm">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-muted-foreground">Base Goal</span>
+              <span className="text-muted-foreground">Target Kalori</span>
               <span className="font-semibold tabular-nums text-foreground">
                 {formatNumberId(targetKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
               </span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-muted-foreground">Food</span>
+              <span className="text-muted-foreground">Makanan</span>
               <span className="font-semibold tabular-nums text-foreground">
                 {formatNumberId(consumedKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
               </span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-muted-foreground">Exercise</span>
+              <span className="text-muted-foreground">Olahraga</span>
               <span className="font-semibold tabular-nums text-foreground">
                 {formatNumberId(burnedKcal)} <span className="text-xs font-normal text-muted-foreground">kkal</span>
               </span>
