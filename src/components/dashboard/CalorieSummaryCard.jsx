@@ -92,10 +92,15 @@ export function CalorieSummaryCard({ userId, className }) {
 
   const currentStreak = useMemo(() => {
     if (!allDates.length) return 0
+    const sorted = [...allDates].sort((a, b) => b.localeCompare(a))
+    const latest = sorted[0]
     const today = toIsoDateLocal(new Date())
-    if (!allDates.includes(today)) return 0
+    const y = new Date()
+    y.setDate(y.getDate() - 1)
+    const yesterday = toIsoDateLocal(y)
+    if (latest !== today && latest !== yesterday) return 0
     let streak = 1
-    const d = new Date()
+    const d = new Date(latest)
     while (true) {
       d.setDate(d.getDate() - 1)
       const iso = toIsoDateLocal(d)
