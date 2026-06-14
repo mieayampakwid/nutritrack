@@ -43,14 +43,7 @@ export function KlienDashboard() {
   return (
     <AppShell dashboardHero dashboardHeroBareMobile dashboardHeroCompactLogo>
       <div className="mx-auto max-w-5xl -mt-2 space-y-4 sm:space-y-5">
-        <section aria-label="Ringkasan gizi dan kebutuhan kalori">
-          <ClientNutritionSummaryCard profile={profile} />
-        </section>
-        <section aria-label="Grafik kalori 30 hari terakhir">
-          <DailyCalorieChart userId={profile?.id} />
-        </section>
-
-        <div className="flex items-center justify-between rounded-2xl bg-white/90 px-4 py-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur-sm">
+        <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur-sm">
           <button
             onClick={prevDay}
             className="h-8 w-8 rounded-full flex items-center justify-center text-neutral-600 hover:bg-black/5 active:bg-black/10 transition-colors"
@@ -110,6 +103,13 @@ export function KlienDashboard() {
           ) : (
             <ActivityLogTable type="exercise" data={exerciseLogs} tanggal={selectedDate} />
           )}
+        </section>
+
+        <section aria-label="Ringkasan gizi dan kebutuhan kalori">
+          <ClientNutritionSummaryCard profile={profile} />
+        </section>
+        <section aria-label="Grafik kalori 30 hari terakhir">
+          <DailyCalorieChart userId={profile?.id} />
         </section>
       </div>
     </AppShell>
