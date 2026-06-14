@@ -738,6 +738,27 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
     setPendingResult(null)
   }
 
+  function handleRemovePendingItem(index) {
+    setPendingResult((prev) => {
+      if (!prev) return null
+      const newItems = prev.items.filter((_, i) => i !== index)
+      if (newItems.length === 0) {
+        idempotencyKeyRef.current = null
+        return null
+      }
+      return {
+        ...prev,
+        items: newItems,
+        total: newItems.reduce((a, x) => a + (x.kalori_estimasi || 0), 0),
+        totalKarbohidrat: newItems.reduce((a, x) => a + (x.karbohidrat || 0), 0),
+        totalProtein: newItems.reduce((a, x) => a + (x.protein || 0), 0),
+        totalLemak: newItems.reduce((a, x) => a + (x.lemak || 0), 0),
+        totalSerat: newItems.reduce((a, x) => a + (x.serat || 0), 0),
+        totalNatrium: newItems.reduce((a, x) => a + (x.natrium || 0), 0),
+      }
+    })
+  }
+
   function handleSelesai() {
     idempotencyKeyRef.current = null
     setResult(null)
@@ -780,11 +801,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                     >
                       {mealLabelFromKey(displayResult.waktuMakan)}
                     </span>
-                    {isPending ? (
-                      <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-700">
-                        Periksa
-                      </span>
-                    ) : (
+                    {isPending ? null : (
                       <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-700">
                         Tersimpan
                       </span>
@@ -803,11 +820,23 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                               </span>
                             </p>
                           </div>
-                          <KaloriValue
-                            value={x.kalori_estimasi}
-                            className="shrink-0 text-sm font-bold tabular-nums text-teal-800"
-                            unitClassName="text-[0.65em] font-normal text-teal-700/70"
-                          />
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            {isPending ? (
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePendingItem(idx)}
+                                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                aria-label={`Hapus ${x.nama_makanan}`}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            ) : null}
+                            <KaloriValue
+                              value={x.kalori_estimasi}
+                              className="text-sm font-bold tabular-nums text-teal-800"
+                              unitClassName="text-[0.65em] font-normal text-teal-700/70"
+                            />
+                          </div>
                         </div>
                         <p className="mt-1 text-[11px] text-muted-foreground/70">
                           P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g
