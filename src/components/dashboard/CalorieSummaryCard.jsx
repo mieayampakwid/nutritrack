@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { FlagBanner, Hamburger, PersonSimpleRun, CheckCircle, Circle } from '@phosphor-icons/react'
+import { FlagBanner, Hamburger, PersonSimpleRun, CheckCircle, Circle, Fire } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
@@ -52,22 +52,15 @@ export function CalorieSummaryCard({ userId, className }) {
 
   const loading = foodLoading || exerciseLoading || assessmentLoading
 
-  const { data: weekDates = [], isLoading: weekLoading } = useQuery({
-    queryKey: ['food_log_dates_week', userId],
+  const { data: allDates = [], isLoading: weekLoading } = useQuery({
+    queryKey: ['food_log_dates', userId],
     enabled: Boolean(userId),
     queryFn: async () => {
-      const today = new Date()
-      const dayOfWeek = today.getDay()
-      const monday = new Date(today)
-      monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7))
-      const start = toIsoDateLocal(monday)
-      const end = toIsoDateLocal(today)
       const { data, error } = await supabase
         .from('food_logs')
         .select('tanggal')
         .eq('user_id', userId)
-        .gte('tanggal', start)
-        .lte('tanggal', end)
+        .order('tanggal', { ascending: false })
       if (error) throw error
       return [...new Set((data ?? []).map((r) => r.tanggal))]
     },
@@ -85,10 +78,25 @@ export function CalorieSummaryCard({ userId, className }) {
       const d = new Date(monday)
       d.setDate(monday.getDate() + i)
       const iso = toIsoDateLocal(d)
-      days.push({ iso, label: labels[i], checked: weekDates.includes(iso) })
+      days.push({ iso, label: labels[i], checked: allDates.includes(iso) })
     }
     return days
-  }, [weekDates])
+  }, [allDates])
+
+  const currentStreak = useMemo(() => {
+    if (!allDates.length) return 0
+    const today = toIsoDateLocal(new Date())
+    if (!allDates.includes(today)) return 0
+    let streak = 1
+    const d = new Date()
+    while (true) {
+      d.setDate(d.getDate() - 1)
+      const iso = toIsoDateLocal(d)
+      if (allDates.includes(iso)) streak++
+      else break
+    }
+    return streak
+  }, [allDates])
 
   const targetKcal = latestAssessment?.anjuran_kalori_harian ?? latestAssessment?.energi_total
   const consumedKcal = useMemo(() => sumField(foodLogs, 'total_kalori'), [foodLogs])
@@ -176,17 +184,29 @@ export function CalorieSummaryCard({ userId, className }) {
           {weekLoading ? (
             <div className="mx-auto h-6 w-48 animate-pulse rounded bg-muted/50" />
           ) : (
-            <div className="flex items-center justify-center gap-1.5">
-              {weekDays.map((d) => (
-                <div key={d.iso} className="flex flex-col items-center gap-0.5">
-                  <span className="text-[0.625rem] text-muted-foreground">{d.label}</span>
-                  {d.checked ? (
-                    <CheckCircle className="h-5 w-5 text-emerald-500" weight="fill" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Fire className="h-5 w-5 text-orange-500 motion-safe:animate-pulse" weight="fill" />
+                <span className="text-xs text-muted-foreground">
+                  {currentStreak > 0 ? (
+                    <><span className="font-semibold tabular-nums text-foreground">{currentStreak}</span> hari berturut-turut</>
                   ) : (
-                    <Circle className="h-5 w-5 text-muted-foreground/25" weight="fill" />
+                    'Catat hari ini!'
                   )}
-                </div>
-              ))}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {weekDays.map((d) => (
+                  <div key={d.iso} className="flex flex-col items-center gap-0.5">
+                    <span className="text-[0.625rem] text-muted-foreground">{d.label}</span>
+                    {d.checked ? (
+                      <CheckCircle className="h-5 w-5 text-emerald-500" weight="fill" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-muted-foreground/25" weight="fill" />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
