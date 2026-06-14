@@ -105,11 +105,12 @@ export function KlienDashboard() {
           )}
         </section>
 
+        <section aria-label="Grafik kalori 14 hari terakhir">
+          <DailyCalorieChart userId={profile?.id} />
+        </section>
+
         <section aria-label="Ringkasan gizi dan kebutuhan kalori">
           <ClientNutritionSummaryCard profile={profile} />
-        </section>
-        <section aria-label="Grafik kalori 30 hari terakhir">
-          <DailyCalorieChart userId={profile?.id} />
         </section>
       </div>
     </AppShell>
