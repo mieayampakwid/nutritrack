@@ -7,8 +7,8 @@ import { formatNumberId, toIsoDateLocal } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 
-const DONUT_SIZE = 104
-const DONUT_STROKE = 10
+const DONUT_SIZE = 120
+const DONUT_STROKE = 12
 const DONUT_RADIUS = (DONUT_SIZE - DONUT_STROKE) / 2
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS
 
@@ -83,15 +83,15 @@ export function CalorieSummaryCard({ userId, className }) {
         </div>
       ) : (
         <div className="mx-auto flex w-fit items-center gap-5 px-5 py-3">
-          <div className="relative h-[104px] w-[104px] shrink-0">
+          <div className="relative h-[120px] w-[120px] shrink-0">
             <Donut ratio={donutRatio} overBudget={overBudget} excessRatio={excessRatio} />
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground">
+              <span className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
                 Sisa
               </span>
               <span
                 className={cn(
-                  'text-lg font-bold tabular-nums leading-none',
+                  'text-xl font-bold tabular-nums leading-none',
                   overBudget ? 'text-amber-600' : 'text-foreground',
                 )}
               >
