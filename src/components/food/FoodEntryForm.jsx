@@ -875,30 +875,41 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                       <li key={idx} className="py-2.5 first:pt-0 last:pb-0">
                         <div className="flex items-center gap-2">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold leading-snug text-foreground">
-                              {x.nama_makanan}
-                              <span className="ml-1.5 font-normal text-muted-foreground">
-                                {formatNumberId(x.jumlah)} {x.unit_nama}
-                              </span>
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-sm font-semibold leading-snug text-foreground">
+                                {x.nama_makanan}
+                                <span className="ml-1.5 font-normal text-muted-foreground">
+                                  {formatNumberId(x.jumlah)} {x.unit_nama}
+                                </span>
+                              </p>
+                              <KaloriValue
+                                value={x.kalori_estimasi}
+                                className="shrink-0 text-sm font-bold tabular-nums text-teal-800"
+                                unitClassName="text-[0.65em] font-normal text-teal-700/70"
+                              />
+                            </div>
+                            <p className="mt-1 text-[11px] text-muted-foreground/70">
+                              P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g
+                              <span className="mx-1 text-border">·</span>
+                              K: {formatNumberId(x.karbohidrat, { maximumFractionDigits: 1 })}g
+                              <span className="mx-1 text-border">·</span>
+                              L: {formatNumberId(x.lemak, { maximumFractionDigits: 1 })}g
+                              <span className="mx-1 text-border">·</span>
+                              S: {formatNumberId(x.serat, { maximumFractionDigits: 1 })}g
+                              <span className="mx-1 text-border">·</span>
+                              Na: {formatNumberId(x.natrium, { maximumFractionDigits: 0 })}mg
                             </p>
                           </div>
-                          <div className="flex shrink-0 items-center gap-1">
-                            <KaloriValue
-                              value={x.kalori_estimasi}
-                              className="text-sm font-bold tabular-nums text-teal-800"
-                              unitClassName="text-[0.65em] font-normal text-teal-700/70"
-                            />
-                            {isPending ? (
-                              <button
-                                type="button"
-                                onClick={() => handleRemovePendingItem(idx)}
-                                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                aria-label={`Hapus ${x.nama_makanan}`}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            ) : null}
-                          </div>
+                          {isPending ? (
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePendingItem(idx)}
+                              className="flex h-7 w-7 shrink-0 items-center justify-center self-center rounded-full text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                              aria-label={`Hapus ${x.nama_makanan}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          ) : null}
                         </div>
                         <p className="mt-1 text-[11px] text-muted-foreground/70">
                           P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g
