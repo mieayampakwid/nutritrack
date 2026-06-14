@@ -6,7 +6,6 @@ import { AnimatePresence, motion as Motion, useReducedMotion } from 'framer-moti
 import { Check, ChevronDown, Clock, Cookie, Loader2, Moon, Pencil, Plus, Sparkles, Sunrise, Sun, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -16,15 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { CalorieDisclaimer } from '@/components/shared/CalorieDisclaimer'
 import { TimeScroller } from '@/components/food/TimeScroller'
 import { useFoodNameSuggestions, useFoodUnits } from '@/hooks/useFoodLog'
 import { analyzeFood } from '@/lib/openai'
 import { KaloriValue } from '@/components/shared/KaloriValue'
-import { format } from 'date-fns'
-import { id as localeId } from 'date-fns/locale'
-import { APP_ACRONYM } from '@/lib/appMeta'
-import { formatDateId, formatNumberId, toIsoDateLocal, parseIsoDateLocal } from '@/lib/format'
+import { formatNumberId, toIsoDateLocal } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { foodEntrySchema } from '@/lib/validators'
@@ -767,201 +762,138 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
               className="scroll-mt-24 text-left outline-none sm:scroll-mt-28"
               aria-live="polite"
             >
-              <Card
-                className={cn(
-                  'food-entry-result-receipt relative overflow-hidden border-2 border-dashed border-stone-400/55',
-                  'bg-[linear-gradient(168deg,#faf7f2_0%,#ffffff_42%,#ecfdf8_96%)]',
-                  'text-neutral-900 shadow-[0_2px_0_rgba(15,118,110,0.06),0_18px_48px_-12px_rgba(0,151,178,0.18)]',
-                  'rounded-2xl max-md:rounded-3xl',
-                  'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:fill-mode-both',
-                )}
-              >
-                <div
-                  className="pointer-events-none absolute inset-0 opacity-[0.035]"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-                  }}
-                  aria-hidden
-                />
-                <div className="relative">
-                  <header className="px-5 pb-1 pt-6 text-center sm:px-7 sm:pt-7">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-teal-700/85">
-                      Struk estimasi
-                    </p>
-                    <p className="mt-2 font-greeting text-[1.35rem] font-semibold leading-tight tracking-tight text-neutral-900 sm:text-2xl">
-                      {isPending ? 'Estimasi kalori' : 'Tersimpan'}
-                    </p>
-                    <p className="mx-auto mt-2 max-w-[18rem] text-xs leading-relaxed text-neutral-600">
-                      {isPending
-                        ? 'Periksa hasil estimasi berikut sebelum menyimpan.'
-                        : 'Ringkasan asupan yang baru dicatat — nilai berikut bersifat estimasi.'}
-                    </p>
-                    <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] text-neutral-500">
-                      <span className="font-medium tracking-wide text-neutral-700">
-                        {APP_ACRONYM}
+              <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm ring-1 ring-black/5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-safe:fill-mode-both">
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={cn(
+                        'inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide',
+                        MEAL_RECEIPT_BADGE[displayResult.waktuMakan] ?? MEAL_RECEIPT_BADGE.pagi,
+                      )}
+                    >
+                      {mealLabelFromKey(displayResult.waktuMakan)}
+                    </span>
+                    {isPending ? (
+                      <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-700">
+                        Periksa
                       </span>
-                      <span className="text-neutral-300" aria-hidden>|</span>
-                      <time className="tabular-nums" dateTime={displayResult.tanggal}>
-                        {formatDateId(parseIsoDateLocal(displayResult.tanggal))}
-                      </time>
-                      <span className="text-neutral-300" aria-hidden>·</span>
-                      <span className="tabular-nums">{jamMakan || format(new Date(), 'HH:mm', { locale: localeId })}</span>
-                    </div>
-                    <div className="mt-4 flex justify-center">
-                      <span
-                        className={cn(
-                          'inline-flex rounded-full border px-3.5 py-1 text-[11px] font-semibold tracking-wide',
-                          MEAL_RECEIPT_BADGE[displayResult.waktuMakan] ?? MEAL_RECEIPT_BADGE.pagi,
-                        )}
-                      >
-                        {mealLabelFromKey(displayResult.waktuMakan)}
+                    ) : (
+                      <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-700">
+                        Tersimpan
                       </span>
-                    </div>
-                  </header>
+                    )}
+                  </div>
 
-                  <div className="mx-5 mt-5 h-px border-t border-dashed border-stone-400/70 sm:mx-7" role="presentation" />
-
-                  <div className="px-5 py-4 sm:px-7">
-                    <div className="flex items-end justify-between gap-2 border-b border-stone-800/10 pb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">Rincian</span>
-                      <span className="text-[10px] font-medium tabular-nums text-neutral-400">
-                        {displayResult.items.length} baris
-                      </span>
-                    </div>
-                    <ul className="mt-1 divide-y divide-dotted divide-stone-300/80">
-                      {displayResult.items.map((x, idx) => (
-                        <li key={idx} className="py-3.5 first:pt-2">
-                          <div className="flex min-w-0 items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold leading-snug text-neutral-900 sm:text-[0.9375rem]">
-                                {x.nama_makanan}
-                              </p>
-                              <p className="mt-1.5 text-[11px] tabular-nums leading-none text-neutral-500">
-                                <span className="font-medium text-neutral-600">{formatNumberId(x.jumlah)}</span>
-                                <span className="mx-1 text-neutral-400">×</span>
-                                <span>{x.unit_nama}</span>
-                              </p>
-                              <p className="mt-1.5 text-[10px] leading-none text-neutral-400">
-                                <span>P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g</span>
-                                <span className="mx-1 text-neutral-300">·</span>
-                                <span>K: {formatNumberId(x.karbohidrat, { maximumFractionDigits: 1 })}g</span>
-                                <span className="mx-1 text-neutral-300">·</span>
-                                <span>L: {formatNumberId(x.lemak, { maximumFractionDigits: 1 })}g</span>
-                                <span className="mx-1 text-neutral-300">·</span>
-                                <span>S: {formatNumberId(x.serat, { maximumFractionDigits: 1 })}g</span>
-                                <span className="mx-1 text-neutral-300">·</span>
-                                <span className="whitespace-nowrap">Na: {formatNumberId(x.natrium, { maximumFractionDigits: 0 })}mg</span>
-                              </p>
-                            </div>
-                            <div className="shrink-0 border-l border-dashed border-stone-300/70 pl-3">
-                              <span className="block text-right font-mono text-sm font-semibold tabular-nums text-teal-800 sm:text-base">
-                                <KaloriValue
-                                  value={x.kalori_estimasi}
-                                  unitClassName="text-[0.65em] font-normal text-teal-700/65"
-                                />
-                              </span>
-                            </div>
+                  <ul className="mt-3 divide-y divide-border/40">
+                    {displayResult.items.map((x, idx) => (
+                      <li key={idx} className="py-2.5 first:pt-0 last:pb-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold leading-snug text-foreground">
+                              {x.nama_makanan}
+                            </p>
+                            <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
+                              {formatNumberId(x.jumlah)} {x.unit_nama}
+                            </p>
                           </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                          <KaloriValue
+                            value={x.kalori_estimasi}
+                            className="shrink-0 text-sm font-bold tabular-nums text-teal-800"
+                            unitClassName="text-[0.65em] font-normal text-teal-700/70"
+                          />
+                        </div>
+                        <p className="mt-1 text-[10px] text-muted-foreground/70">
+                          P: {formatNumberId(x.protein, { maximumFractionDigits: 1 })}g
+                          <span className="mx-1 text-border">·</span>
+                          K: {formatNumberId(x.karbohidrat, { maximumFractionDigits: 1 })}g
+                          <span className="mx-1 text-border">·</span>
+                          L: {formatNumberId(x.lemak, { maximumFractionDigits: 1 })}g
+                          <span className="mx-1 text-border">·</span>
+                          S: {formatNumberId(x.serat, { maximumFractionDigits: 1 })}g
+                          <span className="mx-1 text-border">·</span>
+                          Na: {formatNumberId(x.natrium, { maximumFractionDigits: 0 })}mg
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
 
-                  <div className="mx-5 border-t-2 border-double border-teal-700/25 sm:mx-7" role="presentation" />
-
-                  <div className="relative bg-linear-to-r from-teal-600/9 via-teal-600/5 to-transparent px-5 py-5 sm:px-7">
-                    <div className="flex flex-wrap items-end justify-between gap-3">
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-teal-900/70">Total estimasi</p>
-                        <p className="text-xs text-neutral-600">Jumlah kalori gabungan untuk waktu makan ini.</p>
-                      </div>
-                      <KaloriValue
-                        value={displayResult.total}
-                        className="text-2xl font-bold tracking-tight text-teal-800 sm:text-[1.65rem]"
-                        unitClassName="text-sm font-semibold text-teal-700/75"
-                      />
+                  <div className="mt-3 flex items-end justify-between gap-2 border-t border-border/50 pt-3">
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Total</p>
+                      <p className="text-[10px] text-muted-foreground/60">
+                        K: {formatNumberId(displayResult.totalKarbohidrat ?? 0, { maximumFractionDigits: 1 })}g
+                        <span className="mx-1">·</span>
+                        P: {formatNumberId(displayResult.totalProtein ?? 0, { maximumFractionDigits: 1 })}g
+                        <span className="mx-1">·</span>
+                        L: {formatNumberId(displayResult.totalLemak ?? 0, { maximumFractionDigits: 1 })}g
+                      </p>
                     </div>
-                    <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-neutral-500">
-                      <span>Karbohidrat: <span className="font-medium tabular-nums text-neutral-700">{formatNumberId(displayResult.totalKarbohidrat ?? 0, { maximumFractionDigits: 1 })}g</span></span>
-                      <span>Protein: <span className="font-medium tabular-nums text-neutral-700">{formatNumberId(displayResult.totalProtein ?? 0, { maximumFractionDigits: 1 })}g</span></span>
-                      <span>Lemak: <span className="font-medium tabular-nums text-neutral-700">{formatNumberId(displayResult.totalLemak ?? 0, { maximumFractionDigits: 1 })}g</span></span>
-                      <span>Serat: <span className="font-medium tabular-nums text-neutral-700">{formatNumberId(displayResult.totalSerat ?? 0, { maximumFractionDigits: 1 })}g</span></span>
-                      <span className="whitespace-nowrap">Natrium: <span className="font-medium tabular-nums text-neutral-700">{formatNumberId(displayResult.totalNatrium ?? 0, { maximumFractionDigits: 0 })}mg</span></span>
-                    </div>
+                    <KaloriValue
+                      value={displayResult.total}
+                      className="text-xl font-bold tracking-tight text-teal-800"
+                      unitClassName="text-sm font-semibold text-teal-700/75"
+                    />
                   </div>
-
-                  <div
-                    className="h-2.5 w-full bg-[repeating-linear-gradient(90deg,transparent_0px,transparent_5px,currentColor_5px,currentColor_7px)] text-stone-400/45"
-                    role="presentation"
-                    aria-hidden
-                  />
 
                   {isPending ? (
-                    <div className="px-5 pb-5 pt-1 sm:px-7 sm:pb-6">
-                      <div className="flex flex-col gap-2.5 sm:flex-row sm:justify-end">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full sm:w-auto"
-                          onClick={handleDiscard}
-                          disabled={saving}
-                        >
-                          <X className="mr-1 h-4 w-4" />
-                          Batal
-                        </Button>
-                        <Button
-                          type="button"
-                          className={cn(
-                            'w-full sm:w-auto',
-                            'bg-gradient-to-r from-primary to-primary/90',
-                            'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
-                          )}
-                          onClick={handleConfirmSave}
-                          disabled={saving}
-                        >
-                          {saving ? (
-                            <>
-                              <Loader2 className={cn('mr-2 h-4 w-4', !reduceMotion && 'motion-safe:animate-spin')} aria-hidden />
-                              Menyimpan…
-                            </>
-                          ) : (
-                            <>
-                              <Check className="mr-1 h-4 w-4" />
-                              Simpan
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={handleDiscard}
+                        disabled={saving}
+                      >
+                        <X className="mr-1 h-4 w-4" />
+                        Batal
+                      </Button>
+                      <Button
+                        type="button"
+                        className={cn(
+                          'w-full sm:w-auto',
+                          'bg-gradient-to-r from-primary to-primary/90',
+                          'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
+                        )}
+                        onClick={handleConfirmSave}
+                        disabled={saving}
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className={cn('mr-2 h-4 w-4', !reduceMotion && 'motion-safe:animate-spin')} aria-hidden />
+                            Menyimpan…
+                          </>
+                        ) : (
+                          <>
+                            <Check className="mr-1 h-4 w-4" />
+                            Simpan
+                          </>
+                        )}
+                      </Button>
                     </div>
                   ) : (
-                    <div className="space-y-3 px-5 pb-5 pt-1 sm:px-7 sm:pb-6">
-                      <CalorieDisclaimer className="border-amber-200/70 bg-amber-50/70 shadow-none" />
-                      <div className="flex flex-col gap-2.5 sm:flex-row sm:justify-end">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full sm:w-auto"
-                          onClick={handleSelesai}
-                        >
-                          <Pencil className="mr-1 h-4 w-4" />
-                          Catat lagi
-                        </Button>
-                        <Button
-                          type="button"
-                          className={cn(
-                            'w-full sm:w-auto',
-                            'bg-gradient-to-r from-primary to-primary/90',
-                            'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
-                          )}
-                          onClick={handleSelesai}
-                        >
-                          Selesai
-                        </Button>
-                      </div>
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={handleSelesai}
+                      >
+                        <Pencil className="mr-1 h-4 w-4" />
+                        Catat lagi
+                      </Button>
+                      <Button
+                        type="button"
+                        className={cn(
+                          'w-full sm:w-auto',
+                          'bg-gradient-to-r from-primary to-primary/90',
+                          'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
+                        )}
+                        onClick={handleSelesai}
+                      >
+                        Selesai
+                      </Button>
                     </div>
                   )}
                 </div>
-              </Card>
             </div>
           ) : null}
 
