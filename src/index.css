@@ -231,7 +231,6 @@ button:not(:disabled):active {
 }
 
 .collapsible-content > div {
-  overflow: hidden;
 }
 
 .safe-bottom {

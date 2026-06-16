@@ -159,7 +159,7 @@ export function CalorieSummaryCard({ userId, className }) {
             <Donut ratio={donutRatio} overBudget={overBudget} excessRatio={excessRatio} />
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground">
-                Sisa
+                {overBudget ? 'Over' : 'Sisa'}
               </span>
               <span
                 className={cn(
@@ -167,7 +167,7 @@ export function CalorieSummaryCard({ userId, className }) {
                   overBudget ? 'text-amber-600' : 'text-foreground',
                 )}
               >
-                {formatNumberId(remaining)}
+                {formatNumberId(overBudget ? Math.abs(remaining) : remaining)}
               </span>
               <span className="text-[0.625rem] font-medium text-muted-foreground">
                 kkal
