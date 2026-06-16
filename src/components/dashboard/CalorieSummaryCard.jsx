@@ -234,7 +234,7 @@ export function CalorieSummaryCard({ userId, className }) {
                   {currentStreak > 0 ? (
                     <><span className="font-semibold tabular-nums text-foreground">{currentStreak}</span> hari</>
                   ) : (
-                    'Catat hari ini!'
+                    'Siap?'
                   )}
                 </span>
                 {streakInfo ? (
