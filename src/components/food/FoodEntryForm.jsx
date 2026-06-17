@@ -232,7 +232,7 @@ const foodRowSelectFocus =
   'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1'
 
 const foodSuggestPanelClass =
-  'absolute left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-xl border bg-popover text-popover-foreground shadow-lg ring-1 ring-black/5'
+  'z-50 max-h-48 overflow-y-auto rounded-xl border bg-popover text-popover-foreground shadow-lg ring-1 ring-black/5'
 
 const foodQtyStepperShellClass =
   'flex h-10 min-h-[44px] w-full min-w-0 items-center overflow-hidden rounded-md border border-input bg-background/80 md:h-9 md:min-h-0'
@@ -254,6 +254,28 @@ function FoodNameSuggestField({
   onPick,
   onChangeNama,
 }) {
+  const wrapperRef = useRef(null)
+  const [dropdownStyle, setDropdownStyle] = useState(null)
+
+  useEffect(() => {
+    if (!open || !wrapperRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDropdownStyle(null)
+      return
+    }
+    const id = requestAnimationFrame(() => {
+      if (!wrapperRef.current) return
+      const rect = wrapperRef.current.getBoundingClientRect()
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [open, value])
+
   const filtered = useMemo(() => {
     const t = value.trim()
     if (!t || !suggestionNames.length) return []
@@ -265,7 +287,7 @@ function FoodNameSuggestField({
     'w-full px-3 py-2 text-left text-sm transition-colors duration-100 hover:bg-accent hover:text-accent-foreground'
 
   return (
-    <div className="relative w-full">
+    <div ref={wrapperRef} className="relative w-full">
       <Input
         id={inputId}
         placeholder="Nama makanan"
@@ -280,22 +302,25 @@ function FoodNameSuggestField({
         }}
         onBlur={onCloseRowBlur}
       />
-      {open && filtered.length > 0 ? (
-        <div className={foodSuggestPanelClass} role="listbox">
-          {filtered.map((n, idx) => (
-            <button
-              key={`${n}-${idx}`}
-              type="button"
-              role="option"
-              className={suggestRowClass}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => onPick(n)}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      {open && filtered.length > 0 && dropdownStyle
+        ? createPortal(
+            <div className={foodSuggestPanelClass} style={dropdownStyle} role="listbox">
+              {filtered.map((n, idx) => (
+                <button
+                  key={`${n}-${idx}`}
+                  type="button"
+                  role="option"
+                  className={suggestRowClass}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onPick(n)}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }
