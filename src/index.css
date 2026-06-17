@@ -219,13 +219,14 @@ button:not(:disabled):active {
 .collapsible-content {
   display: grid;
   grid-template-rows: 0fr;
+  overflow: hidden;
   transition:
     grid-template-rows 250ms ease-out,
     opacity 200ms ease-out;
   opacity: 0;
 }
 
-.collapsible-content[data-open="true"] {
+.collapsible-content--open {
   grid-template-rows: 1fr;
   opacity: 1;
 }

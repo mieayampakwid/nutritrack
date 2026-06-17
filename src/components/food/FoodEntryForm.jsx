@@ -1297,7 +1297,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                                 id={`food-row-label-${r.id}`}
                                 className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-0.5 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                 onClick={() => {
-                                  setExpandedRowId(r.id)
+                                  setExpandedRowId(isExpanded ? null : r.id)
                                   setSuggestionsOpenRowId(null)
                                 }}
                                 aria-expanded={isExpanded}
@@ -1342,8 +1342,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                               id={`food-row-panel-${r.id}`}
                               role="region"
                               aria-labelledby={`food-row-label-${r.id}`}
-                              className="collapsible-content"
-                              data-open={isExpanded ? 'true' : undefined}
+                              className={cn('collapsible-content', isExpanded && 'collapsible-content--open')}
                             >
                               <div className="px-4 py-3 sm:px-5 sm:py-4">
                                 {rowError ? (
