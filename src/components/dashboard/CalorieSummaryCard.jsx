@@ -6,6 +6,7 @@ import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
 import { formatNumberId, toIsoDateLocal } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { deriveLogDates } from './logDates'
 
 const DONUT_SIZE = 120
 const DONUT_STROKE = 15
@@ -52,7 +53,7 @@ export function CalorieSummaryCard({ userId, className }) {
 
   const loading = foodLoading || exerciseLoading || assessmentLoading
 
-  const { data: allDates = [], isLoading: weekLoading } = useQuery({
+  const { data: logDates = { loggedDates: [], streakDates: [] }, isLoading: weekLoading } = useQuery({
     queryKey: ['food_log_dates', userId],
     enabled: Boolean(userId),
     queryFn: async () => {
@@ -62,17 +63,12 @@ export function CalorieSummaryCard({ userId, className }) {
         .eq('user_id', userId)
         .order('tanggal', { ascending: false })
       if (error) throw error
-      const honest = new Map()
-      for (const row of data ?? []) {
-        const tgl = row.tanggal
-        if (!tgl || honest.has(tgl)) continue
-        const createdDate = toIsoDateLocal(new Date(row.created_at))
-        if (createdDate === tgl) honest.set(tgl, true)
-      }
-      return [...honest.keys()]
+      return deriveLogDates(data)
     },
     staleTime: 5 * 60 * 1000,
   })
+
+  const { loggedDates, streakDates } = logDates
 
   const weekDays = useMemo(() => {
     const today = new Date()
@@ -85,14 +81,14 @@ export function CalorieSummaryCard({ userId, className }) {
       const d = new Date(monday)
       d.setDate(monday.getDate() + i)
       const iso = toIsoDateLocal(d)
-      days.push({ iso, label: labels[i], checked: allDates.includes(iso) })
+      days.push({ iso, label: labels[i], checked: loggedDates.includes(iso) })
     }
     return days
-  }, [allDates])
+  }, [loggedDates])
 
   const currentStreak = useMemo(() => {
-    if (!allDates.length) return 0
-    const sorted = [...allDates].sort((a, b) => b.localeCompare(a))
+    if (!streakDates.length) return 0
+    const sorted = [...streakDates].sort((a, b) => b.localeCompare(a))
     const latest = sorted[0]
     const today = toIsoDateLocal(new Date())
     const y = new Date()
@@ -104,11 +100,11 @@ export function CalorieSummaryCard({ userId, className }) {
     while (true) {
       d.setDate(d.getDate() - 1)
       const iso = toIsoDateLocal(d)
-      if (allDates.includes(iso)) streak++
+      if (streakDates.includes(iso)) streak++
       else break
     }
     return streak
-  }, [allDates])
+  }, [streakDates])
 
   const targetKcal = latestAssessment?.anjuran_kalori_harian ?? latestAssessment?.energi_total
   const consumedKcal = useMemo(() => sumField(foodLogs, 'total_kalori'), [foodLogs])
