@@ -308,7 +308,7 @@ export function MyProgress() {
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">Tanggal</TableHead>
                     <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">BB</TableHead>
-                    <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">TB</TableHead>
+                    <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">LP (Lingkar Perut)</TableHead>
                     <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">BMI</TableHead>
                     <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">Otot</TableHead>
                     <TableHead className="whitespace-nowrap px-2 text-center text-xs font-semibold uppercase tracking-wide sm:px-3 sm:text-sm">Lemak</TableHead>
@@ -320,7 +320,7 @@ export function MyProgress() {
                       <TableRow key={m.id} className="max-md:text-[0.8125rem]">
                         <TableCell className="whitespace-nowrap px-2 text-center sm:px-3">{formatDateId(m.tanggal)}</TableCell>
                         <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">{formatNumberId(m.berat_badan)}</TableCell>
-                        <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">{formatNumberId(m.tinggi_badan)}</TableCell>
+                        <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">{formatNumberId(m.lingkar_pinggang)}</TableCell>
                         <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">{formatNumberId(m.bmi)}</TableCell>
                         <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">{formatNumberId(m.massa_otot)}</TableCell>
                         <TableCell className="whitespace-nowrap px-2 text-center tabular-nums sm:px-3">{formatNumberId(m.massa_lemak)}</TableCell>
