@@ -28,7 +28,7 @@ There is currently no template / favorit / preset concept anywhere in the databa
 
 **Non-Goals (this iteration)**
 
-- Delete or rename a saved template (templates persist; see Follow-ups).
+- Rename a saved template (delete is included; rename is not).
 - Showing per-template calorie totals in the picker.
 - Editing a template's portions after it is saved (the user edits the rows after applying, which already works).
 - Staff-authored or shared/group templates.
@@ -90,6 +90,7 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 - **`useMealTemplates(userId)`** — query. Key `['meal_templates', userId]`. Uses a nested select to fetch templates with their items in one round-trip:
   `supabase.from('meal_templates').select('*, meal_template_items(*)').eq('user_id', userId).order('created_at', { ascending: false })`.
 - **`useCreateMealTemplate()`** — `useMutation`. Inserts the parent row (`.select().single()`), then the child items with `template_id`. Invalidates `['meal_templates', userId]`. No success toast (the save is announced by the existing "Tersimpan" flow + the log save); the component handles the best-effort error case.
+- **`useDeleteMealTemplate()`** — `useMutation`. Deletes the parent row (items cascade via `on delete cascade`). Invalidates `['meal_templates', userId]`. Toast: `"Template berhasil dihapus."`
 
 ## 6. UI — Save Flow
 
@@ -111,10 +112,11 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 
 **New component:** `src/components/food/MealTemplatePicker.jsx`, built on the existing `src/components/ui/dialog.jsx`.
 
-- Props: `{ open, onOpenChange, templates, onApply }`.
+- Props: `{ open, onOpenChange, templates, onApply, onDelete }`.
 - Lists each template: name, item count (*"3 item"*), and a one-line preview of the item names.
 - Empty state: *"Belum ada template tersimpan."*
 - Selecting a template calls `onApply(template)` and closes the dialog.
+- Each template row includes a small delete button (trash icon) that calls `onDelete(template.id)`.
 
 **Where (entry point):** the input state of `FoodEntryForm.jsx` (the screen with the meal-time selector and food rows), near the **"Tambah makanan"** button.
 
@@ -129,7 +131,7 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 | Checkbox checked but template insert fails | Log stays saved; warning toast shown. |
 | Template name left blank | Falls back to the auto-suggested name (first item + count). |
 | A `food_units` row is later deleted | Template still displays correctly via denormalized `unit_nama`; `unit_id` becomes dangling but harmless (the Select falls back to the unit list). |
-| Applying a template with existing typed rows | Replaces the current rows (a template represents a complete meal). *Decision pending review — see Open Questions.* |
+| Applying a template with existing typed rows | **Appends** template items to existing rows. User keeps what they typed. |
 | Cross-user access | Blocked by RLS (`user_id` scoping). |
 | Staff viewing a client | Staff can read templates (`FOR SELECT`) for monitoring, but cannot create them (the save UI only exists in the `klien` flow). |
 
@@ -143,18 +145,20 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 
 Pre-commit gates: `npm run lint` and `npm test` both green.
 
-## 10. Out of Scope / Follow-ups
+## 10. Resolved Decisions
 
-- **Delete / rename templates** — currently templates persist forever; a delete affordance in the picker is the natural next step.
+| Question | Decision |
+|---|---|
+| Apply behavior — replace vs. append | **Append.** Template items are added to existing rows. User always keeps what they typed. |
+| Default template name | **Auto-suggest + editable.** Pre-fill with first item name + count (e.g. "Nasi goreng (+2)"); user can edit or accept. |
+| Delete in v1 | **Include.** Small delete button (trash icon) on each template row in the picker. Requires `useDeleteMealTemplate` hook + mutation. |
+
+## 11. Out of Scope / Follow-ups
+
+- **Delete / rename templates** — delete ships in v1; rename is a follow-up.
 - **Template calorie totals** in the picker (would require storing macros).
 - **Append vs. replace** refinement when applying a template over existing rows.
 - Group/shared templates authored by `ahli_gizi`.
-
-## 11. Open Questions (for review)
-
-1. **Apply behavior — replace vs. append:** When the user already has typed rows and applies a template, should it *replace* the rows (current proposal) or *append* to them? Replace is simpler and matches "template = a complete meal"; append is safer against data loss.
-2. **Default template name:** Is *"first item + (n) lainnya"* acceptable, or should the name be required (user must type one)?
-3. **Delete in v1:** Should a minimal delete button ship with this feature, or stay as a follow-up?
 
 ---
 
