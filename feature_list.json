@@ -1,0 +1,15 @@
+{
+  "features": [
+    {
+      "id": "FEAT-01",
+      "name": "Example: Food Log UI Refactor",
+      "status": "pending",
+      "scope": "src/components/food/",
+      "tests": ["src/components/food/*.test.jsx"],
+      "done_criteria": ["npm run lint clean", "npm test passes", "manual QA on /gizi/food-logs"],
+      "evidence": null,
+      "notes": "Replace with your actual feature. Keep done_criteria verifiable."
+    }
+  ],
+  "last_updated": "2026-06-24T00:00:00Z"
+}
