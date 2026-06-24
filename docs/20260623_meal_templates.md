@@ -3,7 +3,7 @@
 - **Date:** 2026-06-23
 - **Status:** Draft — pending review
 - **Branch:** `feat/meal-template`
-- **Roles affected:** `klien` (primary). Staff (`admin`, `ahli_gizi`) are read-only.
+- **Roles affected:** `klien` only.
 
 ---
 
@@ -63,15 +63,16 @@ Two new tables, mirroring `food_logs` / `food_log_items`.
 | `jumlah` | numeric(6,2) | `not null` |
 | `unit_id` | uuid FK → `food_units(id)` | nullable |
 | `unit_nama` | text | denormalized unit name; `not null` (survives `food_units` deletion, same pattern as `food_log_items`) |
+| `kalori` | numeric(8,2) | nullable — calorie estimate from the Edge Function at save time |
 | `created_at` | timestamptz | default `now()` |
 
-**Design note — no macros stored.** Template items intentionally store only food identity + quantity, **not** calories/macros. When a template is applied, the items populate the input rows and the user runs **Analisa** as usual, so every saved log still derives its calorie estimate from the `estimate-calories` Edge Function (consistent with the project rule that estimates are immutable and come only from the Edge Function). This also avoids stale macro values drifting in stored templates.
+**Design note — calorie stored, other macros are not.** Template items store `kalori` from the Edge Function at save time so the picker can display a calorie total per template. Other macros (protein, karbohidrat, lemak, serat) are intentionally omitted to avoid stale values drifting. When a template is applied, the items populate the input rows and the user still runs **Analisa** as usual for a fresh estimate.
 
 ### RLS
 
-Mirrors the `food_logs` pattern: owner gets full access scoped to `user_id`; staff get read-only.
+Owner-only access scoped to `user_id`.
 
-- `meal_templates`: klien `FOR ALL` (`auth.uid() = user_id`); staff `FOR SELECT` (`jwt_is_staff()`).
+- `meal_templates`: `FOR ALL` (`auth.uid() = user_id`).
 - `meal_template_items`: ownership resolved through the parent via a new `SECURITY DEFINER` helper `meal_template_owned_by_me(template_id)` — same approach as the existing `food_log_owned_by_me(food_log_id)`.
 
 Explicit grants on the new tables + `execute` on the helper for `authenticated`.
@@ -101,7 +102,7 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 - Add local state `saveAsTemplate` (bool, default `false`) and `templateName` (string).
 - In the `isPending` action area, render a labeled native checkbox **"Simpan juga sebagai template"**. When checked, reveal a text `Input` for the name. The name defaults to a suggestion based on the first item (e.g. *"Nasi goreng (+2)"*); if left blank, the suggestion is used.
 - In `handleConfirmSave`, **after the food log + items are successfully saved**, if `saveAsTemplate` is checked, create the template (best-effort):
-  - Map the just-saved items to `{ nama_makanan, jumlah, unit_id, unit_nama }` (drop macros).
+  - Map the just-saved items to `{ nama_makanan, jumlah, unit_id, unit_nama, kalori }`.
   - Call `useCreateMealTemplate` with `{ userId, nama, waktu_makan, items }`.
   - Wrap in its own `try/catch`. **On failure, the saved log is kept** and a warning toast is shown: *"Log tersimpan, tapi gagal menyimpan template."* The log save is never rolled back because of a template error.
 - Reset `saveAsTemplate` / `templateName` whenever `pendingResult` is cleared (success and discard).
@@ -113,7 +114,7 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 **New component:** `src/components/food/MealTemplatePicker.jsx`, built on the existing `src/components/ui/dialog.jsx`.
 
 - Props: `{ open, onOpenChange, templates, onApply, onDelete }`.
-- Lists each template: name, item count (*"3 item"*), and a one-line preview of the item names.
+- Lists each template: name, item count (*"3 item"*), calorie total (sum of `kalori`), and a one-line preview of the item names.
 - Empty state: *"Belum ada template tersimpan."*
 - Selecting a template calls `onApply(template)` and closes the dialog.
 - Each template row includes a small delete button (trash icon) that calls `onDelete(template.id)`.
@@ -133,7 +134,6 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 | A `food_units` row is later deleted | Template still displays correctly via denormalized `unit_nama`; `unit_id` becomes dangling but harmless (the Select falls back to the unit list). |
 | Applying a template with existing typed rows | **Appends** template items to existing rows. User keeps what they typed. |
 | Cross-user access | Blocked by RLS (`user_id` scoping). |
-| Staff viewing a client | Staff can read templates (`FOR SELECT`) for monitoring, but cannot create them (the save UI only exists in the `klien` flow). |
 
 ## 9. Testing
 
@@ -156,7 +156,7 @@ Pre-commit gates: `npm run lint` and `npm test` both green.
 ## 11. Out of Scope / Follow-ups
 
 - **Delete / rename templates** — delete ships in v1; rename is a follow-up.
-- **Template calorie totals** in the picker (would require storing macros).
+- **Template macro totals** (protein, karbohidrat, lemak, serat) in the picker — only `kalori` is stored per item.
 - **Append vs. replace** refinement when applying a template over existing rows.
 - Group/shared templates authored by `ahli_gizi`.
 
