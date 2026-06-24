@@ -63,10 +63,10 @@ Two new tables, mirroring `food_logs` / `food_log_items`.
 | `jumlah` | numeric(6,2) | `not null` |
 | `unit_id` | uuid FK → `food_units(id)` | nullable |
 | `unit_nama` | text | denormalized unit name; `not null` (survives `food_units` deletion, same pattern as `food_log_items`) |
-| `kalori` | numeric(8,2) | nullable — calorie estimate from the Edge Function at save time |
+| `kalori_estimasi` | numeric(8,2) | nullable — calorie estimate from the Edge Function at save time |
 | `created_at` | timestamptz | default `now()` |
 
-**Design note — calorie stored, other macros are not.** Template items store `kalori` from the Edge Function at save time so the picker can display a calorie total per template. Other macros (protein, karbohidrat, lemak, serat) are intentionally omitted to avoid stale values drifting. When a template is applied, the items populate the input rows and the user still runs **Analisa** as usual for a fresh estimate.
+**Design note — calorie stored, other macros are not.** Template items store `kalori_estimasi` from the Edge Function at save time so the picker can display a calorie total per template. Other macros (protein, karbohidrat, lemak, serat) are intentionally omitted to avoid stale values drifting. When a template is applied, the items populate the input rows and the user still runs **Analisa** as usual for a fresh estimate.
 
 ### RLS
 
@@ -102,7 +102,7 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 - Add local state `saveAsTemplate` (bool, default `false`) and `templateName` (string).
 - In the `isPending` action area, render a labeled native checkbox **"Simpan juga sebagai template"**. When checked, reveal a text `Input` for the name. The name defaults to a suggestion based on the first item (e.g. *"Nasi goreng (+2)"*); if left blank, the suggestion is used.
 - In `handleConfirmSave`, **after the food log + items are successfully saved**, if `saveAsTemplate` is checked, create the template (best-effort):
-  - Map the just-saved items to `{ nama_makanan, jumlah, unit_id, unit_nama, kalori }`.
+  - Map the just-saved items to `{ nama_makanan, jumlah, unit_id, unit_nama, kalori_estimasi }`.
   - Call `useCreateMealTemplate` with `{ userId, nama, waktu_makan, items }`.
   - Wrap in its own `try/catch`. **On failure, the saved log is kept** and a warning toast is shown: *"Log tersimpan, tapi gagal menyimpan template."* The log save is never rolled back because of a template error.
 - Reset `saveAsTemplate` / `templateName` whenever `pendingResult` is cleared (success and discard).
@@ -114,7 +114,7 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 **New component:** `src/components/food/MealTemplatePicker.jsx`, built on the existing `src/components/ui/dialog.jsx`.
 
 - Props: `{ open, onOpenChange, templates, onApply, onDelete }`.
-- Lists each template: name, item count (*"3 item"*), calorie total (sum of `kalori`), and a one-line preview of the item names.
+- Lists each template: name, item count (*"3 item"*), calorie total (sum of `kalori_estimasi`), and a one-line preview of the item names.
 - Empty state: *"Belum ada template tersimpan."*
 - Selecting a template calls `onApply(template)` and closes the dialog.
 - Each template row includes a small delete button (trash icon) that calls `onDelete(template.id)`.
@@ -156,7 +156,7 @@ Pre-commit gates: `npm run lint` and `npm test` both green.
 ## 11. Out of Scope / Follow-ups
 
 - **Delete / rename templates** — delete ships in v1; rename is a follow-up.
-- **Template macro totals** (protein, karbohidrat, lemak, serat) in the picker — only `kalori` is stored per item.
+- **Template macro totals** (protein, karbohidrat, lemak, serat) in the picker — only `kalori_estimasi` is stored per item.
 - **Append vs. replace** refinement when applying a template over existing rows.
 - Group/shared templates authored by `ahli_gizi`.
 
