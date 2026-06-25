@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import { AnimatePresence, motion as Motion, useReducedMotion } from 'framer-motion'
-import { Check, ChevronDown, Clock, Cookie, Loader2, Moon, Pencil, Plus, Sparkles, Sunrise, Sun, Trash2, X } from 'lucide-react'
+import { Bookmark, Check, ChevronDown, Clock, Cookie, Loader2, Moon, Pencil, Plus, Sparkles, Sunrise, Sun, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/select'
 import { TimeScroller } from '@/components/food/TimeScroller'
 import { useFoodNameSuggestions, useFoodUnits } from '@/hooks/useFoodLog'
+import { useMealTemplates, useCreateMealTemplate, useDeleteMealTemplate } from '@/hooks/useMealTemplates'
+import { MealTemplatePicker } from '@/components/food/MealTemplatePicker'
 import { analyzeFood } from '@/lib/openai'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { formatNumberId, toIsoDateLocal } from '@/lib/format'
@@ -342,6 +344,9 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const qc = useQueryClient()
   const { data: units = [] } = useFoodUnits()
   const { data: suggestions = [] } = useFoodNameSuggestions()
+  const { data: templates = [] } = useMealTemplates(userId)
+  const createTemplate = useCreateMealTemplate()
+  const deleteTemplate = useDeleteMealTemplate()
 
   const [mealKey, setMealKey] = useState('')
   const [jamMakan, setJamMakan] = useState('')
@@ -362,6 +367,9 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const [addRows, setAddRows] = useState(() => [emptyRow()])
   const [addLoading, setAddLoading] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false)
+  const [templateName, setTemplateName] = useState('')
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
   const idempotencyKeyRef = useRef(null)
   const resultRef = useRef(null)
   const analyzingAnchorRef = useRef(null)
@@ -715,8 +723,12 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
       const { error: itemErr } = await supabase.from('food_log_items').insert(inserts)
       if (itemErr) throw itemErr
 
+      await saveTemplateIfRequested(inserts, waktuMakan)
+
       setShowSaved(true)
       setPendingResult(null)
+      setSaveAsTemplate(false)
+      setTemplateName('')
       idempotencyKeyRef.current = null
       qc.invalidateQueries({ queryKey: ['food_logs', userId] })
       qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
@@ -770,8 +782,12 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
             }
           }
 
+          await saveTemplateIfRequested(inserts, waktuMakan)
+
           setShowSaved(true)
           setPendingResult(null)
+          setSaveAsTemplate(false)
+          setTemplateName('')
           idempotencyKeyRef.current = null
           qc.invalidateQueries({ queryKey: ['food_logs', userId] })
           qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
@@ -800,6 +816,53 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   function handleDiscard() {
     idempotencyKeyRef.current = null
     setPendingResult(null)
+    setSaveAsTemplate(false)
+    setTemplateName('')
+  }
+
+  function suggestTemplateName(items) {
+    if (!items.length) return 'Template'
+    const first = items[0].nama_makanan
+    const extra = items.length - 1
+    return extra > 0 ? `${first} (+${extra})` : first
+  }
+
+  async function saveTemplateIfRequested(inserts, waktuMakan) {
+    if (!saveAsTemplate) return
+    const nama = templateName.trim() || suggestTemplateName(inserts)
+    try {
+      await createTemplate.mutateAsync({
+        userId,
+        nama,
+        waktu_makan: waktuMakan || null,
+        items: inserts.map((x) => ({
+          nama_makanan: x.nama_makanan,
+          jumlah: x.jumlah,
+          unit_id: x.unit_id,
+          unit_nama: x.unit_nama,
+          kalori_estimasi: x.kalori_estimasi,
+        })),
+      })
+    } catch {
+      toast.warning('Log tersimpan, tapi gagal menyimpan template.')
+    }
+  }
+
+  function handleApplyTemplate(template) {
+    const mapped = (template.meal_template_items ?? []).map((it) => ({
+      id: safeUUID(),
+      nama: it.nama_makanan,
+      jumlah: String(it.jumlah ?? ''),
+      unitId: it.unit_id ?? '',
+    }))
+    setRows((prev) => [...prev, ...mapped])
+    if (mapped.length) setExpandedRowId(mapped[0].id)
+    if (template.waktu_makan) handleMealSelect(template.waktu_makan)
+    setTemplatePickerOpen(false)
+  }
+
+  function handleDeleteTemplate(id) {
+    deleteTemplate.mutate({ templateId: id, userId })
   }
 
   function handleRemovePendingItem(index) {
@@ -923,6 +986,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const isPending = Boolean(pendingResult)
 
   return (
+    <>
     <div className="space-y-2 sm:space-y-3 p-4 sm:p-5">
       {showSaved ? (
         <div className="flex items-center justify-center py-6 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-300">
@@ -1127,40 +1191,68 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                   </div>
 
                   {isPending ? (
-                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full rounded-xl sm:w-auto"
-                        onClick={handleDiscard}
-                        disabled={saving}
-                      >
-                        <X className="mr-1 h-4 w-4" />
-                        Batal
-                      </Button>
-                      <Button
-                        type="button"
-                        className={cn(
-                          'w-full rounded-xl sm:w-auto',
-                          'bg-gradient-to-r from-primary to-primary/90',
-                          'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
-                        )}
-                        onClick={handleConfirmSave}
-                        disabled={saving}
-                      >
-                        {saving ? (
-                          <>
-                            <Loader2 className={cn('mr-2 h-4 w-4', !reduceMotion && 'motion-safe:animate-spin')} aria-hidden />
-                            Menyimpan…
-                          </>
-                        ) : (
-                          <>
-                            <Check className="mr-1 h-4 w-4" />
-                            Simpan
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                    <>
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full rounded-xl sm:w-auto"
+                          onClick={handleDiscard}
+                          disabled={saving}
+                        >
+                          <X className="mr-1 h-4 w-4" />
+                          Batal
+                        </Button>
+                        <Button
+                          type="button"
+                          className={cn(
+                            'w-full rounded-xl sm:w-auto',
+                            'bg-gradient-to-r from-primary to-primary/90',
+                            'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
+                          )}
+                          onClick={handleConfirmSave}
+                          disabled={saving}
+                        >
+                          {saving ? (
+                            <>
+                              <Loader2 className={cn('mr-2 h-4 w-4', !reduceMotion && 'motion-safe:animate-spin')} aria-hidden />
+                              Menyimpan…
+                            </>
+                          ) : (
+                            <>
+                              <Check className="mr-1 h-4 w-4" />
+                              Simpan
+                            </>
+                          )}
+                        </Button>
+                        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer sm:ml-2">
+                          <input
+                            type="checkbox"
+                            checked={saveAsTemplate}
+                            onChange={(e) => {
+                              const checked = e.target.checked
+                              setSaveAsTemplate(checked)
+                              if (checked && !templateName.trim()) {
+                                setTemplateName(suggestTemplateName(pendingResult?.items ?? []))
+                              }
+                            }}
+                            disabled={saving}
+                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          Simpan juga sebagai template
+                        </label>
+                      </div>
+                      {saveAsTemplate && (
+                        <Input
+                          type="text"
+                          placeholder={suggestTemplateName(pendingResult?.items ?? [])}
+                          value={templateName}
+                          onChange={(e) => setTemplateName(e.target.value)}
+                          disabled={saving}
+                          className="mt-1"
+                        />
+                      )}
+                    </>
                   ) : (
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
                       <Button
@@ -1451,6 +1543,17 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                   <Plus className="h-4 w-4" />
                   Tambah makanan
                 </Button>
+                {templates.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full rounded-xl border border-gray-300 text-sm transition-all duration-200 motion-safe:active:scale-[0.99] hover:bg-muted/50 hover:text-foreground"
+                    onClick={() => setTemplatePickerOpen(true)}
+                  >
+                    <Bookmark className="h-4 w-4" />
+                    Gunakan template
+                  </Button>
+                )}
               </section>
 
               <div ref={analyzingAnchorRef} className="mt-3 scroll-mt-4">
@@ -1495,5 +1598,13 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
             </>
           )}
     </div>
+    <MealTemplatePicker
+      open={templatePickerOpen}
+      onOpenChange={setTemplatePickerOpen}
+      templates={templates}
+      onApply={handleApplyTemplate}
+      onDelete={handleDeleteTemplate}
+    />
+    </>
   )
 }

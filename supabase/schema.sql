@@ -91,6 +91,31 @@ create table if not exists public.food_log_items (
   created_at timestamptz default now()
 );
 
+create table if not exists public.meal_templates (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  nama text not null,
+  waktu_makan text check (waktu_makan in ('pagi', 'siang', 'malam', 'snack')),
+  created_at timestamptz default now()
+);
+
+create index if not exists meal_templates_user_created_idx
+  on public.meal_templates (user_id, created_at desc);
+
+create table if not exists public.meal_template_items (
+  id uuid primary key default gen_random_uuid(),
+  meal_template_id uuid references public.meal_templates(id) on delete cascade,
+  nama_makanan text not null,
+  jumlah numeric(6,2) not null,
+  unit_id uuid references public.food_units(id),
+  unit_nama text not null,
+  kalori_estimasi numeric(8,2) default 0,
+  created_at timestamptz default now()
+);
+
+create index if not exists meal_template_items_template_idx
+  on public.meal_template_items (meal_template_id);
+
 create table if not exists public.assessments (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -122,7 +147,7 @@ create table if not exists public.user_evaluations (
 create index if not exists user_evaluations_user_date_to_idx
   on public.user_evaluations (user_id, date_to desc, created_at desc);
 
-create table public.anthropometric_change_log (
+create table if not exists public.anthropometric_change_log (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
   field text not null,
@@ -139,7 +164,7 @@ create table public.anthropometric_change_log (
   ))
 );
 
-create index anthropometric_change_log_user_changed_idx
+create index if not exists anthropometric_change_log_user_changed_idx
   on public.anthropometric_change_log (user_id, changed_at desc);
 
 create or replace view public.food_name_suggestions
@@ -247,6 +272,22 @@ as $$
   );
 $$;
 
+-- Cek kepemilikan meal_template untuk RLS meal_template_items
+create or replace function public.meal_template_owned_by_me(p_template_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.meal_templates mt
+    where mt.id = p_template_id
+      and mt.user_id = (select auth.uid())
+  );
+$$;
+
 -- Anthropometric change log (Sprint 2): internal writers + triggers
 create or replace function public.append_antrop_change(
   p_user_id uuid,
@@ -275,6 +316,7 @@ create or replace function public.bmi_from_bb_tb(bb numeric, tb numeric)
 returns numeric
 language sql
 immutable
+set search_path = ''
 as $$
   select case
     when bb is null or tb is null or bb <= 0 or tb <= 0 then null
@@ -283,6 +325,7 @@ as $$
 $$;
 
 revoke all on function public.bmi_from_bb_tb(numeric, numeric) from public;
+revoke all on function public.bmi_from_bb_tb(numeric, numeric) from anon;
 grant execute on function public.bmi_from_bb_tb(numeric, numeric) to authenticated;
 
 create or replace function public.trg_body_measurements_change_log()
@@ -402,6 +445,8 @@ alter table public.profiles enable row level security;
 alter table public.body_measurements enable row level security;
 alter table public.food_logs enable row level security;
 alter table public.food_log_items enable row level security;
+alter table public.meal_templates enable row level security;
+alter table public.meal_template_items enable row level security;
 alter table public.food_units enable row level security;
 alter table public.assessments enable row level security;
 alter table public.user_evaluations enable row level security;
@@ -451,6 +496,26 @@ create policy "food_items_klien" on public.food_log_items
 
 drop policy if exists "food_items_staff_read" on public.food_log_items;
 create policy "food_items_staff_read" on public.food_log_items
+  for select using (public.jwt_is_staff());
+
+-- meal_templates: klien can CRUD own templates; staff can only read.
+drop policy if exists "meal_templates_klien" on public.meal_templates;
+create policy "meal_templates_klien" on public.meal_templates
+  for all using (auth.uid() = user_id);
+
+drop policy if exists "meal_templates_staff_read" on public.meal_templates;
+create policy "meal_templates_staff_read" on public.meal_templates
+  for select using (public.jwt_is_staff());
+
+-- meal_template_items: klien can CRUD items in own templates; staff can only read.
+drop policy if exists "meal_template_items_klien" on public.meal_template_items;
+create policy "meal_template_items_klien" on public.meal_template_items
+  for all
+  using (public.meal_template_owned_by_me(meal_template_id))
+  with check (public.meal_template_owned_by_me(meal_template_id));
+
+drop policy if exists "meal_template_items_staff_read" on public.meal_template_items;
+create policy "meal_template_items_staff_read" on public.meal_template_items
   for select using (public.jwt_is_staff());
 
 -- food_log_deletions: klien can insert for own deletions; staff can select.
@@ -504,10 +569,16 @@ grant all on all tables in schema public to postgres, service_role;
 grant select, insert, update, delete on all tables in schema public to authenticated;
 grant select on public.food_name_suggestions to authenticated;
 revoke all on function public.jwt_is_staff() from public;
+revoke all on function public.jwt_is_staff() from anon;
 grant execute on function public.jwt_is_staff() to authenticated;
 
 revoke all on function public.food_log_owned_by_me(uuid) from public;
+revoke all on function public.food_log_owned_by_me(uuid) from anon;
 grant execute on function public.food_log_owned_by_me(uuid) to authenticated;
+
+revoke all on function public.meal_template_owned_by_me(uuid) from public;
+revoke all on function public.meal_template_owned_by_me(uuid) from anon;
+grant execute on function public.meal_template_owned_by_me(uuid) to authenticated;
 
 -- Security definer: read profile names bypassing RLS (for showing creator/evaluator names)
 create or replace function public.get_profile_names(profile_ids uuid[])
@@ -520,4 +591,22 @@ as $$
 $$;
 
 revoke all on function public.get_profile_names(uuid[]) from public;
+revoke all on function public.get_profile_names(uuid[]) from anon;
 grant execute on function public.get_profile_names(uuid[]) to authenticated;
+
+-- Trigger functions: only called by triggers, never via RPC
+revoke all on function public.trg_body_measurements_change_log() from public;
+revoke all on function public.trg_body_measurements_change_log() from anon;
+revoke all on function public.trg_body_measurements_change_log() from authenticated;
+revoke all on function public.trg_assessments_change_log() from public;
+revoke all on function public.trg_assessments_change_log() from anon;
+revoke all on function public.trg_assessments_change_log() from authenticated;
+revoke all on function public.trg_profiles_antrop_change_log() from public;
+revoke all on function public.trg_profiles_antrop_change_log() from anon;
+revoke all on function public.trg_profiles_antrop_change_log() from authenticated;
+
+revoke all on function public.handle_new_user() from public;
+revoke execute on function public.handle_new_user() from anon;
+revoke execute on function public.handle_new_user() from authenticated;
+revoke all on function public.append_antrop_change(uuid, text, text, text, uuid, text) from anon;
+revoke all on function public.append_antrop_change(uuid, text, text, text, uuid, text) from authenticated;

@@ -48,9 +48,9 @@ Two new tables, mirroring `food_logs` / `food_log_items`.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid PK | `gen_random_uuid()` |
-| `user_id` | uuid FK → `profiles(id)` | owner; `on delete cascade` |
+| `user_id` | uuid FK → `profiles(id)` | owner; `on delete cascade`; `not null` |
 | `nama` | text | user-facing template name; `not null` |
-| `waktu_makan` | text | `'pagi' \| 'siang' \| 'malam' \| 'snack'` (nullable) — the meal it was saved from |
+| `waktu_makan` | text | `check (waktu_makan in ('pagi', 'siang', 'malam', 'snack'))` (nullable) — the meal it was saved from |
 | `created_at` | timestamptz | default `now()` |
 
 ### `meal_template_items` (child)
@@ -63,23 +63,47 @@ Two new tables, mirroring `food_logs` / `food_log_items`.
 | `jumlah` | numeric(6,2) | `not null` |
 | `unit_id` | uuid FK → `food_units(id)` | nullable |
 | `unit_nama` | text | denormalized unit name; `not null` (survives `food_units` deletion, same pattern as `food_log_items`) |
-| `kalori_estimasi` | numeric(8,2) | nullable — calorie estimate from the Edge Function at save time |
+| `kalori_estimasi` | numeric(8,2) | `default 0` — calorie estimate from the Edge Function at save time |
 | `created_at` | timestamptz | default `now()` |
 
 **Design note — calorie stored, other macros are not.** Template items store `kalori_estimasi` from the Edge Function at save time so the picker can display a calorie total per template. Other macros (protein, karbohidrat, lemak, serat) are intentionally omitted to avoid stale values drifting. When a template is applied, the items populate the input rows and the user still runs **Analisa** as usual for a fresh estimate.
 
+### Indexes
+
+- `meal_templates`: `(user_id, created_at desc)` — matches the query pattern (fetch by owner, newest first).
+- `meal_template_items`: `(template_id)` — FK join performance for nested select.
+
 ### RLS
+
+Both tables have `alter table public.meal_templates enable row level security` / `alter table public.meal_template_items enable row level security`.
 
 Owner-only access scoped to `user_id`.
 
-- `meal_templates`: `FOR ALL` (`auth.uid() = user_id`).
-- `meal_template_items`: ownership resolved through the parent via a new `SECURITY DEFINER` helper `meal_template_owned_by_me(template_id)` — same approach as the existing `food_log_owned_by_me(food_log_id)`.
+- `meal_templates`: `FOR ALL` using (`auth.uid() = user_id`).
+- `meal_template_items`: `FOR ALL` using (`public.meal_template_owned_by_me(template_id)`) **with check** (`public.meal_template_owned_by_me(template_id)`) — both clauses required, matching the `food_log_items` pattern.
 
-Explicit grants on the new tables + `execute` on the helper for `authenticated`.
+### SECURITY DEFINER helper
+
+New function `meal_template_owned_by_me(p_template_id uuid) returns boolean` — mirrors `food_log_owned_by_me`:
+```sql
+create or replace function public.meal_template_owned_by_me(p_template_id uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.meal_templates mt
+    where mt.id = p_template_id
+      and mt.user_id = (select auth.uid())
+  );
+$$;
+```
+Grants: `revoke all on function public.meal_template_owned_by_me(uuid) from public;` + `grant execute on function public.meal_template_owned_by_me(uuid) to authenticated;`.
+
+Explicit grants on the new tables for `authenticated`.
 
 ### Migration
 
-- New file `supabase/migration_meal_templates.sql`.
+- New file `supabase/migrations/20260625_meal_templates.sql`.
 - Mirror the same DDL into the canonical `supabase/schema.sql`.
 - Apply to the remote project via the Supabase `apply_migration` tool; verify with `list_tables` and `get_advisors` (security).
 - Add the two tables to the DB table list in `AGENTS.md` §7.
@@ -90,8 +114,8 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 
 - **`useMealTemplates(userId)`** — query. Key `['meal_templates', userId]`. Uses a nested select to fetch templates with their items in one round-trip:
   `supabase.from('meal_templates').select('*, meal_template_items(*)').eq('user_id', userId).order('created_at', { ascending: false })`.
-- **`useCreateMealTemplate()`** — `useMutation`. Inserts the parent row (`.select().single()`), then the child items with `template_id`. Invalidates `['meal_templates', userId]`. No success toast (the save is announced by the existing "Tersimpan" flow + the log save); the component handles the best-effort error case.
-- **`useDeleteMealTemplate()`** — `useMutation`. Deletes the parent row (items cascade via `on delete cascade`). Invalidates `['meal_templates', userId]`. Toast: `"Template berhasil dihapus."`
+- **`useCreateMealTemplate()`** — `useMutation`. Inserts the parent row with `.insert(...).select().single()` to retrieve the generated `id` (unlike `food_logs` which uses idempotency keys — templates have no such mechanism), then inserts child items with the returned `template_id`. Invalidates via `qc.invalidateQueries({ queryKey: ['meal_templates', userId] })`. No success toast (the save is announced by the existing "Tersimpan" flow + the log save); the component handles the best-effort error case.
+- **`useDeleteMealTemplate()`** — `useMutation`. Deletes the parent row (items cascade via `on delete cascade`). Invalidates via `qc.invalidateQueries({ queryKey: ['meal_templates', userId] })`. Toast: `"Template berhasil dihapus."`
 
 ## 6. UI — Save Flow
 
@@ -161,5 +185,3 @@ Pre-commit gates: `npm run lint` and `npm test` both green.
 - Group/shared templates authored by `ahli_gizi`.
 
 ---
-
-*Based on the implementation plan at `~/.claude/plans/snug-tumbling-lobster.md`.*

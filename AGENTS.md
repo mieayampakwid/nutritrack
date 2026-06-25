@@ -105,11 +105,13 @@ Tables in `supabase/schema.sql` (canonical schema — keep in sync):
 | `food_units`             | Food unit definitions (centong, etc) |
 | `food_logs`              | Daily food intake logs               |
 | `food_log_items`         | Individual food items within logs    |
+| `meal_templates`         | Saved meal combinations (klien-owned) |
+| `meal_template_items`   | Food items within a meal template     |
 | `assessments`            | Nutritional assessment calculations  |
 | `user_evaluations`       | User evaluation and feedback         |
 | `food_name_suggestions`  | View — frequently consumed foods     |
 
-All tables have RLS enabled. Key helper functions: `jwt_is_staff()` (admin or ahli_gizi), `food_log_owned_by_me(uuid)`.
+All tables have RLS enabled. Key helper functions: `jwt_is_staff()` (admin or ahli_gizi), `food_log_owned_by_me(uuid)`, `meal_template_owned_by_me(uuid)`.
 
 ## 8. Common Commands
 

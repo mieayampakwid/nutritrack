@@ -94,6 +94,18 @@ vi.mock('@/hooks/useFoodLog', () => ({
   useFoodNameSuggestions: () => ({ data: [], isLoading: false }),
 }))
 
+const mealTemplatesMock = vi.hoisted(() => ({
+  useMealTemplates: vi.fn(() => ({ data: [], isLoading: false })),
+  useCreateMealTemplate: vi.fn(() => ({
+    mutateAsync: vi.fn().mockResolvedValue(undefined),
+  })),
+  useDeleteMealTemplate: vi.fn(() => ({
+    mutate: vi.fn(),
+  })),
+}))
+
+vi.mock('@/hooks/useMealTemplates', () => mealTemplatesMock)
+
 const openaiMock = vi.hoisted(() => ({
   analyzeFood: vi.fn().mockResolvedValue([{ kalori: 200, karbohidrat: 45, protein: 8, lemak: 5, serat: 2, natrium: 400, nama_makanan: 'Nasi Goreng' }]),
 }))
@@ -130,6 +142,7 @@ vi.mock('sonner', () => ({
   toast: { error: vi.fn(), success: vi.fn(), info: vi.fn(), warning: vi.fn() },
 }))
 
+import { toast } from 'sonner'
 import { FoodEntryForm } from './FoodEntryForm'
 
 describe('FoodEntryForm', () => {
@@ -151,6 +164,31 @@ describe('FoodEntryForm', () => {
     }
 
     await user.click(screen.getByRole('button', { name: /simpan/i }))
+  }
+
+  /** Override supabase.from so a successful food-log save works (parent → child insert). */
+  function mockFoodLogSave() {
+    const originalFrom = supabaseMock.from.getMockImplementation()
+    supabaseMock.from.mockImplementation((table) => {
+      if (table === 'food_logs') {
+        return {
+          insert: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { id: 'log-new' }, error: null }),
+            }),
+          }),
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+        }
+      }
+      if (table === 'food_log_items') {
+        return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) }
+      }
+      return originalFrom(table)
+    })
   }
 
   it('renders the food list header and a single initial food row', () => {
@@ -347,4 +385,111 @@ describe('FoodEntryForm', () => {
     expect(insertArgs[0].food_log_id).toBe('existing-log-id')
     expect(insertArgs[0].nama_makanan).toBe('Nasi Goreng')
   }, 15000)
+
+  it('shows template checkbox after analysis, and name input when checked', async () => {
+    const user = userEvent.setup()
+    openaiMock.analyzeFood.mockResolvedValueOnce([
+      { nama_makanan: 'Nasi Goreng', kalori: 350, karbohidrat: 50, protein: 10, lemak: 12, serat: 2, natrium: 400 },
+    ])
+
+    renderWithProviders(<FoodEntryForm userId="u1" />)
+
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
+    await setJamMakan(user, '7', '5')
+    await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Nasi Goreng')
+    await user.type(screen.getByPlaceholderText('0'), '1')
+    await user.selectOptions(screen.getByRole('combobox'), 'g')
+
+    await user.click(screen.getByRole('button', { name: /analisa/i }))
+    await screen.findByRole('button', { name: /simpan/i })
+
+    // Checkbox should be present after analysis
+    expect(screen.getByRole('checkbox', { name: /simpan juga sebagai template/i })).toBeInTheDocument()
+
+    // Check it — name input should appear with suggestion pre-filled
+    await user.click(screen.getByRole('checkbox', { name: /simpan juga sebagai template/i }))
+    expect(screen.getByPlaceholderText('Nasi Goreng')).toBeInTheDocument()
+  }, 15000)
+
+  it('saves template when checkbox is checked and Simpan clicked', async () => {
+    const user = userEvent.setup()
+    mockFoodLogSave()
+    const mutateAsyncSpy = vi.fn().mockResolvedValue(undefined)
+    mealTemplatesMock.useCreateMealTemplate.mockReturnValue({ mutateAsync: mutateAsyncSpy })
+
+    openaiMock.analyzeFood.mockResolvedValueOnce([
+      { nama_makanan: 'Nasi Goreng', kalori: 350, karbohidrat: 50, protein: 10, lemak: 12, serat: 2, natrium: 400 },
+    ])
+
+    renderWithProviders(<FoodEntryForm userId="u1" />)
+
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
+    await setJamMakan(user, '7', '5')
+    await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Nasi Goreng')
+    await user.type(screen.getByPlaceholderText('0'), '1')
+    await user.selectOptions(screen.getByRole('combobox'), 'g')
+
+    await user.click(screen.getByRole('button', { name: /analisa/i }))
+    await screen.findByRole('button', { name: /simpan/i })
+
+    await user.click(screen.getByRole('checkbox', { name: /simpan juga sebagai template/i }))
+    await user.click(screen.getByRole('button', { name: /simpan/i }))
+
+    await waitFor(() => expect(screen.getByText('Tersimpan')).toBeInTheDocument())
+
+    expect(mutateAsyncSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u1',
+        items: expect.arrayContaining([
+          expect.objectContaining({ nama_makanan: 'Nasi Goreng' }),
+        ]),
+      }),
+    )
+  }, 15000)
+
+  it('shows warning toast when template save fails but log still saved', async () => {
+    const user = userEvent.setup()
+    mockFoodLogSave()
+    const mutateAsyncSpy = vi.fn().mockRejectedValue(new Error('template insert failed'))
+    mealTemplatesMock.useCreateMealTemplate.mockReturnValue({ mutateAsync: mutateAsyncSpy })
+
+    openaiMock.analyzeFood.mockResolvedValueOnce([
+      { nama_makanan: 'Nasi Goreng', kalori: 350, karbohidrat: 50, protein: 10, lemak: 12, serat: 2, natrium: 400 },
+    ])
+
+    renderWithProviders(<FoodEntryForm userId="u1" />)
+
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
+    await setJamMakan(user, '7', '5')
+    await user.type(screen.getByPlaceholderText(/nama makanan/i), 'Nasi Goreng')
+    await user.type(screen.getByPlaceholderText('0'), '1')
+    await user.selectOptions(screen.getByRole('combobox'), 'g')
+
+    await user.click(screen.getByRole('button', { name: /analisa/i }))
+    await screen.findByRole('button', { name: /simpan/i })
+
+    await user.click(screen.getByRole('checkbox', { name: /simpan juga sebagai template/i }))
+    await user.click(screen.getByRole('button', { name: /simpan/i }))
+
+    // Log should still be saved
+    await waitFor(() => expect(screen.getByText('Tersimpan')).toBeInTheDocument())
+
+    // Warning toast shown for template failure
+    expect(toast.warning).toHaveBeenCalledWith('Log tersimpan, tapi gagal menyimpan template.')
+  }, 15000)
+
+  it('does not show "Gunakan template" when no templates exist', async () => {
+    mealTemplatesMock.useMealTemplates.mockReturnValue({ data: [], isLoading: false })
+    renderWithProviders(<FoodEntryForm userId="u1" />)
+    expect(screen.queryByRole('button', { name: /gunakan template/i })).not.toBeInTheDocument()
+  })
+
+  it('shows "Gunakan template" button when templates exist', async () => {
+    mealTemplatesMock.useMealTemplates.mockReturnValue({
+      data: [{ id: 't1', nama: 'Oatmeal', meal_template_items: [] }],
+      isLoading: false,
+    })
+    renderWithProviders(<FoodEntryForm userId="u1" />)
+    expect(screen.getByRole('button', { name: /gunakan template/i })).toBeInTheDocument()
+  })
 })
