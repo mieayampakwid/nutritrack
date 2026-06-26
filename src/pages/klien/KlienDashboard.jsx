@@ -44,11 +44,12 @@ export function KlienDashboard() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-5xl -mt-2 space-y-4 sm:space-y-5">
+      <div className="mx-auto max-w-5xl mt-1 space-y-4 sm:space-y-5">
         <DashboardHero
           bareOnMobile
           compactLogo
-          slot={<WaterProgressBar userId={profile?.id} beratBadan={profile?.berat_badan} />}
+          greetingStatic
+          slot={<WaterProgressBar userId={profile?.id} beratBadan={profile?.berat_badan} bare />}
         />
 
         <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur-sm">

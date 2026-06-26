@@ -21,7 +21,7 @@ function sumField(list, field) {
   return (list ?? []).reduce((s, row) => s + (Number(row[field]) || 0), 0)
 }
 
-export function CalorieSummaryCard({ userId, className }) {
+export function CalorieSummaryCard({ userId, className, slot }) {
   const today = toIsoDateLocal(new Date())
 
   const { data: foodLogs = [], isLoading: foodLoading } = useFoodLogsForUser(userId, {
@@ -201,6 +201,7 @@ export function CalorieSummaryCard({ userId, className }) {
             </div>
           </div>
         </div>
+        {slot}
         <div className="border-t border-border/40 px-5 py-3">
           {weekLoading ? (
             <div className="mx-auto h-6 w-48 animate-pulse rounded bg-muted/50" />

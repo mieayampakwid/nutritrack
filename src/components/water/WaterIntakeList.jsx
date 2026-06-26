@@ -20,10 +20,10 @@ function formatTimeLocal(iso) {
   return `${h}:${m}`
 }
 
-export function WaterIntakeList({ userId, tanggal }) {
+export function WaterIntakeList({ userId, tanggal, onEntryClick, silentDelete = false }) {
   const { profile } = useAuth()
   const { data: entries = [], isLoading } = useWaterIntakeByDate(userId, tanggal)
-  const deleteMutation = useDeleteWaterIntake()
+  const deleteMutation = useDeleteWaterIntake({ silent: silentDelete })
   const [confirmId, setConfirmId] = useState(null)
 
   const confirmEntry = confirmId ? entries.find((e) => e.id === confirmId) : null
@@ -52,7 +52,8 @@ export function WaterIntakeList({ userId, tanggal }) {
         {entries.map((entry) => (
           <div
             key={entry.id}
-            className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2"
+            onClick={() => onEntryClick?.(entry.volume_ml)}
+            className={`flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 ${onEntryClick ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors' : ''}`}
           >
             <div className="flex items-center gap-3 min-w-0">
               <span className="text-xs text-muted-foreground tabular-nums shrink-0">

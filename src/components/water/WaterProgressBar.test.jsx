@@ -62,11 +62,11 @@ describe('WaterProgressBar', () => {
       />,
     )
 
-    expect(screen.getByText(/2\.100/)).toBeInTheDocument()
-    expect(screen.getByText('38%')).toBeInTheDocument()
+    expect(screen.getByText(/800 \/ 2\.100 ml/)).toBeInTheDocument()
+    expect(screen.getByText('Asupan air')).toBeInTheDocument()
   })
 
-  it('shows Tercapai when consumed >= target', () => {
+  it('shows checkmark when consumed >= target', () => {
     useWaterIntakeByDate.mockReturnValue({
       data: [
         { id: 'w1', volume_ml: 2100, tanggal: '2026-06-25' },
@@ -82,7 +82,10 @@ describe('WaterProgressBar', () => {
       />,
     )
 
-    expect(screen.getByText('Tercapai')).toBeInTheDocument()
+    expect(screen.getByText(/2\.100 \/ 2\.100 ml/)).toBeInTheDocument()
+    // CircleCheck icon from lucide is rendered in an svg
+    const container = screen.getByText(/2\.100 \/ 2\.100 ml/).parentElement
+    expect(container.querySelector('svg')).toBeTruthy()
   })
 
   it('caps progress at 100% when exceeded', () => {
@@ -101,10 +104,10 @@ describe('WaterProgressBar', () => {
       />,
     )
 
-    expect(screen.getByText('Tercapai')).toBeInTheDocument()
+    expect(screen.getByText(/3\.000 \/ 2\.100 ml/)).toBeInTheDocument()
   })
 
-  it('shows 0% when no entries', () => {
+  it('shows 0 consumed when no entries', () => {
     useWaterIntakeByDate.mockReturnValue({
       data: [],
       isLoading: false,
@@ -118,6 +121,6 @@ describe('WaterProgressBar', () => {
       />,
     )
 
-    expect(screen.getByText('0%')).toBeInTheDocument()
+    expect(screen.getByText(/0 \/ 2\.100 ml/)).toBeInTheDocument()
   })
 })

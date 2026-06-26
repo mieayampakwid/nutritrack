@@ -19,7 +19,8 @@ export function useWaterIntakeByDate(userId, tanggal) {
   })
 }
 
-export function useAddWaterIntake() {
+export function useAddWaterIntake(options = {}) {
+  const { silent = false } = options
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ userId, tanggal, volumeMl }) => {
@@ -33,15 +34,16 @@ export function useAddWaterIntake() {
     },
     onSuccess: (_, { userId, tanggal }) => {
       qc.invalidateQueries({ queryKey: ['water_intakes', userId, tanggal] })
-      toast.success('Asupan air tercatat.')
+      if (!silent) toast.success('Asupan air tercatat.')
     },
     onError: (error) => {
-      toast.error(error.message ?? 'Gagal mencatat asupan air.')
+      if (!silent) toast.error(error.message ?? 'Gagal mencatat asupan air.')
     },
   })
 }
 
-export function useDeleteWaterIntake() {
+export function useDeleteWaterIntake(options = {}) {
+  const { silent = false } = options
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ intakeId, userId, volumeMl, tanggal, createdAt }) => {
@@ -63,10 +65,10 @@ export function useDeleteWaterIntake() {
     },
     onSuccess: (_, { userId, tanggal }) => {
       qc.invalidateQueries({ queryKey: ['water_intakes', userId, tanggal] })
-      toast.success('Entri asupan air dihapus.')
+      if (!silent) toast.success('Entri asupan air dihapus.')
     },
     onError: (error) => {
-      toast.error(error.message ?? 'Gagal menghapus entri.')
+      if (!silent) toast.error(error.message ?? 'Gagal menghapus entri.')
     },
   })
 }
