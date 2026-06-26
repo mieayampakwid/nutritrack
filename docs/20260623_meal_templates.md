@@ -1,7 +1,7 @@
 # Feature Spec — Save & Reuse Meal Templates
 
 - **Date:** 2026-06-23
-- **Status:** Draft — pending review
+- **Status:** Draft — updated to match acceptance criteria
 - **Branch:** `feat/meal-template`
 - **Roles affected:** `klien` only.
 
@@ -35,7 +35,7 @@ There is currently no template / favorit / preset concept anywhere in the databa
 
 ## 3. User Stories
 
-- **US-1 (Save):** As a `klien`, after analyzing a meal, I can check "Simpan juga sebagai template" on the confirmation card, optionally name it, and pressing **Simpan** saves both my food log *and* the meal as a reusable template.
+- **US-1 (Save):** As a `klien`, after analyzing a meal, I can check "Simpan kombinasi ini sebagai template" on the confirmation card, enter a template name (required), and pressing **Simpan** saves both my food log *and* the meal as a reusable template.
 - **US-2 (Reuse):** As a `klien` starting a new meal, I can open my saved templates, pick one, and have its food rows (and meal time) pre-filled — then continue to analyze and save as usual.
 - **US-3 (Isolation):** One `klien` cannot see or use another `klien`'s templates.
 
@@ -64,9 +64,12 @@ Two new tables, mirroring `food_logs` / `food_log_items`.
 | `unit_id` | uuid FK → `food_units(id)` | nullable |
 | `unit_nama` | text | denormalized unit name; `not null` (survives `food_units` deletion, same pattern as `food_log_items`) |
 | `kalori_estimasi` | numeric(8,2) | `default 0` — calorie estimate from the Edge Function at save time |
+| `karbohidrat` | numeric(8,2) | `default 0` |
+| `protein` | numeric(8,2) | `default 0` |
+| `lemak` | numeric(8,2) | `default 0` |
+| `serat` | numeric(8,2) | `default 0` |
+| `natrium` | numeric(8,2) | `default 0` |
 | `created_at` | timestamptz | default `now()` |
-
-**Design note — calorie stored, other macros are not.** Template items store `kalori_estimasi` from the Edge Function at save time so the picker can display a calorie total per template. Other macros (protein, karbohidrat, lemak, serat) are intentionally omitted to avoid stale values drifting. When a template is applied, the items populate the input rows and the user still runs **Analisa** as usual for a fresh estimate.
 
 ### Indexes
 
@@ -124,9 +127,9 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 **Behavior:**
 
 - Add local state `saveAsTemplate` (bool, default `false`) and `templateName` (string).
-- In the `isPending` action area, render a labeled native checkbox **"Simpan juga sebagai template"**. When checked, reveal a text `Input` for the name. The name defaults to a suggestion based on the first item (e.g. *"Nasi goreng (+2)"*); if left blank, the suggestion is used.
+- In the `isPending` action area (below the item list, above the action buttons), render a labeled native checkbox **"Simpan kombinasi ini sebagai template"**. When checked, reveal a text `Input` for the name with placeholder text suggesting a name (e.g. *"Nasi goreng (+2)"*). The template name is **required** when the checkbox is checked — the **Simpan** button is disabled until a name is entered.
 - In `handleConfirmSave`, **after the food log + items are successfully saved**, if `saveAsTemplate` is checked, create the template (best-effort):
-  - Map the just-saved items to `{ nama_makanan, jumlah, unit_id, unit_nama, kalori_estimasi }`.
+  - Map the just-saved items to `{ nama_makanan, jumlah, unit_id, unit_nama, kalori_estimasi, karbohidrat, protein, lemak, serat, natrium }`.
   - Call `useCreateMealTemplate` with `{ userId, nama, waktu_makan, items }`.
   - Wrap in its own `try/catch`. **On failure, the saved log is kept** and a warning toast is shown: *"Log tersimpan, tapi gagal menyimpan template."* The log save is never rolled back because of a template error.
 - Reset `saveAsTemplate` / `templateName` whenever `pendingResult` is cleared (success and discard).
@@ -154,7 +157,7 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 | Case | Behavior |
 |---|---|
 | Checkbox checked but template insert fails | Log stays saved; warning toast shown. |
-| Template name left blank | Falls back to the auto-suggested name (first item + count). |
+| Checkbox checked but template name is empty | Simpan button is disabled; user must enter a name. |
 | A `food_units` row is later deleted | Template still displays correctly via denormalized `unit_nama`; `unit_id` becomes dangling but harmless (the Select falls back to the unit list). |
 | Applying a template with existing typed rows | **Appends** template items to existing rows. User keeps what they typed. |
 | Cross-user access | Blocked by RLS (`user_id` scoping). |
@@ -165,7 +168,7 @@ New file `src/hooks/useMealTemplates.js`, following `src/hooks/useFoodLog.js` co
 |---|---|
 | `src/hooks/useMealTemplates.test.js` | Query returns embedded items; create mutation inserts parent + children and invalidates `['meal_templates', userId]`. Uses `queryWrapper` + `supabaseMock`. |
 | `src/components/food/MealTemplatePicker.test.jsx` | Renders templates, empty state, selecting calls `onApply` with the correct template. |
-| `src/components/food/FoodEntryForm.test.jsx` (extend) | Checkbox toggles the name field; when checked, a successful Simpan also creates a template; template-create failure leaves the log saved and warns; picking a template pre-fills the rows. |
+| `src/components/food/FoodEntryForm.test.jsx` (extend) | Checkbox toggles the name field; Simpan is disabled when name is empty; when checked with name filled, a successful Simpan also creates a template; template-create failure leaves the log saved and warns; picking a template pre-fills the rows. |
 
 Pre-commit gates: `npm run lint` and `npm test` both green.
 
@@ -174,13 +177,12 @@ Pre-commit gates: `npm run lint` and `npm test` both green.
 | Question | Decision |
 |---|---|
 | Apply behavior — replace vs. append | **Append.** Template items are added to existing rows. User always keeps what they typed. |
-| Default template name | **Auto-suggest + editable.** Pre-fill with first item name + count (e.g. "Nasi goreng (+2)"); user can edit or accept. |
+| Default template name | **Required + suggested placeholder.** Placeholder suggests first item name + count (e.g. "Nasi goreng (+2)"). User must type a name — Simpan is disabled until filled. |
 | Delete in v1 | **Include.** Small delete button (trash icon) on each template row in the picker. Requires `useDeleteMealTemplate` hook + mutation. |
 
 ## 11. Out of Scope / Follow-ups
 
 - **Delete / rename templates** — delete ships in v1; rename is a follow-up.
-- **Template macro totals** (protein, karbohidrat, lemak, serat) in the picker — only `kalori_estimasi` is stored per item.
 - **Append vs. replace** refinement when applying a template over existing rows.
 - Group/shared templates authored by `ahli_gizi`.
 

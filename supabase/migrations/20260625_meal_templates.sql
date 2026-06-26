@@ -35,6 +35,11 @@ create table if not exists public.meal_template_items (
   unit_id uuid references public.food_units(id),
   unit_nama text not null,
   kalori_estimasi numeric(8,2) default 0,
+  karbohidrat numeric(8,2) default 0,
+  protein numeric(8,2) default 0,
+  lemak numeric(8,2) default 0,
+  serat numeric(8,2) default 0,
+  natrium numeric(8,2) default 0,
   created_at timestamptz default now()
 );
 

@@ -23,7 +23,6 @@ vi.mock('@/components/ui/popover', async () => {
 // Radix Select also portals & depends on browser event semantics; mock with native <select>.
 vi.mock('@/components/ui/select', async () => {
   const React = await import('react')
-  const Ctx = React.createContext(null)
 
   function collect(node, out) {
     if (!node) return
@@ -386,7 +385,7 @@ describe('FoodEntryForm', () => {
     expect(insertArgs[0].nama_makanan).toBe('Nasi Goreng')
   }, 15000)
 
-  it('shows template checkbox after analysis, and name input when checked', async () => {
+  it('shows template checkbox after analysis', async () => {
     const user = userEvent.setup()
     openaiMock.analyzeFood.mockResolvedValueOnce([
       { nama_makanan: 'Nasi Goreng', kalori: 350, karbohidrat: 50, protein: 10, lemak: 12, serat: 2, natrium: 400 },
@@ -404,11 +403,7 @@ describe('FoodEntryForm', () => {
     await screen.findByRole('button', { name: /simpan/i })
 
     // Checkbox should be present after analysis
-    expect(screen.getByRole('checkbox', { name: /simpan juga sebagai template/i })).toBeInTheDocument()
-
-    // Check it — name input should appear with suggestion pre-filled
-    await user.click(screen.getByRole('checkbox', { name: /simpan juga sebagai template/i }))
-    expect(screen.getByPlaceholderText('Nasi Goreng')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /simpan kombinasi ini sebagai template/i })).toBeInTheDocument()
   }, 15000)
 
   it('saves template when checkbox is checked and Simpan clicked', async () => {
@@ -432,7 +427,7 @@ describe('FoodEntryForm', () => {
     await user.click(screen.getByRole('button', { name: /analisa/i }))
     await screen.findByRole('button', { name: /simpan/i })
 
-    await user.click(screen.getByRole('checkbox', { name: /simpan juga sebagai template/i }))
+    await user.click(screen.getByRole('checkbox', { name: /simpan kombinasi ini sebagai template/i }))
     await user.click(screen.getByRole('button', { name: /simpan/i }))
 
     await waitFor(() => expect(screen.getByText('Tersimpan')).toBeInTheDocument())
@@ -468,7 +463,7 @@ describe('FoodEntryForm', () => {
     await user.click(screen.getByRole('button', { name: /analisa/i }))
     await screen.findByRole('button', { name: /simpan/i })
 
-    await user.click(screen.getByRole('checkbox', { name: /simpan juga sebagai template/i }))
+    await user.click(screen.getByRole('checkbox', { name: /simpan kombinasi ini sebagai template/i }))
     await user.click(screen.getByRole('button', { name: /simpan/i }))
 
     // Log should still be saved

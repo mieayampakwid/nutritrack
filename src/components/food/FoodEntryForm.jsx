@@ -7,7 +7,6 @@ import { Bookmark, Check, ChevronDown, Clock, Cookie, Loader2, Moon, Pencil, Plu
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -368,7 +367,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const [addLoading, setAddLoading] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
   const [saveAsTemplate, setSaveAsTemplate] = useState(false)
-  const [templateName, setTemplateName] = useState('')
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
   const idempotencyKeyRef = useRef(null)
   const resultRef = useRef(null)
@@ -728,7 +726,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
       setShowSaved(true)
       setPendingResult(null)
       setSaveAsTemplate(false)
-      setTemplateName('')
       idempotencyKeyRef.current = null
       qc.invalidateQueries({ queryKey: ['food_logs', userId] })
       qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
@@ -787,7 +784,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
           setShowSaved(true)
           setPendingResult(null)
           setSaveAsTemplate(false)
-          setTemplateName('')
           idempotencyKeyRef.current = null
           qc.invalidateQueries({ queryKey: ['food_logs', userId] })
           qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
@@ -817,19 +813,21 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
     idempotencyKeyRef.current = null
     setPendingResult(null)
     setSaveAsTemplate(false)
-    setTemplateName('')
   }
 
-  function suggestTemplateName(items) {
-    if (!items.length) return 'Template'
-    const first = items[0].nama_makanan
-    const extra = items.length - 1
-    return extra > 0 ? `${first} (+${extra})` : first
+  const WAKTU_LABELS = { pagi: 'Sarapan', siang: 'Makan Siang', malam: 'Makan Malam', snack: 'Snack' }
+
+  function generateTemplateName(waktuMakan) {
+    const label = waktuMakan ? WAKTU_LABELS[waktuMakan] : 'Template'
+    const count = waktuMakan
+      ? templates.filter((t) => t.waktu_makan === waktuMakan).length
+      : templates.length
+    return `${label} ${count + 1}`
   }
 
   async function saveTemplateIfRequested(inserts, waktuMakan) {
     if (!saveAsTemplate) return
-    const nama = templateName.trim() || suggestTemplateName(inserts)
+    const nama = generateTemplateName(waktuMakan)
     try {
       await createTemplate.mutateAsync({
         userId,
@@ -841,6 +839,11 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
           unit_id: x.unit_id,
           unit_nama: x.unit_nama,
           kalori_estimasi: x.kalori_estimasi,
+          karbohidrat: x.karbohidrat,
+          protein: x.protein,
+          lemak: x.lemak,
+          serat: x.serat,
+          natrium: x.natrium,
         })),
       })
     } catch {
@@ -1192,66 +1195,52 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
 
                   {isPending ? (
                     <>
-                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full rounded-xl sm:w-auto"
-                          onClick={handleDiscard}
-                          disabled={saving}
-                        >
-                          <X className="mr-1 h-4 w-4" />
-                          Batal
-                        </Button>
-                        <Button
-                          type="button"
-                          className={cn(
-                            'w-full rounded-xl sm:w-auto',
-                            'bg-gradient-to-r from-primary to-primary/90',
-                            'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
-                          )}
-                          onClick={handleConfirmSave}
-                          disabled={saving}
-                        >
-                          {saving ? (
-                            <>
-                              <Loader2 className={cn('mr-2 h-4 w-4', !reduceMotion && 'motion-safe:animate-spin')} aria-hidden />
-                              Menyimpan…
-                            </>
-                          ) : (
-                            <>
-                              <Check className="mr-1 h-4 w-4" />
-                              Simpan
-                            </>
-                          )}
-                        </Button>
-                        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer sm:ml-2">
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-between">
+                        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
                           <input
                             type="checkbox"
                             checked={saveAsTemplate}
-                            onChange={(e) => {
-                              const checked = e.target.checked
-                              setSaveAsTemplate(checked)
-                              if (checked && !templateName.trim()) {
-                                setTemplateName(suggestTemplateName(pendingResult?.items ?? []))
-                              }
-                            }}
+                            onChange={(e) => setSaveAsTemplate(e.target.checked)}
                             disabled={saving}
                             className="rounded border-gray-300 text-primary focus:ring-primary"
                           />
-                          Simpan juga sebagai template
+                          Simpan kombinasi ini sebagai template
                         </label>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full rounded-xl sm:w-auto"
+                            onClick={handleDiscard}
+                            disabled={saving}
+                          >
+                            <X className="mr-1 h-4 w-4" />
+                            Batal
+                          </Button>
+                          <Button
+                            type="button"
+                            className={cn(
+                              'w-full rounded-xl sm:w-auto',
+                              'bg-gradient-to-r from-primary to-primary/90',
+                              'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
+                            )}
+                            onClick={handleConfirmSave}
+                            disabled={saving}
+                          >
+                            {saving ? (
+                              <>
+                                <Loader2 className={cn('mr-2 h-4 w-4', !reduceMotion && 'motion-safe:animate-spin')} aria-hidden />
+                                Menyimpan…
+                              </>
+                            ) : (
+                              <>
+                                <Check className="mr-1 h-4 w-4" />
+                                Simpan
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </div>
-                      {saveAsTemplate && (
-                        <Input
-                          type="text"
-                          placeholder={suggestTemplateName(pendingResult?.items ?? [])}
-                          value={templateName}
-                          onChange={(e) => setTemplateName(e.target.value)}
-                          disabled={saving}
-                          className="mt-1"
-                        />
-                      )}
                     </>
                   ) : (
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
