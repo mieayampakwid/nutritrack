@@ -5,7 +5,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { AppShell } from '@/components/layout/AppShell'
 import { ClientNutritionSummaryCard } from '@/components/clients/ClientNutritionSummaryCard'
 import { DailyCalorieChart } from '@/components/dashboard/DailyCalorieChart'
+import { DashboardHero } from '@/components/dashboard/DashboardHero'
 import { ActivityLogTable } from '@/components/shared/ActivityLogTable'
+import { WaterProgressBar } from '@/components/water/WaterProgressBar'
 import { useAuth } from '@/hooks/useAuth'
 import { useFoodLogsForUser } from '@/hooks/useFoodLog'
 import { useExerciseLogsForUser } from '@/hooks/useExerciseLog'
@@ -41,8 +43,14 @@ export function KlienDashboard() {
   })
 
   return (
-    <AppShell dashboardHero dashboardHeroBareMobile dashboardHeroCompactLogo>
+    <AppShell>
       <div className="mx-auto max-w-5xl -mt-2 space-y-4 sm:space-y-5">
+        <DashboardHero
+          bareOnMobile
+          compactLogo
+          slot={<WaterProgressBar userId={profile?.id} beratBadan={profile?.berat_badan} />}
+        />
+
         <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur-sm">
           <button
             onClick={prevDay}

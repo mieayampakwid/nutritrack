@@ -20,6 +20,7 @@ export function DashboardHero({
   bareOnMobile = false,
   compactLogo = false,
   bareLogoShell = false,
+  slot,
 }) {
   const { profile } = useAuth()
   const displayName = profileDisplayName(profile)
@@ -175,6 +176,7 @@ export function DashboardHero({
           <div className="mt-3">
             <CalorieSummaryCard userId={profile?.id} />
           </div>
+          {slot}
           <div className="mb-6 sm:mb-8">
             <AdBannerCarousel dismissible userId={profile?.id} />
           </div>
