@@ -20,6 +20,7 @@ export function DashboardHero({
   bareOnMobile = false,
   compactLogo = false,
   bareLogoShell = false,
+  greetingStatic = false,
   slot,
 }) {
   const { profile } = useAuth()
@@ -42,6 +43,7 @@ export function DashboardHero({
 
   /** Scroll sync */
   useLayoutEffect(() => {
+    if (greetingStatic) return
     const sentinel = sentinelRef.current
     const main = sentinel?.closest('main')
     if (!sentinel || !main) return
@@ -63,7 +65,7 @@ export function DashboardHero({
       window.removeEventListener('resize', syncGreetingFloated)
       ro.disconnect()
     }
-  }, [])
+  }, [greetingStatic])
 
   void tick
   const now = new Date()
@@ -115,14 +117,15 @@ export function DashboardHero({
         </div>
       </div>
 
-      <div ref={sentinelRef} className="h-1 w-full shrink-0" aria-hidden />
+      {!greetingStatic && <div ref={sentinelRef} className="h-1 w-full shrink-0" aria-hidden />}
 
       <div
         className={cn(
-          'sticky top-0 -mx-3 w-[calc(100%+1.5rem)] max-w-none px-3 md:-mx-6 md:w-[calc(100%+3rem)] md:px-6 lg:-mx-8 lg:w-[calc(100%+4rem)] lg:px-8',
+          !greetingStatic && 'sticky top-0 -mx-3 w-[calc(100%+1.5rem)] max-w-none px-3 md:-mx-6 md:w-[calc(100%+3rem)] md:px-6 lg:-mx-8 lg:w-[calc(100%+4rem)] lg:px-8',
+          greetingStatic && 'mt-3 sm:mt-4',
           'transition-[padding,box-shadow,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-          !greetingFloated && 'mt-2.5 sm:mt-3',
-          greetingFloated &&
+          !greetingStatic && !greetingFloated && 'mt-2.5 sm:mt-3',
+          !greetingStatic && greetingFloated &&
             'py-1.5 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.12)]',
         )}
       >
@@ -134,7 +137,7 @@ export function DashboardHero({
               'ring-1 ring-inset ring-amber-100/90 backdrop-blur-md',
               'after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:z-[1] after:h-[3px] after:bg-gradient-to-b after:from-amber-100/95 after:to-amber-100',
               'transition-[box-shadow,border-color,ring-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-              greetingFloated &&
+              !greetingStatic && greetingFloated &&
                 'shadow-[0_12px_36px_-14px_hsl(38_55%_28%_/_0.2)] ring-amber-900/[0.06]',
             )}
           >
@@ -174,9 +177,8 @@ export function DashboardHero({
       {profile?.role === 'klien' ? (
         <>
           <div className="mt-3">
-            <CalorieSummaryCard userId={profile?.id} />
+            <CalorieSummaryCard userId={profile?.id} slot={slot} />
           </div>
-          {slot}
           <div className="mb-6 sm:mb-8">
             <AdBannerCarousel dismissible userId={profile?.id} />
           </div>

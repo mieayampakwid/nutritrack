@@ -118,6 +118,18 @@ describe('useAddWaterIntake', () => {
 
     expect(toast.error).toHaveBeenCalledWith('Check violation')
   })
+
+  it('suppresses toast when silent option is true', async () => {
+    resultRef.current = { data: { id: 'w1' }, error: null }
+
+    const { result } = renderHook(() => useAddWaterIntake({ silent: true }), { wrapper })
+
+    await act(async () => {
+      await result.current.mutateAsync({ userId: 'u1', tanggal: '2026-06-25', volumeMl: 300 })
+    })
+
+    expect(toast.success).not.toHaveBeenCalled()
+  })
 })
 
 describe('useDeleteWaterIntake', () => {
@@ -187,5 +199,23 @@ describe('useDeleteWaterIntake', () => {
     })
 
     expect(toast.error).toHaveBeenCalledWith('RLS violation')
+  })
+
+  it('suppresses toast on silent delete', async () => {
+    resultRef.current = { data: null, error: null }
+
+    const { result } = renderHook(() => useDeleteWaterIntake({ silent: true }), { wrapper })
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        intakeId: 'w1',
+        userId: 'u1',
+        volumeMl: 300,
+        tanggal: '2026-06-25',
+        createdAt: '2026-06-25T08:00:00Z',
+      })
+    })
+
+    expect(toast.success).not.toHaveBeenCalled()
   })
 })
