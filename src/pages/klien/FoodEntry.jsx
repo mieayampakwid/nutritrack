@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FoodEntryForm } from '@/components/food/FoodEntryForm'
 import { ExerciseEntryForm } from '@/components/exercise/ExerciseEntryForm'
 import { DailyFoodSummary } from '@/components/food/DailyFoodSummary'
+import { WaterIntakeInput } from '@/components/water/WaterIntakeInput'
 import { useAuth } from '@/hooks/useAuth'
 import { toIsoDateLocal, parseIsoDateLocal, formatDateId } from '@/lib/format'
 import { supabase } from '@/lib/supabase'
@@ -227,6 +228,12 @@ export function FoodEntry() {
             </Tabs>
           </CardContent>
         </Card>
+
+        <WaterIntakeInput
+          userId={profile.id}
+          tanggal={selectedDate}
+          onSaved={handleSaved}
+        />
       </div>
     </AppShell>
   )

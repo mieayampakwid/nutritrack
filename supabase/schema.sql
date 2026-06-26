@@ -142,6 +142,27 @@ create table public.anthropometric_change_log (
 create index anthropometric_change_log_user_changed_idx
   on public.anthropometric_change_log (user_id, changed_at desc);
 
+create table if not exists public.water_intakes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  tanggal date not null default current_date,
+  volume_ml integer not null check (volume_ml > 0 and volume_ml <= 10000),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists water_intakes_user_tanggal_idx
+  on public.water_intakes (user_id, tanggal desc);
+
+create table if not exists public.water_intake_deletions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  water_intake_id uuid not null,
+  volume_ml integer not null,
+  tanggal date not null,
+  created_at timestamptz not null,
+  deleted_at timestamptz default now()
+);
+
 create or replace view public.food_name_suggestions
   with (security_invoker = true)
 as
@@ -397,6 +418,27 @@ create trigger profiles_antrop_change_log_upd
   )
   execute procedure public.trg_profiles_antrop_change_log();
 
+-- Sync profiles.berat_badan from assessments
+create or replace function public.sync_profile_bb_from_assessment()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.berat_badan is not null then
+    update profiles set berat_badan = new.berat_badan
+    where id = new.user_id;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_assessments_sync_profile_bb on public.assessments;
+create trigger trg_assessments_sync_profile_bb
+  after insert on public.assessments
+  for each row execute function public.sync_profile_bb_from_assessment();
+
 -- RLS
 alter table public.profiles enable row level security;
 alter table public.body_measurements enable row level security;
@@ -406,6 +448,8 @@ alter table public.food_units enable row level security;
 alter table public.assessments enable row level security;
 alter table public.user_evaluations enable row level security;
 alter table public.anthropometric_change_log enable row level security;
+alter table public.water_intakes enable row level security;
+alter table public.water_intake_deletions enable row level security;
 
 drop policy if exists "profiles_self" on public.profiles;
 create policy "profiles_self" on public.profiles
@@ -494,6 +538,24 @@ drop policy if exists "anthropometric_change_log_staff_all" on public.anthropome
 create policy "anthropometric_change_log_staff_all" on public.anthropometric_change_log
   for all using (public.jwt_is_staff());
 
+-- water_intakes: klien CRUD own; staff read only
+drop policy if exists "water_intakes_klien" on public.water_intakes;
+create policy "water_intakes_klien" on public.water_intakes
+  for all using (auth.uid() = user_id);
+
+drop policy if exists "water_intakes_staff_read" on public.water_intakes;
+create policy "water_intakes_staff_read" on public.water_intakes
+  for select using (public.jwt_is_staff());
+
+-- water_intake_deletions: klien insert own; staff select
+drop policy if exists "water_deletions_klien_insert" on public.water_intake_deletions;
+create policy "water_deletions_klien_insert" on public.water_intake_deletions
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "water_deletions_staff_select" on public.water_intake_deletions;
+create policy "water_deletions_staff_select" on public.water_intake_deletions
+  for select using (public.jwt_is_staff());
+
 -- GRANTS
 -- The `anon` role requires schema usage for Supabase PostgREST to function,
 -- but all RLS policies require auth.uid() or authenticated role.
@@ -505,6 +567,9 @@ grant select, insert, update, delete on all tables in schema public to authentic
 grant select on public.food_name_suggestions to authenticated;
 revoke all on function public.jwt_is_staff() from public;
 grant execute on function public.jwt_is_staff() to authenticated;
+
+revoke all on function public.sync_profile_bb_from_assessment() from public;
+grant execute on function public.sync_profile_bb_from_assessment() to authenticated;
 
 revoke all on function public.food_log_owned_by_me(uuid) from public;
 grant execute on function public.food_log_owned_by_me(uuid) to authenticated;
