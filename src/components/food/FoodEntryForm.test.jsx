@@ -473,18 +473,34 @@ describe('FoodEntryForm', () => {
     expect(toast.warning).toHaveBeenCalledWith('Log tersimpan, tapi gagal menyimpan template.')
   }, 15000)
 
-  it('does not show "Gunakan template" when no templates exist', async () => {
+  it('shows empty state in Template Saya section when no templates exist', () => {
     mealTemplatesMock.useMealTemplates.mockReturnValue({ data: [], isLoading: false })
     renderWithProviders(<FoodEntryForm userId="u1" />)
-    expect(screen.queryByRole('button', { name: /gunakan template/i })).not.toBeInTheDocument()
+    expect(screen.getByText('Template Saya')).toBeInTheDocument()
+    expect(screen.getByText(/belum ada template tersimpan/i)).toBeInTheDocument()
   })
 
-  it('shows "Gunakan template" button when templates exist', async () => {
+  it('shows Template Saya section with cards when templates exist', () => {
     mealTemplatesMock.useMealTemplates.mockReturnValue({
       data: [{ id: 't1', nama: 'Oatmeal', meal_template_items: [] }],
       isLoading: false,
     })
     renderWithProviders(<FoodEntryForm userId="u1" />)
-    expect(screen.getByRole('button', { name: /gunakan template/i })).toBeInTheDocument()
+    expect(screen.getByText('Template Saya')).toBeInTheDocument()
+    expect(screen.getByText('Oatmeal')).toBeInTheDocument()
+  })
+
+  it('shows toast when template is applied', async () => {
+    const user = userEvent.setup()
+    mealTemplatesMock.useMealTemplates.mockReturnValue({
+      data: [{ id: 't1', nama: 'Oatmeal', meal_template_items: [{ id: 'i1', nama_makanan: 'Oatmeal', jumlah: 200, unit_nama: 'gram', kalori_estimasi: 150 }] }],
+      isLoading: false,
+    })
+    renderWithProviders(<FoodEntryForm userId="u1" />)
+
+    await user.click(screen.getByText('Oatmeal'))
+
+    expect(toast.info).toHaveBeenCalledWith(expect.stringContaining('Oatmeal'))
+    expect(toast.info).toHaveBeenCalledWith(expect.stringContaining('diterapkan'))
   })
 })

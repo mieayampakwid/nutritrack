@@ -21,10 +21,10 @@ export function useMealTemplates(userId) {
 export function useCreateMealTemplate() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ userId, nama, waktu_makan, items }) => {
+    mutationFn: async ({ userId, nama, items }) => {
       const { data: row, error: parentErr } = await supabase
         .from('meal_templates')
-        .insert({ user_id: userId, nama, waktu_makan: waktu_makan ?? null })
+        .insert({ user_id: userId, nama })
         .select()
         .single()
       if (parentErr) throw parentErr

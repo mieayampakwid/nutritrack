@@ -8,7 +8,6 @@ const baseTemplates = [
   {
     id: 't1',
     nama: 'Nasi goreng (+2)',
-    waktu_makan: 'pagi',
     meal_template_items: [
       { id: 'i1', nama_makanan: 'Nasi goreng', jumlah: 1, unit_nama: 'piring', kalori_estimasi: 400 },
       { id: 'i2', nama_makanan: 'Telur', jumlah: 2, unit_nama: 'butir', kalori_estimasi: 140 },
@@ -18,7 +17,6 @@ const baseTemplates = [
   {
     id: 't2',
     nama: 'Oatmeal',
-    waktu_makan: 'pagi',
     meal_template_items: [
       { id: 'i4', nama_makanan: 'Oatmeal', jumlah: 200, unit_nama: 'gram', kalori_estimasi: 150 },
     ],
@@ -29,80 +27,89 @@ describe('MealTemplatePicker', () => {
   it('shows empty state when no templates', () => {
     renderWithProviders(
       <MealTemplatePicker
-        open={true}
-        onOpenChange={() => {}}
         templates={[]}
         onApply={() => {}}
         onDelete={() => {}}
+        isLoading={false}
       />,
     )
-    expect(screen.getByText('Belum ada template tersimpan.')).toBeInTheDocument()
+    expect(screen.getByText(/belum ada template tersimpan/i)).toBeInTheDocument()
   })
 
-  it('renders template list with names, item counts, and calorie totals', () => {
+  it('shows skeleton cards while loading', () => {
+    const { container } = renderWithProviders(
+      <MealTemplatePicker
+        templates={[]}
+        onApply={() => {}}
+        onDelete={() => {}}
+        isLoading={true}
+      />,
+    )
+    // Skeleton placeholders: 3 divs with animate-pulse
+    const skeletons = container.querySelectorAll('.animate-pulse')
+    expect(skeletons).toHaveLength(3)
+    // No empty state or card content should appear
+    expect(screen.queryByText(/belum ada template/i)).not.toBeInTheDocument()
+  })
+
+  it('renders section header and cards with name, count, and calories', () => {
     renderWithProviders(
       <MealTemplatePicker
-        open={true}
-        onOpenChange={() => {}}
         templates={baseTemplates}
         onApply={() => {}}
         onDelete={() => {}}
+        isLoading={false}
       />,
     )
+    expect(screen.getByText('Template Saya')).toBeInTheDocument()
     expect(screen.getByText('Nasi goreng (+2)')).toBeInTheDocument()
     expect(screen.getByText('3 item · 570 kkal')).toBeInTheDocument()
     expect(screen.getByText('1 item · 150 kkal')).toBeInTheDocument()
-    // "Oatmeal" appears as both the template name and the preview text (single-item)
-    expect(screen.getAllByText('Oatmeal')).toHaveLength(2)
   })
 
-  it('renders item preview text', () => {
-    renderWithProviders(
-      <MealTemplatePicker
-        open={true}
-        onOpenChange={() => {}}
-        templates={baseTemplates}
-        onApply={() => {}}
-        onDelete={() => {}}
-      />,
-    )
-    expect(screen.getByText('Nasi goreng, Telur, Kerupuk')).toBeInTheDocument()
-    // Single-item template: name and preview are the same text
-    expect(screen.getAllByText('Oatmeal')).toHaveLength(2)
-  })
-
-  it('calls onApply with the template and closes when a template is clicked', async () => {
+  it('calls onApply when a template card is clicked', async () => {
     const user = userEvent.setup()
     const onApply = vi.fn()
-    const onOpenChange = vi.fn()
 
     renderWithProviders(
       <MealTemplatePicker
-        open={true}
-        onOpenChange={onOpenChange}
         templates={baseTemplates}
         onApply={onApply}
         onDelete={() => {}}
+        isLoading={false}
       />,
     )
 
     await user.click(screen.getByText('Nasi goreng (+2)'))
     expect(onApply).toHaveBeenCalledWith(baseTemplates[0])
-    expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
-  it('calls onDelete when the trash button is clicked', async () => {
+  it('delete button is visible at reduced opacity without hover', () => {
+    renderWithProviders(
+      <MealTemplatePicker
+        templates={baseTemplates}
+        onApply={() => {}}
+        onDelete={() => {}}
+        isLoading={false}
+      />,
+    )
+    const deleteButtons = screen.getAllByRole('button', { name: 'Hapus template' })
+    // Should have partial opacity (visible on touch) — no opacity-0 class
+    expect(deleteButtons[0].className).not.toContain('opacity-0')
+    expect(deleteButtons[0].className).toContain('text-muted-foreground/40')
+  })
+
+  it('calls onDelete when delete button is clicked without triggering onApply', async () => {
     const user = userEvent.setup()
-    const onDelete = vi.fn()
     const onApply = vi.fn()
+    const onDelete = vi.fn()
 
     renderWithProviders(
       <MealTemplatePicker
-        open={true}
-        onOpenChange={() => {}}
         templates={baseTemplates}
         onApply={onApply}
         onDelete={onDelete}
+        isLoading={false}
       />,
     )
 

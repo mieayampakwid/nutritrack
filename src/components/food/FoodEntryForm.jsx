@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import { AnimatePresence, motion as Motion, useReducedMotion } from 'framer-motion'
-import { Bookmark, Check, ChevronDown, Clock, Cookie, Loader2, Moon, Pencil, Plus, Sparkles, Sunrise, Sun, Trash2, X } from 'lucide-react'
+import { Check, ChevronDown, Clock, Cookie, Loader2, Moon, Pencil, Plus, Sparkles, Sunrise, Sun, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -343,7 +343,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const qc = useQueryClient()
   const { data: units = [] } = useFoodUnits()
   const { data: suggestions = [] } = useFoodNameSuggestions()
-  const { data: templates = [] } = useMealTemplates(userId)
+  const { data: templates = [], isLoading: templatesLoading } = useMealTemplates(userId)
   const createTemplate = useCreateMealTemplate()
   const deleteTemplate = useDeleteMealTemplate()
 
@@ -367,7 +367,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const [addLoading, setAddLoading] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
   const [saveAsTemplate, setSaveAsTemplate] = useState(false)
-  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
   const idempotencyKeyRef = useRef(null)
   const resultRef = useRef(null)
   const analyzingAnchorRef = useRef(null)
@@ -721,7 +720,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
       const { error: itemErr } = await supabase.from('food_log_items').insert(inserts)
       if (itemErr) throw itemErr
 
-      await saveTemplateIfRequested(inserts, waktuMakan)
+      await saveTemplateIfRequested(inserts)
 
       setShowSaved(true)
       setPendingResult(null)
@@ -779,7 +778,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
             }
           }
 
-          await saveTemplateIfRequested(inserts, waktuMakan)
+          await saveTemplateIfRequested(inserts)
 
           setShowSaved(true)
           setPendingResult(null)
@@ -815,24 +814,17 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
     setSaveAsTemplate(false)
   }
 
-  const WAKTU_LABELS = { pagi: 'Sarapan', siang: 'Makan Siang', malam: 'Makan Malam', snack: 'Snack' }
-
-  function generateTemplateName(waktuMakan) {
-    const label = waktuMakan ? WAKTU_LABELS[waktuMakan] : 'Template'
-    const count = waktuMakan
-      ? templates.filter((t) => t.waktu_makan === waktuMakan).length
-      : templates.length
-    return `${label} ${count + 1}`
+  function generateTemplateName() {
+    return `Template ${templates.length + 1}`
   }
 
-  async function saveTemplateIfRequested(inserts, waktuMakan) {
+  async function saveTemplateIfRequested(inserts) {
     if (!saveAsTemplate) return
-    const nama = generateTemplateName(waktuMakan)
+    const nama = generateTemplateName()
     try {
       await createTemplate.mutateAsync({
         userId,
         nama,
-        waktu_makan: waktuMakan || null,
         items: inserts.map((x) => ({
           nama_makanan: x.nama_makanan,
           jumlah: x.jumlah,
@@ -858,10 +850,13 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
       jumlah: String(it.jumlah ?? ''),
       unitId: it.unit_id ?? '',
     }))
-    setRows((prev) => [...prev, ...mapped])
+    setRows((prev) => {
+      // Replace the default empty row with template items
+      const hasOnlyEmpty = prev.length === 1 && !prev[0].nama.trim()
+      return hasOnlyEmpty ? mapped : [...prev, ...mapped]
+    })
     if (mapped.length) setExpandedRowId(mapped[0].id)
-    if (template.waktu_makan) handleMealSelect(template.waktu_makan)
-    setTemplatePickerOpen(false)
+    toast.info(`Template "${template.nama}" diterapkan`)
   }
 
   function handleDeleteTemplate(id) {
@@ -1532,18 +1527,14 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                   <Plus className="h-4 w-4" />
                   Tambah makanan
                 </Button>
-                {templates.length > 0 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full rounded-xl border border-gray-300 text-sm transition-all duration-200 motion-safe:active:scale-[0.99] hover:bg-muted/50 hover:text-foreground"
-                    onClick={() => setTemplatePickerOpen(true)}
-                  >
-                    <Bookmark className="h-4 w-4" />
-                    Gunakan template
-                  </Button>
-                )}
               </section>
+
+              <MealTemplatePicker
+                templates={templates}
+                onApply={handleApplyTemplate}
+                onDelete={handleDeleteTemplate}
+                isLoading={templatesLoading}
+              />
 
               <div ref={analyzingAnchorRef} className="mt-3 scroll-mt-4">
                 <FoodEntryAiAnalyzingPanel active={loading} reduceMotion={reduceMotion} />
@@ -1587,13 +1578,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
             </>
           )}
     </div>
-    <MealTemplatePicker
-      open={templatePickerOpen}
-      onOpenChange={setTemplatePickerOpen}
-      templates={templates}
-      onApply={handleApplyTemplate}
-      onDelete={handleDeleteTemplate}
-    />
     </>
   )
 }

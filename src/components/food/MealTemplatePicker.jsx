@@ -1,77 +1,68 @@
-import { Trash2 } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { Cookie, Trash2 } from 'lucide-react'
 import { formatNumberId } from '@/lib/format'
-import { cn } from '@/lib/utils'
 
-export function MealTemplatePicker({ open, onOpenChange, templates, onApply, onDelete }) {
-  const handleSelect = (template) => {
-    onApply(template)
-    onOpenChange(false)
-  }
-
+export function MealTemplatePicker({ templates, onApply, onDelete, isLoading }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Template Makanan</DialogTitle>
-        </DialogHeader>
+    <section className="mt-3 rounded-xl border border-border/80 bg-card p-4">
+      <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold">
+        <Cookie className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+        Template Saya
+      </h3>
 
-        {templates.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            Belum ada template tersimpan.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {templates.map((t) => {
-              const items = t.meal_template_items ?? []
-              const totalKal = items.reduce((s, i) => s + Number(i.kalori_estimasi ?? 0), 0)
-              const preview = items.map((i) => i.nama_makanan).join(', ')
+      {isLoading ? (
+        <div className="flex gap-3.5 overflow-x-auto pb-1">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="min-w-[160px] flex-shrink-0 animate-pulse rounded-lg border border-border/40 px-3.5 py-3"
+            >
+              <div className="mb-2 h-3.5 w-20 rounded bg-muted" />
+              <div className="h-2.5 w-14 rounded bg-muted" />
+            </div>
+          ))}
+        </div>
+      ) : templates.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Belum ada template tersimpan. Simpan kombinasi makanan favorit dari halaman konfirmasi.
+        </p>
+      ) : (
+        <div className="flex gap-3.5 overflow-x-auto pb-1">
+          {templates.map((t) => {
+            const items = t.meal_template_items ?? []
+            const totalKal = items.reduce((s, i) => s + Number(i.kalori_estimasi ?? 0), 0)
 
-              return (
-                <li key={t.id}>
-                  <div
-                    className={cn(
-                      'flex items-start gap-3 rounded-xl border p-3',
-                      'cursor-pointer transition-colors hover:bg-muted/50',
-                    )}
-                    onClick={() => handleSelect(t)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleSelect(t) }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium leading-tight">{t.nama}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {items.length} item
-                        {totalKal > 0 && <> · {formatNumberId(totalKal)} kkal</>}
-                      </p>
-                      {preview && (
-                        <p className="mt-1 truncate text-sm text-muted-foreground">
-                          {preview}
-                        </p>
-                      )}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                      aria-label="Hapus template"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDelete(t.id)
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </DialogContent>
-    </Dialog>
+            return (
+              <div
+                key={t.id}
+                className="group relative min-w-[160px] flex-shrink-0 cursor-pointer rounded-lg border border-border/40 px-3.5 py-3 transition-colors hover:bg-muted/50"
+                onClick={() => {
+                  onApply(t)
+                }}
+                onKeyDown={(e) => { if (e.key === 'Enter') onApply(t) }}
+                role="button"
+                tabIndex={0}
+              >
+                <button
+                  type="button"
+                  className="absolute right-2 top-2 text-muted-foreground/40 transition-opacity hover:text-destructive group-hover:opacity-100"
+                  aria-label="Hapus template"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete(t.id)
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+                <p className="pr-5 text-sm font-medium leading-snug">{t.nama}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {items.length} item
+                  {totalKal > 0 && <> · {formatNumberId(totalKal)} kkal</>}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </section>
   )
 }

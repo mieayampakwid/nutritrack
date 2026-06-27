@@ -45,7 +45,6 @@ describe('useMealTemplates', () => {
         id: 't1',
         user_id: 'u1',
         nama: 'Nasi goreng (+2)',
-        waktu_makan: 'pagi',
         meal_template_items: [
           { id: 'i1', meal_template_id: 't1', nama_makanan: 'Nasi goreng', jumlah: 1, unit_nama: 'piring', kalori_estimasi: 400 },
           { id: 'i2', meal_template_id: 't1', nama_makanan: 'Telur', jumlah: 2, unit_nama: 'butir', kalori_estimasi: 140 },
@@ -84,7 +83,7 @@ describe('useCreateMealTemplate', () => {
 
     // Parent insert (.select().single()) resolves with the new row
     resultRef.current = {
-      data: { id: 't-new', nama: 'Sarapan', waktu_makan: 'pagi' },
+      data: { id: 't-new', nama: 'Sarapan' },
       error: null,
     }
 
@@ -96,14 +95,13 @@ describe('useCreateMealTemplate', () => {
     ]
 
     await act(async () => {
-      await result.current.mutateAsync({ userId: 'u1', nama: 'Sarapan', waktu_makan: 'pagi', items })
+      await result.current.mutateAsync({ userId: 'u1', nama: 'Sarapan', items })
     })
 
     expect(fromSpy).toHaveBeenCalledWith('meal_templates')
     expect(chain.insert).toHaveBeenCalledWith({
       user_id: 'u1',
       nama: 'Sarapan',
-      waktu_makan: 'pagi',
     })
     expect(chain.select).toHaveBeenCalled()
     expect(chain.single).toHaveBeenCalled()
@@ -128,7 +126,6 @@ describe('useCreateMealTemplate', () => {
         await result.current.mutateAsync({
           userId: 'u1',
           nama: 'Sarapan',
-          waktu_makan: 'pagi',
           items: [{ nama_makanan: 'Nasi', jumlah: 1, unit_id: null, unit_nama: 'piring', kalori_estimasi: 300 }],
         })
       } catch {

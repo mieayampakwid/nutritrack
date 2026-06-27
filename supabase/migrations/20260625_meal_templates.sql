@@ -4,7 +4,6 @@ create table if not exists public.meal_templates (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
   nama text not null,
-  waktu_makan text check (waktu_makan in ('pagi', 'siang', 'malam', 'snack')),
   created_at timestamptz default now()
 );
 
