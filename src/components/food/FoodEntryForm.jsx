@@ -844,7 +844,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   }
 
   function handleApplyTemplate(template) {
-    const mapped = (template.meal_template_items ?? []).map((it) => ({
+    const items = template.meal_template_items ?? []
+    const mapped = items.map((it) => ({
       id: safeUUID(),
       nama: it.nama_makanan,
       jumlah: String(it.jumlah ?? ''),
@@ -856,6 +857,43 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
       return hasOnlyEmpty ? mapped : [...prev, ...mapped]
     })
     if (mapped.length) setExpandedRowId(mapped[0].id)
+
+    // If meal time is already selected, skip analysis — build pendingResult from template macros
+    if (mealKey && jamMakan) {
+      const submittedAt = new Date()
+      const tanggal = tanggalProp || toIsoDateLocal(submittedAt)
+      const itemsWithKal = items.map((it) => ({
+        nama_makanan: it.nama_makanan,
+        jumlah: it.jumlah,
+        unit_id: it.unit_id ?? null,
+        unit_nama: it.unit_nama,
+        kalori_estimasi: Number(it.kalori_estimasi ?? 0),
+        karbohidrat: Number(it.karbohidrat ?? 0),
+        protein: Number(it.protein ?? 0),
+        lemak: Number(it.lemak ?? 0),
+        serat: Number(it.serat ?? 0),
+        natrium: Number(it.natrium ?? 0),
+      }))
+      const total = itemsWithKal.reduce((a, x) => a + x.kalori_estimasi, 0)
+      const totalKarbohidrat = itemsWithKal.reduce((a, x) => a + x.karbohidrat, 0)
+      const totalProtein = itemsWithKal.reduce((a, x) => a + x.protein, 0)
+      const totalLemak = itemsWithKal.reduce((a, x) => a + x.lemak, 0)
+      const totalSerat = itemsWithKal.reduce((a, x) => a + x.serat, 0)
+      const totalNatrium = itemsWithKal.reduce((a, x) => a + x.natrium, 0)
+      idempotencyKeyRef.current = safeUUID()
+      setPendingResult({
+        items: itemsWithKal,
+        total,
+        totalKarbohidrat,
+        totalProtein,
+        totalLemak,
+        totalSerat,
+        totalNatrium,
+        waktuMakan: mealKey,
+        tanggal,
+      })
+    }
+
     toast.info(`Template "${template.nama}" diterapkan`)
   }
 

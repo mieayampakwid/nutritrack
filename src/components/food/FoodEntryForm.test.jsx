@@ -503,4 +503,35 @@ describe('FoodEntryForm', () => {
     expect(toast.info).toHaveBeenCalledWith(expect.stringContaining('Oatmeal'))
     expect(toast.info).toHaveBeenCalledWith(expect.stringContaining('diterapkan'))
   })
+
+  it('skips analysis when template is applied with meal time already selected', async () => {
+    const user = userEvent.setup()
+    mockFoodLogSave()
+    mealTemplatesMock.useMealTemplates.mockReturnValue({
+      data: [{
+        id: 't1', nama: 'Oatmeal',
+        meal_template_items: [{
+          id: 'i1', nama_makanan: 'Oatmeal', jumlah: 200,
+          unit_id: '8410997f-6536-46c8-9e5e-bd4a976f6b42', unit_nama: 'buah',
+          kalori_estimasi: 150, karbohidrat: 27, protein: 5, lemak: 3, serat: 4, natrium: 5,
+        }],
+      }],
+      isLoading: false,
+    })
+
+    renderWithProviders(<FoodEntryForm userId="u1" />)
+
+    // Select meal time first
+    await user.click(screen.getByRole('radio', { name: /sarapan/i }))
+    await setJamMakan(user, '7', '5')
+
+    // Apply template — should go straight to confirmation (Simpan button visible)
+    await user.click(screen.getByText('Oatmeal'))
+
+    // Simpan button should appear without needing Analisa
+    expect(screen.getByRole('button', { name: /simpan/i })).toBeInTheDocument()
+
+    // Should NOT have called the AI analysis
+    expect(openaiMock.analyzeFood).not.toHaveBeenCalled()
+  }, 15000)
 })
