@@ -1,7 +1,7 @@
 # Feature Spec — Template Browsing on Diary Page
 
 - **Date:** 2026-06-26
-- **Status:** Draft — pending review
+- **Status:** Implemented
 - **Branch:** `feat/meal-template` (follows up on save & reuse)
 - **Roles affected:** `klien` only.
 - **Depends on:** Save & Reuse Meal Templates (`docs/20260623_meal_templates.md`)
@@ -10,27 +10,27 @@
 
 ## 1. Overview
 
-Saved templates are currently accessible only via a dialog triggered by a "Gunakan template" ghost button inside the food entry form. This feature replaces the dialog with an **inline "Template Saya" section** on the diary page, showing template cards that can be tapped to pre-fill a meal entry. The section is always visible (no dialog, no button to open it), making templates a first-class part of the food entry flow.
+Saved templates are displayed as an **inline "Template Saya" section** on the food entry page. Template cards show name, item count, and total calories in a horizontal scrollable card row. Tapping a card pre-fills the meal entry — when meal time is already selected, it skips AI analysis and goes directly to the confirmation card using stored macros.
 
 ## 2. Goals & Non-Goals
 
 **Goals**
 
-- Display saved templates as cards directly on the food entry page (not hidden in a dialog).
+- Display saved templates as cards directly on the food entry page.
 - Show each card with: template name, item count, and total calories.
-- Tapping a card adds all its items to the current draft entry (same append behavior as US-2).
-- Show an empty state when the user has no saved templates.
+- Tapping a card fills food rows and, if meal time is selected, skips analysis.
+- Delete button visible on touch devices.
 
 **Non-Goals (this iteration)**
 
-- Filtering or searching templates (total count is expected to be small).
+- Filtering or searching templates.
 - Editing templates after saving (delete only).
-- Drag-and-drop template reordering.
+- Drag-and-drop reordering.
 
 ## 3. User Stories
 
 - **US-4 (Browse):** As a `klien` on the diary page, I can see my saved templates displayed as cards in a "Template Saya" section, each showing the template name, item count, and total calories.
-- **US-5 (Tap to Apply):** As a `klien`, tapping a template card adds all its items to my current food entry draft. I can then add, remove, or edit items before submitting.
+- **US-5 (Tap to Apply):** As a `klien`, tapping a template card fills my food entry. If I've already selected a meal time, the confirmation card appears immediately — no need to re-analyze.
 - **US-6 (Empty State):** As a `klien` with no saved templates, I see an empty state message in the "Template Saya" section explaining that templates can be saved from the confirmation screen.
 
 ## 4. Data Model
@@ -39,81 +39,84 @@ No changes — reuses existing `meal_templates` + `meal_template_items` tables a
 
 ## 5. UI — Template Section
 
-**Component:** Rewrite `src/components/food/MealTemplatePicker.jsx` from Dialog-based to inline section.
+**Component:** `src/components/food/MealTemplatePicker.jsx` — inline section.
 
-**Where:** Inside `src/components/food/FoodEntryForm.jsx`, rendered **below the "Tambah makanan" button**. Section is always visible (no toggle, no dialog trigger).
+**Where:** Below "Tambah makanan" button in `FoodEntryForm.jsx`. Always visible.
 
 **Layout:**
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ Template Saya                          [Trash2] │
+│ 🍪 Template Saya                                │
 │                                                 │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
-│  │ Sarapan 1│  │ Siang 2  │  │ Snack 3  │  →  │
-│  │ 3 item   │  │ 2 item   │  │ 1 item   │     │
-│  │ 570 kkal │  │ 340 kkal │  │ 150 kkal │     │
-│  │ [🗑️]     │  │ [🗑️]     │  │ [🗑️]     │     │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  →  │
+│  │ Nasi     │  │ Oatmeal  │  │ Yogurt   │     │
+│  │ 3 item   │  │ 1 item   │  │ 3 item   │     │
+│  │ 560 kkal │  │ 150 kkal │  │ 279 kkal │     │
+│  │     [🗑️]│  │     [🗑️]│  │     [🗑️]│     │
 │  └──────────┘  └──────────┘  └──────────┘      │
 └─────────────────────────────────────────────────┘
 ```
 
-- **Section header:** "Template Saya" as a small bold label, left-aligned.
-- **Cards:** Horizontal scrollable row (`overflow-x-auto`, `flex-nowrap`, `gap-3`). Each card is `min-w-[140px]` with `rounded-xl border p-3 hover:bg-muted/50 cursor-pointer transition-colors`.
+- **Container:** `rounded-xl border border-border/80 bg-card p-4` — matches food entry row card style.
+- **Header:** Cookie icon + "Template Saya" (`text-sm font-semibold`).
+- **Cards:** Horizontal scroll (`overflow-x-auto`, `gap-3.5`). Each card: `min-w-[160px] rounded-lg border border-border/40 px-3.5 py-3 hover:bg-muted/50 cursor-pointer`.
 - **Card content:**
-  - Template name (`font-medium text-sm`)
-  - Item count + total calories (`text-xs text-muted-foreground`): `"3 item · 570 kkal"`
-  - Delete button (Trash2 icon, `h-3.5 w-3.5`, `text-muted-foreground hover:text-destructive`) — positioned top-right, `aria-label="Hapus template"`. Clicking delete must **stop propagation** so it doesn't trigger the card's onApply.
-- **Empty state:** When `templates.length === 0`, render muted text below the section header: *"Belum ada template tersimpan. Simpan kombinasi makanan favorit dari halaman konfirmasi."*
+  - Template name (`text-sm font-medium leading-snug`)
+  - Item count + total calories (`text-xs text-muted-foreground`): *"3 item · 570 kkal"*
+  - Delete button (Trash2, `h-3.5 w-3.5`) — `absolute right-2 top-2`, visible at `text-muted-foreground/40` on touch, `group-hover:opacity-100` on desktop.
+- **Loading state:** 3 skeleton cards with `animate-pulse`.
+- **Empty state:** Muted text: *"Belum ada template tersimpan. Simpan kombinasi makanan favorit dari halaman konfirmasi."*
 
-**Props (simplified from Dialog version):**
+**Props:**
 
 | Prop | Type | Notes |
 |---|---|---|
 | `templates` | `Array<Template>` | From `useMealTemplates(userId)` |
 | `onApply` | `(template: Template) => void` | Card tap handler |
 | `onDelete` | `(id: string) => void` | Delete button handler |
-
-**Removed props:** `open`, `onOpenChange` (no longer a dialog).
-
-**Card tap behavior:** Same as existing `handleApplyTemplate` — maps `meal_template_items` to input rows, appends to existing rows, sets meal time from `template.waktu_makan`, and expands the first applied row. User can then add, remove, or edit rows before clicking **Analisa**.
+| `isLoading` | `boolean` | From `useMealTemplates` — shows skeleton |
 
 ## 6. UI — FoodEntryForm Integration
 
-**Changes to `src/components/food/FoodEntryForm.jsx`:**
+- `MealTemplatePicker` rendered inline below "Tambah makanan" button.
+- No dialog trigger or toggle state.
 
-- Remove `templatePickerOpen` state (no dialog to open/close).
-- Remove the "Gunakan template" ghost button (replaced by the inline section).
-- Render `<MealTemplatePicker>` inline, below "Tambah makanan" button area, **without** `open`/`onOpenChange` props.
-- Keep `handleApplyTemplate` and `handleDeleteTemplate` unchanged.
+**Apply logic (`handleApplyTemplate`):**
+
+1. Map `meal_template_items` to input rows (`{ id, nama, jumlah, unitId }`).
+2. If only the default empty row exists → replace it; otherwise → append.
+3. If `mealKey` && `jamMakan` are set:
+   - Build `pendingResult` from template macros (kalori_estimasi, karbohidrat, protein, lemak, serat, natrium).
+   - Confirmation card appears with Simpan — **AI analysis skipped**.
+4. Toast: `Template "Nama" diterapkan`.
 
 ## 7. Edge Cases & Behaviors
 
 | Case | Behavior |
 |---|---|
 | No saved templates | Empty state message shown; no cards rendered. |
-| Card tap with existing typed rows | Template items **appended** to existing rows. User keeps what they typed. |
-| Card tap when no meal type selected | Meal time is set from `template.waktu_makan` if present. If null, user must still select. |
-| Delete button tap | Only `onDelete(id)` fires; card's `onApply` does NOT fire (event propagation stopped). |
-| Applying then deleting rows | User is free to remove applied items before Analisa. No restriction. |
+| Card tap with existing typed rows | Template items **appended** to existing rows. |
+| Card tap when no meal type selected | Rows filled; user must still select meal time and click Analisa. |
+| Card tap when meal type selected | Rows filled; confirmation card appears directly — no Analisa needed. |
+| Delete button tap | Only `onDelete(id)` fires; card's `onApply` does NOT fire. |
+| Applying then deleting rows | User can remove applied items before saving. |
 
 ## 8. Testing
 
 | Target | What to verify |
 |---|---|
-| `src/components/food/MealTemplatePicker.test.jsx` | Renders section header "Template Saya"; renders cards with name, count, calories; empty state message; card tap calls `onApply`; delete button calls `onDelete` without `onApply`. |
-| `src/components/food/FoodEntryForm.test.jsx` (extend) | "Template Saya" section not rendered when `templates` is empty; section renders with cards when templates exist. |
-
-Pre-commit gates: `npm run lint` and `npm test` both green.
+| `MealTemplatePicker.test.jsx` | Empty state, skeleton loading, cards with name/count/calories, onApply, onDelete without onApply, delete button opacity on touch. |
+| `FoodEntryForm.test.jsx` | Template section visibility, apply toast, skip-analysis when meal time selected. |
 
 ## 9. Acceptance Criteria Mapping
 
 | AC | Coverage |
 |---|---|
-| "Template Saya" section accessible from food entry page | §5 — inline section below "Tambah makanan" |
+| "Template Saya" section on food entry page | §5 — inline card section below "Tambah makanan" |
 | Template card: name, item count, total calories | §5 — card layout |
-| Tapping adds items to draft, same multi-item flow | §5, §7 — same `handleApplyTemplate` append behavior |
+| Tapping fills rows, skips analysis when meal time set | §6 — `handleApplyTemplate` with `pendingResult` |
 | User can remove/add items after applying | §7 — no restriction on row editing |
-| Empty state with explanation | §5 — muted text when `templates.length === 0` |
+| Empty state with explanation | §5 — muted text when no templates |
 
 ---
