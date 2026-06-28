@@ -27,16 +27,27 @@ NutriTrack (LAPER) is a web-based nutritional tracking platform for Indonesian d
 src/pages/{admin,ahli-gizi,klien,staff,auth}/   # Route-level pages by role
 src/components/shared/                           # Cross-role UI (disclaimer, spinner, error boundary)
 src/components/ui/                               # Primitive components (shadcn pattern)
-src/components/food/                             # Food-related shared components
+src/components/{food,measurement,dashboard,water,exercise,clients,participants,layout}/  # Feature components
 src/hooks/                                       # React Query hooks, useAuth
-src/lib/                                         # Utilities: supabase client, openai wrapper, bmi, format, etc.
-src/config/                                      # Static configuration
+src/lib/                                         # Utilities: supabase client, openai wrapper, bmi, format, water target, etc.
+src/config/                                      # Static configuration (ad banners, etc.)
 src/test/                                        # Shared test helpers (renderWithProviders, queryWrapper, supabaseMock)
-supabase/functions/                              # Deno edge functions (TypeScript)
+supabase/functions/                              # Deno edge functions (TypeScript, 7 functions)
 supabase/schema.sql                              # Canonical database schema
 ```
 
 ## 4. Key Conventions
+
+### Quick reference — common mistakes
+
+| ❌ Don't | ✅ Do |
+|---------|-------|
+| `supabase.auth.*` in components | `useAuth()` hook from `src/hooks/useAuth.jsx` |
+| `supabase.from('...').select()` in components | React Query hooks from `src/hooks/` |
+| English UI text | Indonesian — `format.js` has helpers for dates/numbers |
+| `VITE_OPENAI_API_KEY` | Server-side only — Supabase secrets, never `VITE_*` |
+| Editing saved calorie estimates | Immutable after save — from Edge Function |
+| Hardcoded BMI thresholds | `src/lib/bmiCalculator.js` (WHO Asia-Pacific) |
 
 - **Path alias:** `@/` resolves to `src/`. Always use this alias for imports within `src/`.
 - **Auth state:** Read from `useAuth` hook (`src/hooks/useAuth.jsx`) — never call `supabase.auth` directly in components.
