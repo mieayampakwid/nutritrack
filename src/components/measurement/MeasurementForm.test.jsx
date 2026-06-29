@@ -67,7 +67,7 @@ describe('MeasurementForm', () => {
     await user.type(tinggiInput, '170')
 
     await waitFor(() =>
-      expect(screen.getByText(/24/)).toBeInTheDocument(),
+      expect(screen.getByText(/24,2/)).toBeInTheDocument(),
     )
   })
 

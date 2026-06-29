@@ -1,0 +1,135 @@
+{
+  "features": [
+    {
+      "id": "FEAT-03",
+      "name": "Admin Dashboard — pending approval count & user summary",
+      "status": "pending",
+      "scope": "src/pages/admin/AdminDashboard.jsx",
+      "tests": ["src/pages/admin/AdminDashboard.test.jsx"],
+      "done_criteria": [
+        "npm run lint clean",
+        "npm test passes",
+        "npm run build passes",
+        "Renders registered user count with pending approval badge",
+        "Screen matches S-06 spec"
+      ],
+      "evidence": null,
+      "notes": "Currently only renders PopularFoodsTrendCard. S-06 requires pending approval count + user summary."
+    },
+    {
+      "id": "FEAT-06",
+      "name": "ClientDirectory — overdue evaluation indicators",
+      "status": "pending",
+      "scope": "src/components/clients/ClientDirectory.jsx",
+      "tests": ["src/components/clients/ClientDirectory.test.jsx"],
+      "done_criteria": [
+        "npm run lint clean",
+        "npm test passes",
+        "npm run build passes",
+        "Highlights participants with >14 days since last evaluation",
+        "Shows days-since-last-evaluation badge"
+      ],
+      "evidence": null,
+      "notes": "S-16 spec: visual indicator for overdue participants. US-33."
+    },
+    {
+      "id": "FEAT-04",
+      "name": "Gizi Dashboard — overdue evaluation notifications",
+      "status": "pending",
+      "scope": "src/pages/ahli-gizi/GiziDashboard.jsx",
+      "tests": ["src/pages/ahli-gizi/GiziDashboard.test.jsx"],
+      "done_criteria": [
+        "npm run lint clean",
+        "npm test passes",
+        "npm run build passes",
+        "Shows pending evaluation notification section",
+        "Screen matches S-05 spec"
+      ],
+      "evidence": null,
+      "notes": "S-05 requires overdue evaluation notifications. Currently missing from dashboard."
+    },
+    {
+      "id": "FEAT-05",
+      "name": "Klien Dashboard — remaining calories & trending food",
+      "status": "pending",
+      "scope": "src/pages/klien/KlienDashboard.jsx",
+      "tests": ["src/pages/klien/KlienDashboard.test.jsx"],
+      "done_criteria": [
+        "npm run lint clean",
+        "npm test passes",
+        "npm run build passes",
+        "Shows remaining calories indicator",
+        "Shows trending food section",
+        "Screen matches S-04 spec"
+      ],
+      "evidence": null,
+      "notes": "S-04 requires remaining calories + trending food. Currently missing."
+    },
+    {
+      "id": "FEAT-08",
+      "name": "Exercise Calorie — biometric adjustment in edge function",
+      "status": "pending",
+      "scope": "supabase/functions/estimate-exercise-calories/index.ts",
+      "tests": [],
+      "done_criteria": [
+        "deno check passes",
+        "Fetches height, age, gender from profiles",
+        "AI prompt simplified to MET + duration only",
+        "Calories computed deterministically with biometric adjustments",
+        "Manual test with sample input"
+      ],
+      "evidence": null,
+      "notes": "Approved spec at docs/superpowers/specs/2026-05-13-activity-calorie-ai-prompt-design.md. Currently AI computes calories; should use TypeScript instead."
+    },
+    {
+      "id": "BUG-01",
+      "name": "Admin delete user — edge function not wired to UI",
+      "status": "pending",
+      "scope": "src/pages/admin/AdminUsers.jsx",
+      "tests": ["src/pages/admin/AdminUsers.test.jsx"],
+      "done_criteria": [
+        "npm run lint clean",
+        "npm test passes",
+        "npm run build passes",
+        "Pending users show 'Hapus' button",
+        "Calls admin-delete-user edge function",
+        "Only shown for users with is_active=false"
+      ],
+      "evidence": null,
+      "notes": "admin-delete-user edge function exists but no UI trigger. US-17."
+    },
+    {
+      "id": "IMPR-01",
+      "name": "Klien Progress — show evaluation history from nutritionist",
+      "status": "pending",
+      "scope": "src/pages/klien/MyProgress.jsx",
+      "tests": ["src/pages/klien/MyProgress.test.jsx"],
+      "done_criteria": [
+        "npm run lint clean",
+        "npm test passes",
+        "npm run build passes",
+        "Displays evaluation notes history",
+        "Uses existing useUserEvaluations hook"
+      ],
+      "evidence": null,
+      "notes": "useUserEvaluations hook exists but not used on progress page. US-32."
+    },
+    {
+      "id": "IMPR-04",
+      "name": "ParticipantDetail — add exercise log history section",
+      "status": "pending",
+      "scope": "src/pages/ahli-gizi/ParticipantDetail.jsx",
+      "tests": ["src/pages/ahli-gizi/ParticipantDetail.test.jsx"],
+      "done_criteria": [
+        "npm run lint clean",
+        "npm test passes",
+        "npm run build passes",
+        "Shows exercise log entries below progress timeline",
+        "Screen matches S-11 spec"
+      ],
+      "evidence": null,
+      "notes": "S-11 spec requires exercise log history in participant profile. Currently missing."
+    }
+  ],
+  "last_updated": "2026-06-24T00:00:00Z"
+}
