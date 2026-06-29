@@ -25,7 +25,7 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }))
 
-import { useMealTemplates, useCreateMealTemplate, useDeleteMealTemplate } from './useMealTemplates'
+import { useMealTemplates, useCreateMealTemplate, useDeleteMealTemplate, useUpdateMealTemplate } from './useMealTemplates'
 import { toast } from 'sonner'
 
 describe('useMealTemplates', () => {
@@ -90,8 +90,8 @@ describe('useCreateMealTemplate', () => {
     const { result } = renderHook(() => useCreateMealTemplate(), { wrapper })
 
     const items = [
-      { nama_makanan: 'Nasi goreng', jumlah: 1, unit_id: 'g1', unit_nama: 'gram', kalori_estimasi: 400 },
-      { nama_makanan: 'Telur', jumlah: 2, unit_id: null, unit_nama: 'butir', kalori_estimasi: 140 },
+      { nama_makanan: 'Nasi goreng', jumlah: 1, unit_id: 'g1', unit_nama: 'gram', kalori_estimasi: 400, karbohidrat: 60, protein: 10, lemak: 8, serat: 2, natrium: 500 },
+      { nama_makanan: 'Telur', jumlah: 2, unit_id: null, unit_nama: 'butir', kalori_estimasi: 140, karbohidrat: 1, protein: 12, lemak: 10, serat: 0, natrium: 280 },
     ]
 
     await act(async () => {
@@ -109,8 +109,8 @@ describe('useCreateMealTemplate', () => {
     // Second from call for child insert
     expect(fromSpy).toHaveBeenCalledWith('meal_template_items')
     expect(chain.insert).toHaveBeenCalledWith([
-      { meal_template_id: 't-new', nama_makanan: 'Nasi goreng', jumlah: 1, unit_id: 'g1', unit_nama: 'gram', kalori_estimasi: 400 },
-      { meal_template_id: 't-new', nama_makanan: 'Telur', jumlah: 2, unit_id: null, unit_nama: 'butir', kalori_estimasi: 140 },
+      { meal_template_id: 't-new', nama_makanan: 'Nasi goreng', jumlah: 1, unit_id: 'g1', unit_nama: 'gram', kalori_estimasi: 400, karbohidrat: 60, protein: 10, lemak: 8, serat: 2, natrium: 500 },
+      { meal_template_id: 't-new', nama_makanan: 'Telur', jumlah: 2, unit_id: null, unit_nama: 'butir', kalori_estimasi: 140, karbohidrat: 1, protein: 12, lemak: 10, serat: 0, natrium: 280 },
     ])
 
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['meal_templates', 'u1'] })
@@ -185,5 +185,65 @@ describe('useDeleteMealTemplate', () => {
     })
 
     expect(toast.error).toHaveBeenCalledWith('RLS violation')
+  })
+})
+
+describe('useUpdateMealTemplate', () => {
+  let wrapper
+  let queryClient
+
+  beforeEach(() => {
+    const created = createQueryWrapper()
+    wrapper = created.wrapper
+    queryClient = created.queryClient
+    resultRef.current = { data: null, error: null }
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    resultRef.current = { data: [], error: null }
+  })
+
+  it('updates parent, replaces children, and invalidates', async () => {
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+    resultRef.current = { data: null, error: null }
+
+    const { result } = renderHook(() => useUpdateMealTemplate(), { wrapper })
+
+    const items = [
+      { nama_makanan: 'Nasi goreng', jumlah: 1, unit_id: 'g1', unit_nama: 'gram', kalori_estimasi: 400, karbohidrat: 60, protein: 10, lemak: 8, serat: 2, natrium: 500 },
+    ]
+
+    await act(async () => {
+      await result.current.mutateAsync({ templateId: 't1', userId: 'u1', nama: 'Updated', items })
+    })
+
+    expect(fromSpy).toHaveBeenCalledWith('meal_templates')
+    expect(chain.update).toHaveBeenCalledWith({ nama: 'Updated' })
+    expect(fromSpy).toHaveBeenCalledWith('meal_template_items')
+    expect(chain.delete).toHaveBeenCalled()
+    expect(chain.insert).toHaveBeenCalledWith([
+      { meal_template_id: 't1', nama_makanan: 'Nasi goreng', jumlah: 1, unit_id: 'g1', unit_nama: 'gram', kalori_estimasi: 400, karbohidrat: 60, protein: 10, lemak: 8, serat: 2, natrium: 500 },
+    ])
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['meal_templates', 'u1'] })
+    expect(toast.success).toHaveBeenCalledWith('Template berhasil diperbarui.')
+  })
+
+  it('shows error toast when update fails', async () => {
+    resultRef.current = { data: null, error: { message: 'Update failed' } }
+
+    const { result } = renderHook(() => useUpdateMealTemplate(), { wrapper })
+
+    await act(async () => {
+      try {
+        await result.current.mutateAsync({
+          templateId: 't1', userId: 'u1', nama: 'X', items: [{ nama_makanan: 'A', jumlah: 1, unit_id: null, unit_nama: 'g', kalori_estimasi: 100, karbohidrat: 0, protein: 0, lemak: 0, serat: 0, natrium: 0 }],
+        })
+      } catch {
+        // expected
+      }
+    })
+
+    expect(toast.error).toHaveBeenCalledWith('Update failed')
   })
 })

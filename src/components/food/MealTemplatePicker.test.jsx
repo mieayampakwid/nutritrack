@@ -29,7 +29,6 @@ describe('MealTemplatePicker', () => {
       <MealTemplatePicker
         templates={[]}
         onApply={() => {}}
-        onDelete={() => {}}
         isLoading={false}
       />,
     )
@@ -41,7 +40,6 @@ describe('MealTemplatePicker', () => {
       <MealTemplatePicker
         templates={[]}
         onApply={() => {}}
-        onDelete={() => {}}
         isLoading={true}
       />,
     )
@@ -57,7 +55,6 @@ describe('MealTemplatePicker', () => {
       <MealTemplatePicker
         templates={baseTemplates}
         onApply={() => {}}
-        onDelete={() => {}}
         isLoading={false}
       />,
     )
@@ -75,48 +72,11 @@ describe('MealTemplatePicker', () => {
       <MealTemplatePicker
         templates={baseTemplates}
         onApply={onApply}
-        onDelete={() => {}}
         isLoading={false}
       />,
     )
 
     await user.click(screen.getByText('Nasi goreng (+2)'))
     expect(onApply).toHaveBeenCalledWith(baseTemplates[0])
-  })
-
-  it('delete button is visible at reduced opacity without hover', () => {
-    renderWithProviders(
-      <MealTemplatePicker
-        templates={baseTemplates}
-        onApply={() => {}}
-        onDelete={() => {}}
-        isLoading={false}
-      />,
-    )
-    const deleteButtons = screen.getAllByRole('button', { name: 'Hapus template' })
-    // Should have partial opacity (visible on touch) — no opacity-0 class
-    expect(deleteButtons[0].className).not.toContain('opacity-0')
-    expect(deleteButtons[0].className).toContain('text-muted-foreground/40')
-  })
-
-  it('calls onDelete when delete button is clicked without triggering onApply', async () => {
-    const user = userEvent.setup()
-    const onApply = vi.fn()
-    const onDelete = vi.fn()
-
-    renderWithProviders(
-      <MealTemplatePicker
-        templates={baseTemplates}
-        onApply={onApply}
-        onDelete={onDelete}
-        isLoading={false}
-      />,
-    )
-
-    const deleteButtons = screen.getAllByRole('button', { name: 'Hapus template' })
-    await user.click(deleteButtons[0])
-
-    expect(onDelete).toHaveBeenCalledWith('t1')
-    expect(onApply).not.toHaveBeenCalled()
   })
 })

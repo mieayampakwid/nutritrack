@@ -77,6 +77,9 @@ const FoodEntry = lazy(() =>
 const MyProgress = lazy(() =>
   import('@/pages/klien/MyProgress').then((m) => ({ default: m.MyProgress })),
 )
+const MyMealTemplates = lazy(() =>
+  import('@/pages/klien/MyMealTemplates').then((m) => ({ default: m.MyMealTemplates })),
+)
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -343,6 +346,14 @@ function AppRoutes() {
           element={
             <RequireAuth roles={['klien']}>
               <MyProgress />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/klien/templates"
+          element={
+            <RequireAuth roles={['klien']}>
+              <MyMealTemplates />
             </RequireAuth>
           }
         />

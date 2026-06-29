@@ -1,7 +1,7 @@
-import { Cookie, Trash2 } from 'lucide-react'
+import { Cookie } from 'lucide-react'
 import { formatNumberId } from '@/lib/format'
 
-export function MealTemplatePicker({ templates, onApply, onDelete, isLoading }) {
+export function MealTemplatePicker({ templates, onApply, isLoading }) {
   return (
     <section className="mt-3 rounded-xl border border-border/80 bg-card p-4">
       <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold">
@@ -42,18 +42,7 @@ export function MealTemplatePicker({ templates, onApply, onDelete, isLoading }) 
                 role="button"
                 tabIndex={0}
               >
-                <button
-                  type="button"
-                  className="absolute right-2 top-2 text-muted-foreground/40 transition-opacity hover:text-destructive group-hover:opacity-100"
-                  aria-label="Hapus template"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDelete(t.id)
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-                <p className="pr-5 text-sm font-medium leading-snug">{t.nama}</p>
+                <p className="text-sm font-medium leading-snug">{t.nama}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {items.length} item
                   {totalKal > 0 && <> · {formatNumberId(totalKal)} kkal</>}

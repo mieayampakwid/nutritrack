@@ -36,6 +36,11 @@ export function useCreateMealTemplate() {
         unit_id: i.unit_id,
         unit_nama: i.unit_nama,
         kalori_estimasi: i.kalori_estimasi,
+        karbohidrat: i.karbohidrat,
+        protein: i.protein,
+        lemak: i.lemak,
+        serat: i.serat,
+        natrium: i.natrium,
       }))
       const { error: childErr } = await supabase
         .from('meal_template_items')
@@ -64,6 +69,51 @@ export function useDeleteMealTemplate() {
     },
     onError: (error) => {
       toast.error(error.message ?? 'Gagal menghapus template.')
+    },
+  })
+}
+
+export function useUpdateMealTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ templateId, nama, items }) => {
+      const { error: parentErr } = await supabase
+        .from('meal_templates')
+        .update({ nama })
+        .eq('id', templateId)
+      if (parentErr) throw parentErr
+
+      await supabase
+        .from('meal_template_items')
+        .delete()
+        .eq('meal_template_id', templateId)
+
+      if (items.length > 0) {
+        const childRows = items.map((i) => ({
+          meal_template_id: templateId,
+          nama_makanan: i.nama_makanan,
+          jumlah: i.jumlah,
+          unit_id: i.unit_id,
+          unit_nama: i.unit_nama,
+          kalori_estimasi: i.kalori_estimasi,
+          karbohidrat: i.karbohidrat,
+          protein: i.protein,
+          lemak: i.lemak,
+          serat: i.serat,
+          natrium: i.natrium,
+        }))
+        const { error: childErr } = await supabase
+          .from('meal_template_items')
+          .insert(childRows)
+        if (childErr) throw childErr
+      }
+    },
+    onSuccess: (_, { userId }) => {
+      qc.invalidateQueries({ queryKey: ['meal_templates', userId] })
+      toast.success('Template berhasil diperbarui.')
+    },
+    onError: (error) => {
+      toast.error(error.message ?? 'Gagal memperbarui template.')
     },
   })
 }
