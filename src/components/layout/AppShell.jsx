@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { DashboardHero } from '@/components/dashboard/DashboardHero'
 import {
   Apple,
+  Cookie,
   EllipsisVertical,
   LayoutDashboard,
   LogOut,
@@ -65,6 +66,7 @@ const ROLE_NAV = {
       { to: '/klien/dashboard', label: 'Dasbor', icon: LayoutDashboard },
       { to: '/klien/food-entry', label: 'Diary', icon: Apple },
       { to: '/klien/progress', label: 'Progres', icon: Ruler },
+      { to: '/klien/templates', label: 'Template', icon: Cookie },
     ],
     more: [],
   },

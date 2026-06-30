@@ -7,7 +7,6 @@ import { Check, ChevronDown, Clock, Cookie, Loader2, Moon, Pencil, Plus, Sparkle
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -15,8 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { FoodEntryAiAnalyzingPanel } from '@/components/food/FoodEntryAiAnalyzingPanel'
+import { FoodNameSuggestField } from '@/components/food/FoodNameSuggestField'
 import { TimeScroller } from '@/components/food/TimeScroller'
 import { useFoodNameSuggestions, useFoodUnits } from '@/hooks/useFoodLog'
+import { useMealTemplates, useCreateMealTemplate } from '@/hooks/useMealTemplates'
+import { MealTemplatePicker } from '@/components/food/MealTemplatePicker'
 import { analyzeFood } from '@/lib/openai'
 import { KaloriValue } from '@/components/shared/KaloriValue'
 import { formatNumberId, toIsoDateLocal } from '@/lib/format'
@@ -82,147 +85,6 @@ const MEAL_CARD_COLORS = {
   snack: { card: 'border-rose-200/60 bg-rose-50/70', accent: 'border-rose-300/60 text-rose-800', border: 'border-rose-200/50', divider: 'border-rose-200/30', hover: 'hover:bg-rose-100/50', header: 'bg-rose-100/60' },
 }
 
-const ANALYZE_STATUS_LINES = [
-  'Memetakan bahan dan porsi ke basis data gizi…',
-  'Menghitung estimasi energi dan zat gizi (makro) per item…',
-  'Menyelaraskan hasil dengan satuan yang Anda pilih…',
-  'Menyiapkan ringkasan untuk disimpan…',
-]
-
-function FoodEntryAiAnalyzingPanel({ active, reduceMotion }) {
-  const [lineIdx, setLineIdx] = useState(0)
-
-  useEffect(() => {
-    if (!active) return
-    const id = window.setInterval(() => {
-      setLineIdx((i) => (i + 1) % ANALYZE_STATUS_LINES.length)
-    }, 2600)
-    return () => window.clearInterval(id)
-  }, [active])
-
-  const spinTransition = reduceMotion
-    ? { duration: 0 }
-    : { repeat: Infinity, duration: 1.05, ease: 'linear' }
-
-  const pulseTransition = reduceMotion
-    ? { duration: 0 }
-    : { repeat: Infinity, duration: 1.35, ease: 'easeInOut' }
-
-  const barTransition = reduceMotion
-    ? { duration: 0 }
-    : { repeat: Infinity, duration: 1.35, ease: [0.4, 0, 0.2, 1] }
-
-  return (
-    <AnimatePresence initial={false}>
-      {active ? (
-        <Motion.div
-          key="ai-analyzing"
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-          aria-label="Menganalisa makanan dengan AI"
-          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
-          transition={{ duration: reduceMotion ? 0.15 : 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="relative overflow-hidden rounded-2xl border border-primary/25 bg-linear-to-br from-primary/[0.07] via-background to-teal-500/6 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]"
-        >
-          {!reduceMotion ? (
-            <Motion.div
-              className="pointer-events-none absolute -left-1/2 top-0 h-px w-[200%] bg-linear-to-r from-transparent via-primary/40 to-transparent"
-              animate={{ x: ['-30%', '30%'] }}
-              transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
-            />
-          ) : (
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-primary/25" />
-          )}
-          {!reduceMotion ? (
-            <Motion.div
-              className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/10 blur-2xl"
-              animate={{ opacity: [0.35, 0.65, 0.35], scale: [1, 1.08, 1] }}
-              transition={{ repeat: Infinity, duration: 3.2, ease: 'easeInOut' }}
-            />
-          ) : null}
-          {!reduceMotion ? (
-            <Motion.div
-              className="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-teal-500/10 blur-2xl"
-              animate={{ opacity: [0.25, 0.5, 0.25] }}
-              transition={{ repeat: Infinity, duration: 2.8, ease: 'easeInOut', delay: 0.4 }}
-            />
-          ) : null}
-
-          <div className="relative flex gap-3.5 sm:gap-4">
-            <div className="relative flex h-13 w-13 shrink-0 items-center justify-center sm:h-14 sm:w-14">
-              <div className="absolute inset-0 rounded-full border-2 border-primary/15" />
-              <Motion.div
-                className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary border-r-primary/40"
-                animate={reduceMotion ? {} : { rotate: 360 }}
-                transition={spinTransition}
-              />
-              <Motion.div
-                className="absolute inset-1 rounded-full border border-dashed border-primary/25"
-                animate={reduceMotion ? {} : { rotate: -360 }}
-                transition={{ ...spinTransition, duration: reduceMotion ? 0 : 2.1 }}
-              />
-              <Motion.div
-                animate={
-                  reduceMotion
-                    ? {}
-                    : { scale: [1, 1.12, 1], opacity: [0.75, 1, 0.75] }
-                }
-                transition={pulseTransition}
-              >
-                <Sparkles className="relative z-10 h-6 w-6 text-primary sm:h-7 sm:w-7" aria-hidden />
-              </Motion.div>
-            </div>
-
-            <div className="min-w-0 flex-1 space-y-2 pt-0.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-greeting text-sm font-semibold tracking-tight text-foreground sm:text-base">
-                  Menganalisa dengan AI
-                </p>
-                <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                  tunggu sebentar
-                </span>
-              </div>
-              <div className="relative min-h-11 sm:min-h-10">
-                <AnimatePresence mode="wait">
-                  <Motion.p
-                    key={lineIdx}
-                    initial={reduceMotion ? false : { opacity: 0, x: 8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -6 }}
-                    transition={{ duration: reduceMotion ? 0 : 0.3 }}
-                    className="text-xs leading-relaxed text-muted-foreground sm:text-sm"
-                  >
-                    {ANALYZE_STATUS_LINES[lineIdx]}
-                  </Motion.p>
-                </AnimatePresence>
-              </div>
-
-              <div className="relative mt-1 h-1.5 overflow-hidden rounded-full bg-muted/80">
-                {!reduceMotion ? (
-                  <>
-                    <Motion.div
-                      className="absolute inset-y-0 left-0 w-2/5 rounded-full bg-linear-to-r from-primary/20 via-primary to-primary/20"
-                      initial={false}
-                      animate={{ left: ['-40%', '100%'] }}
-                      transition={barTransition}
-                    />
-                    <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/25 to-transparent" />
-                  </>
-                ) : (
-                  <div className="h-full w-full rounded-full bg-primary/40" />
-                )}
-              </div>
-            </div>
-          </div>
-        </Motion.div>
-      ) : null}
-    </AnimatePresence>
-  )
-}
-
 const foodRowControlShell =
   'flex h-10 min-h-[44px] w-full items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input bg-background/80 px-3.5 py-2 text-base shadow-sm ring-offset-background transition-[color,box-shadow,border-color] duration-200 md:h-9 md:min-h-0 md:px-3 md:py-1'
 
@@ -230,9 +92,6 @@ const foodRowSelectMobileType = 'food-row-select-sync'
 
 const foodRowSelectFocus =
   'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1'
-
-const foodSuggestPanelClass =
-  'z-50 max-h-48 overflow-y-auto rounded-xl border bg-popover text-popover-foreground shadow-lg ring-1 ring-black/5'
 
 const foodQtyStepperShellClass =
   'flex h-10 min-h-[44px] w-full min-w-0 items-center overflow-hidden rounded-md border border-input bg-background/80 md:h-9 md:min-h-0'
@@ -242,88 +101,6 @@ const foodQtyStepperInnerInputClass =
 
 const foodQtyStepperBtnClass =
   'flex h-full w-9 shrink-0 items-center justify-center text-sm font-medium text-muted-foreground transition-colors hover:bg-accent sm:w-10 md:w-8 md:text-xs'
-
-function FoodNameSuggestField({
-  inputId,
-  value,
-  suggestionNames,
-  open,
-  onOpen,
-  onClosePanel,
-  onCloseRowBlur,
-  onPick,
-  onChangeNama,
-}) {
-  const wrapperRef = useRef(null)
-  const [dropdownStyle, setDropdownStyle] = useState(null)
-
-  useEffect(() => {
-    if (!open || !wrapperRef.current) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDropdownStyle(null)
-      return
-    }
-    const id = requestAnimationFrame(() => {
-      if (!wrapperRef.current) return
-      const rect = wrapperRef.current.getBoundingClientRect()
-      setDropdownStyle({
-        position: 'fixed',
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
-      })
-    })
-    return () => cancelAnimationFrame(id)
-  }, [open, value])
-
-  const filtered = useMemo(() => {
-    const t = value.trim()
-    if (!t || !suggestionNames.length) return []
-    const low = t.toLowerCase()
-    return suggestionNames.filter((n) => n.toLowerCase().includes(low)).slice(0, 20)
-  }, [suggestionNames, value])
-
-  const suggestRowClass =
-    'w-full px-3 py-2 text-left text-sm transition-colors duration-100 hover:bg-accent hover:text-accent-foreground'
-
-  return (
-    <div ref={wrapperRef} className="relative w-full">
-      <Input
-        id={inputId}
-        placeholder="Nama makanan"
-        autoComplete="off"
-        className="food-entry-compact-input bg-background/80 text-base leading-tight transition-shadow duration-200 md:text-sm"
-        value={value}
-        onChange={(e) => {
-          const v = e.target.value
-          onChangeNama(v)
-          if (v.trim()) onOpen()
-          else onClosePanel()
-        }}
-        onBlur={onCloseRowBlur}
-      />
-      {open && filtered.length > 0 && dropdownStyle
-        ? createPortal(
-            <div className={foodSuggestPanelClass} style={dropdownStyle} role="listbox">
-              {filtered.map((n, idx) => (
-                <button
-                  key={`${n}-${idx}`}
-                  type="button"
-                  role="option"
-                  className={suggestRowClass}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => onPick(n)}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>,
-            document.body,
-          )
-        : null}
-    </div>
-  )
-}
 
 function emptyRow() {
   return { id: safeUUID(), nama: '', jumlah: '', unitId: '' }
@@ -342,6 +119,8 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const qc = useQueryClient()
   const { data: units = [] } = useFoodUnits()
   const { data: suggestions = [] } = useFoodNameSuggestions()
+  const { data: templates = [], isLoading: templatesLoading } = useMealTemplates(userId)
+  const createTemplate = useCreateMealTemplate()
 
   const [mealKey, setMealKey] = useState('')
   const [jamMakan, setJamMakan] = useState('')
@@ -362,6 +141,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const [addRows, setAddRows] = useState(() => [emptyRow()])
   const [addLoading, setAddLoading] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false)
   const idempotencyKeyRef = useRef(null)
   const resultRef = useRef(null)
   const analyzingAnchorRef = useRef(null)
@@ -715,8 +495,11 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
       const { error: itemErr } = await supabase.from('food_log_items').insert(inserts)
       if (itemErr) throw itemErr
 
+      await saveTemplateIfRequested(inserts)
+
       setShowSaved(true)
       setPendingResult(null)
+      setSaveAsTemplate(false)
       idempotencyKeyRef.current = null
       qc.invalidateQueries({ queryKey: ['food_logs', userId] })
       qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
@@ -770,8 +553,11 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
             }
           }
 
+          await saveTemplateIfRequested(inserts)
+
           setShowSaved(true)
           setPendingResult(null)
+          setSaveAsTemplate(false)
           idempotencyKeyRef.current = null
           qc.invalidateQueries({ queryKey: ['food_logs', userId] })
           qc.invalidateQueries({ queryKey: ['food_name_suggestions'] })
@@ -800,6 +586,90 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   function handleDiscard() {
     idempotencyKeyRef.current = null
     setPendingResult(null)
+    setSaveAsTemplate(false)
+  }
+
+  function generateTemplateName() {
+    return `Template ${templates.length + 1}`
+  }
+
+  async function saveTemplateIfRequested(inserts) {
+    if (!saveAsTemplate) return
+    const nama = generateTemplateName()
+    try {
+      await createTemplate.mutateAsync({
+        userId,
+        nama,
+        items: inserts.map((x) => ({
+          nama_makanan: x.nama_makanan,
+          jumlah: x.jumlah,
+          unit_id: x.unit_id,
+          unit_nama: x.unit_nama,
+          kalori_estimasi: x.kalori_estimasi,
+          karbohidrat: x.karbohidrat,
+          protein: x.protein,
+          lemak: x.lemak,
+          serat: x.serat,
+          natrium: x.natrium,
+        })),
+      })
+    } catch {
+      toast.warning('Log tersimpan, tapi gagal menyimpan template.')
+    }
+  }
+
+  function handleApplyTemplate(template) {
+    const items = template.meal_template_items ?? []
+    const mapped = items.map((it) => ({
+      id: safeUUID(),
+      nama: it.nama_makanan,
+      jumlah: String(it.jumlah ?? ''),
+      unitId: it.unit_id ?? '',
+    }))
+    setRows((prev) => {
+      // Replace the default empty row with template items
+      const hasOnlyEmpty = prev.length === 1 && !prev[0].nama.trim()
+      return hasOnlyEmpty ? mapped : [...prev, ...mapped]
+    })
+    if (mapped.length) setExpandedRowId(mapped[0].id)
+
+    // If meal time is already selected, skip analysis — build pendingResult from template macros
+    if (mealKey && jamMakan) {
+      const submittedAt = new Date()
+      const tanggal = tanggalProp || toIsoDateLocal(submittedAt)
+      const itemsWithKal = items.map((it) => ({
+        nama_makanan: it.nama_makanan,
+        jumlah: it.jumlah,
+        unit_id: it.unit_id ?? null,
+        unit_nama: it.unit_nama,
+        kalori_estimasi: Number(it.kalori_estimasi ?? 0),
+        karbohidrat: Number(it.karbohidrat ?? 0),
+        protein: Number(it.protein ?? 0),
+        lemak: Number(it.lemak ?? 0),
+        serat: Number(it.serat ?? 0),
+        natrium: Number(it.natrium ?? 0),
+      }))
+      const total = itemsWithKal.reduce((a, x) => a + x.kalori_estimasi, 0)
+      const totalKarbohidrat = itemsWithKal.reduce((a, x) => a + x.karbohidrat, 0)
+      const totalProtein = itemsWithKal.reduce((a, x) => a + x.protein, 0)
+      const totalLemak = itemsWithKal.reduce((a, x) => a + x.lemak, 0)
+      const totalSerat = itemsWithKal.reduce((a, x) => a + x.serat, 0)
+      const totalNatrium = itemsWithKal.reduce((a, x) => a + x.natrium, 0)
+      idempotencyKeyRef.current = safeUUID()
+      setPendingResult({
+        items: itemsWithKal,
+        total,
+        totalKarbohidrat,
+        totalProtein,
+        totalLemak,
+        totalSerat,
+        totalNatrium,
+        waktuMakan: mealKey,
+        tanggal,
+      })
+    }
+
+    toast.info(`Template "${template.nama}" diterapkan`)
   }
 
   function handleRemovePendingItem(index) {
@@ -923,6 +793,7 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
   const isPending = Boolean(pendingResult)
 
   return (
+    <>
     <div className="space-y-2 sm:space-y-3 p-4 sm:p-5">
       {showSaved ? (
         <div className="flex items-center justify-center py-6 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-300">
@@ -1127,40 +998,54 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                   </div>
 
                   {isPending ? (
-                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full rounded-xl sm:w-auto"
-                        onClick={handleDiscard}
-                        disabled={saving}
-                      >
-                        <X className="mr-1 h-4 w-4" />
-                        Batal
-                      </Button>
-                      <Button
-                        type="button"
-                        className={cn(
-                          'w-full rounded-xl sm:w-auto',
-                          'bg-gradient-to-r from-primary to-primary/90',
-                          'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
-                        )}
-                        onClick={handleConfirmSave}
-                        disabled={saving}
-                      >
-                        {saving ? (
-                          <>
-                            <Loader2 className={cn('mr-2 h-4 w-4', !reduceMotion && 'motion-safe:animate-spin')} aria-hidden />
-                            Menyimpan…
-                          </>
-                        ) : (
-                          <>
-                            <Check className="mr-1 h-4 w-4" />
-                            Simpan
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                    <>
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-between">
+                        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={saveAsTemplate}
+                            onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                            disabled={saving}
+                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          Simpan kombinasi ini sebagai template
+                        </label>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full rounded-xl sm:w-auto"
+                            onClick={handleDiscard}
+                            disabled={saving}
+                          >
+                            <X className="mr-1 h-4 w-4" />
+                            Batal
+                          </Button>
+                          <Button
+                            type="button"
+                            className={cn(
+                              'w-full rounded-xl sm:w-auto',
+                              'bg-gradient-to-r from-primary to-primary/90',
+                              'shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25',
+                            )}
+                            onClick={handleConfirmSave}
+                            disabled={saving}
+                          >
+                            {saving ? (
+                              <>
+                                <Loader2 className={cn('mr-2 h-4 w-4', !reduceMotion && 'motion-safe:animate-spin')} aria-hidden />
+                                Menyimpan…
+                              </>
+                            ) : (
+                              <>
+                                <Check className="mr-1 h-4 w-4" />
+                                Simpan
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
                       <Button
@@ -1453,6 +1338,12 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
                 </Button>
               </section>
 
+              <MealTemplatePicker
+                templates={templates}
+                onApply={handleApplyTemplate}
+                isLoading={templatesLoading}
+              />
+
               <div ref={analyzingAnchorRef} className="mt-3 scroll-mt-4">
                 <FoodEntryAiAnalyzingPanel active={loading} reduceMotion={reduceMotion} />
               </div>
@@ -1495,5 +1386,6 @@ export function FoodEntryForm({ userId, tanggal: tanggalProp, onSaved }) {
             </>
           )}
     </div>
+    </>
   )
 }
