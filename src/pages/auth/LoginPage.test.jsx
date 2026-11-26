@@ -98,4 +98,10 @@ describe('LoginPage', () => {
       expect(toast.error).toHaveBeenCalledWith('Invalid login credentials'),
     )
   })
+
+  it('links to forgot password and hides self sign-up', () => {
+    renderWithProviders(<LoginPage />)
+    expect(screen.getByRole('link', { name: /lupa kata sandi/i })).toHaveAttribute('href', '/lupa-kata-sandi')
+    expect(screen.queryByRole('link', { name: 'Daftar' })).not.toBeInTheDocument()
+  })
 })

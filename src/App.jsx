@@ -3,12 +3,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppShellLoadingSkeleton } from '@/components/shared/AppShellLoadingSkeleton'
 import { useAuth, AuthProvider } from '@/hooks/useAuth'
+import { SELF_SIGNUP_ENABLED } from '@/lib/authConfig'
+import { dashboardPath } from '@/lib/routes'
 
 const LoginPage = lazy(() =>
   import('@/pages/auth/LoginPage').then((m) => ({ default: m.LoginPage })),
 )
 const RegisterPage = lazy(() =>
   import('@/pages/auth/RegisterPage').then((m) => ({ default: m.RegisterPage })),
+)
+const ForgotPasswordPage = lazy(() =>
+  import('@/pages/auth/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })),
+)
+const ChangePasswordPage = lazy(() =>
+  import('@/pages/auth/ChangePasswordPage').then((m) => ({ default: m.ChangePasswordPage })),
 )
 const ApprovalPendingPage = lazy(() =>
   import('@/pages/auth/ApprovalPendingPage').then((m) => ({
@@ -84,12 +92,6 @@ const queryClient = new QueryClient({
   },
 })
 
-function dashboardPath(role) {
-  if (role === 'admin') return '/admin/dashboard'
-  if (role === 'ahli_gizi') return '/gizi/dashboard'
-  return '/klien/dashboard'
-}
-
 function RootRedirect() {
   const { session, profile, loading, isInactive } = useAuth()
   if (loading) {
@@ -97,6 +99,7 @@ function RootRedirect() {
   }
   if (!session || !profile) return <Navigate to="/login" replace />
   if (isInactive) return <Navigate to="/menunggu-persetujuan" replace />
+  if (profile.must_change_password) return <Navigate to="/ganti-kata-sandi" replace />
   return <Navigate to={dashboardPath(profile.role)} replace />
 }
 
@@ -109,6 +112,7 @@ function RequireAuth({ roles, children }) {
   if (!session) return <Navigate to="/login" replace state={{ from: location }} />
   if (!profile) return <Navigate to="/login" replace state={{ from: location }} />
   if (isInactive) return <Navigate to="/menunggu-persetujuan" replace />
+  if (profile.must_change_password) return <Navigate to="/ganti-kata-sandi" replace />
   if (roles && !roles.includes(profile.role)) {
     return <Navigate to={dashboardPath(profile.role)} replace />
   }
@@ -124,7 +128,13 @@ function AppRoutes() {
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/register"
+          element={SELF_SIGNUP_ENABLED ? <RegisterPage /> : <Navigate to="/login" replace />}
+        />
+        <Route path="/lupa-kata-sandi" element={<ForgotPasswordPage />} />
+        <Route path="/atur-ulang-kata-sandi" element={<ChangePasswordPage recovery />} />
+        <Route path="/ganti-kata-sandi" element={<ChangePasswordPage />} />
         <Route path="/menunggu-persetujuan" element={<ApprovalPendingPage />} />
         <Route path="/" element={<RootRedirect />} />
 

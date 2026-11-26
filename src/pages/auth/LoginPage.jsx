@@ -13,13 +13,9 @@ import { APP_ACRONYM, APP_DISPLAY_NAME, APP_TAGLINE } from '@/lib/appMeta'
 import { cn } from '@/lib/utils'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { loginSchema } from '@/lib/validators'
+import { SELF_SIGNUP_ENABLED } from '@/lib/authConfig'
+import { dashboardPath } from '@/lib/routes'
 import laperLogo from '@/assets/laper-logo.png'
-
-function dashboardPath(role) {
-  if (role === 'admin') return '/admin/dashboard'
-  if (role === 'ahli_gizi') return '/gizi/dashboard'
-  return '/klien/dashboard'
-}
 
 function LoginLogoBlock() {
   const year = new Date().getFullYear()
@@ -150,6 +146,10 @@ export function LoginPage() {
         </>
       </LoginPageChrome>
     )
+  }
+
+  if (session && profile && profile.is_active !== false && profile.must_change_password) {
+    return <Navigate to="/ganti-kata-sandi" replace />
   }
 
   if (session && profile && profile.is_active !== false) {
@@ -316,11 +316,18 @@ export function LoginPage() {
                   )}
                 </form>
                 <p className="text-center text-xs text-muted-foreground">
-                  Belum punya akun?{' '}
-                  <Link to="/register" className="font-medium text-primary hover:underline">
-                    Daftar
+                  <Link to="/lupa-kata-sandi" className="font-medium text-primary hover:underline">
+                    Lupa kata sandi?
                   </Link>
                 </p>
+                {SELF_SIGNUP_ENABLED ? (
+                  <p className="text-center text-xs text-muted-foreground">
+                    Belum punya akun?{' '}
+                    <Link to="/register" className="font-medium text-primary hover:underline">
+                      Daftar
+                    </Link>
+                  </p>
+                ) : null}
               </div>
             </CardContent>
           </Card>

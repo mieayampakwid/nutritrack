@@ -4,6 +4,7 @@ import { DashboardHero } from '@/components/dashboard/DashboardHero'
 import {
   Apple,
   EllipsisVertical,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   Ruler,
@@ -158,6 +159,17 @@ function SidebarContent({ className }) {
           </div>
         </div>
         <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-9 md:text-sm"
+        >
+          <Link to="/ganti-kata-sandi">
+            <KeyRound className="mr-2 h-4 w-4" />
+            Ganti kata sandi
+          </Link>
+        </Button>
+        <Button
           variant="ghost"
           size="sm"
           className="w-full justify-start text-muted-foreground hover:bg-accent hover:text-accent-foreground md:h-9 md:text-sm"
@@ -304,6 +316,14 @@ function MobileBottomNav() {
                 </Link>
               )
             })}
+            <Link
+              to="/ganti-kata-sandi"
+              onClick={() => setMenuOpen(false)}
+              className="inline-flex h-9 items-center justify-start whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-card-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <KeyRound className="mr-2 h-4 w-4" />
+              Ganti kata sandi
+            </Link>
             <Button
               variant="ghost"
               className="justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
